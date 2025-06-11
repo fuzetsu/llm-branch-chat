@@ -77,8 +77,7 @@ class APIService {
   async streamResponse(messages, model, onToken, onComplete, onError, entropy) {
     try {
       const response = await fetch(
-        `${this.baseUrl}/chat/completions` +
-          (entropy ? '?rand=' + Date.now() + Math.random().toString(32).slice(1) : ''),
+        this.baseUrl + (entropy ? '?rand=' + Date.now() + Math.random().toString(32).slice(2) : ''),
         {
           method: 'POST',
           headers: {
@@ -150,7 +149,6 @@ class APIService {
     ]
 
     try {
-      //const response = await fetch(`${this.baseUrl}/chat/completions`, {
       const response = await fetch(this.baseUrl, {
         method: 'POST',
         headers: {
