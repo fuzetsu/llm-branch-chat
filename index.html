@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LLM Chat App</title>
+    <link rel="stylesheet" href="./app.css" />
+  </head>
+  <body>
+    <div class="app-container">
+      <!-- Header -->
+      <div class="header">
+        <div class="header-left">
+          <button class="sidebar-toggle" id="sidebarToggle">☰</button>
+          <div class="chat-title" id="chatTitle">New Chat</div>
+          <input type="text" class="chat-title-input hidden" id="chatTitleInput" />
+        </div>
+        <div class="header-right">
+          <button class="header-btn" id="settingsBtn" title="Settings">⚙️</button>
+          <button class="header-btn" id="newChatBtn" title="New Chat">➕</button>
+        </div>
+      </div>
+
+      <!-- Sidebar -->
+      <div class="sidebar" id="sidebar">
+        <button class="new-chat-btn" id="newChatSidebar">➕ New Chat</button>
+        <div class="chat-list" id="chatList">
+          <!-- Chat items will be dynamically inserted here -->
+        </div>
+      </div>
+
+      <!-- Main Content -->
+      <div class="main-content">
+        <div class="chat-area" id="chatArea">
+          <!-- Messages will be dynamically inserted here -->
+        </div>
+
+        <div class="input-area">
+          <div class="input-container">
+            <textarea
+              class="message-input"
+              id="messageInput"
+              placeholder="Type your message..."
+              rows="1"
+            ></textarea>
+            <button class="send-btn" id="sendBtn">Send</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settingsModal">
+      <div class="modal">
+        <div class="modal-header">
+          <h3 class="modal-title">Settings</h3>
+          <button class="modal-close" id="closeSettings">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="apiBaseUrl">API Base URL</label>
+            <input
+              type="text"
+              class="form-input"
+              id="apiBaseUrl"
+              placeholder="https://api.openai.com/v1"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="apiKey">API Key</label>
+            <input type="password" class="form-input" id="apiKey" placeholder="Your API key" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="availableModels">Available Models (one per line)</label>
+            <textarea
+              class="form-input"
+              id="availableModels"
+              rows="4"
+              placeholder="gpt-4&#10;gpt-3.5-turbo&#10;claude-3-sonnet"
+            ></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="defaultModel">Default Model</label>
+            <select class="form-select" id="defaultModel">
+              <option value="">Select a model</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="temperature"
+              >Temperature <span class="range-value" id="temperatureValue">0.7</span></label
+            >
+            <input
+              type="range"
+              class="form-range"
+              id="temperature"
+              min="0"
+              max="2"
+              step="0.1"
+              value="0.7"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="maxTokens">Max Tokens</label>
+            <input
+              type="number"
+              class="form-input"
+              id="maxTokens"
+              value="2048"
+              min="1"
+              max="4096"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="autoGenerateTitle">
+              <input type="checkbox" id="autoGenerateTitle" style="margin-right: 8px" />
+              Auto-generate chat titles
+            </label>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="titleGenerationTrigger"
+              >Title Generation Trigger (total messages)</label
+            >
+            <input
+              type="number"
+              class="form-input"
+              id="titleGenerationTrigger"
+              value="2"
+              min="1"
+              max="20"
+            />
+            <small
+              style="color: var(--text-secondary); font-size: 12px; margin-top: 4px; display: block"
+            >
+              Generate title after this many total messages (user + assistant)
+            </small>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="titleModel">Title Generation Model</label>
+            <select class="form-select" id="titleModel">
+              <option value="">Select a model</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="theme">Theme</label>
+            <select class="form-select" id="theme">
+              <option value="light">Light</option>
+              <option value="dark">Dark</option>
+              <option value="auto">Auto</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn" id="cancelSettings">Cancel</button>
+          <button class="btn primary" id="saveSettings">Save Settings</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div class="modal-overlay" id="confirmModal">
+      <div class="modal">
+        <div class="modal-header">
+          <h3 class="modal-title" id="confirmTitle">Confirm Action</h3>
+          <button class="modal-close" id="closeConfirm">✕</button>
+        </div>
+        <div class="modal-body">
+          <p id="confirmMessage">Are you sure you want to perform this action?</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn" id="cancelConfirm">Cancel</button>
+          <button class="btn danger" id="confirmAction">Confirm</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
