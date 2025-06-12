@@ -54,6 +54,14 @@ class AppState {
               ...chat,
               messageBranches: new Map(chat.messageBranches || []),
               currentBranches: new Map(chat.currentBranches || []),
+              // Migration: Add model property to existing chats
+              model: chat.model || this.settings.chat.model,
+              modelHistory: chat.modelHistory || [{ model: chat.model || this.settings.chat.model, timestamp: chat.createdAt || Date.now() }],
+              // Migration: Add model property to existing messages
+              messages: (chat.messages || []).map(msg => ({
+                ...msg,
+                model: msg.model || (msg.role === 'assistant' ? this.settings.chat.model : undefined)
+              }))
             },
           ]),
         )
@@ -209,6 +217,8 @@ function createNewChat() {
     updatedAt: Date.now(),
     isGeneratingTitle: false,
     isArchived: false,
+    model: appState.settings.chat.model, // Current model for this chat
+    modelHistory: [{ model: appState.settings.chat.model, timestamp: Date.now() }], // Track model changes
   }
 
   appState.chats.set(chatId, chat)
@@ -277,6 +287,22 @@ function restoreChat(chatId) {
 
 function getCurrentChat() {
   return appState.currentChatId ? appState.chats.get(appState.currentChatId) : null
+}
+
+function getEffectiveModel(chatId = null) {
+  const targetChatId = chatId || appState.currentChatId
+  const chat = targetChatId ? appState.chats.get(targetChatId) : null
+  return chat?.model || appState.settings.chat.model
+}
+
+function updateChatModel(chatId, newModel) {
+  const chat = appState.chats.get(chatId)
+  if (!chat || chat.model === newModel) return
+
+  chat.model = newModel
+  chat.modelHistory.push({ model: newModel, timestamp: Date.now() })
+  chat.updatedAt = Date.now()
+  appState.save()
 }
 
 // Message editing functions
@@ -376,6 +402,7 @@ function regenerateMessage(messageId) {
   }
 
   // Create new assistant message for the new branch
+  const currentModel = getEffectiveModel()
   const assistantMessage = {
     id: generateId(),
     role: 'assistant',
@@ -386,6 +413,7 @@ function regenerateMessage(messageId) {
     parentId: null,
     children: [],
     branchId: null,
+    model: currentModel, // Track generating model
   }
 
   // Temporarily add to display
@@ -404,7 +432,7 @@ function regenerateMessage(messageId) {
 
   apiService.streamResponse(
     messages,
-    appState.settings.chat.model,
+    currentModel,
     (token) => {
       assistantMessage.content += token
       updateChatDisplay()
@@ -578,6 +606,7 @@ async function sendMessage() {
   updateUI()
 
   // Add assistant message placeholder
+  const currentModel = getEffectiveModel()
   const assistantMessage = {
     id: generateId(),
     role: 'assistant',
@@ -588,6 +617,7 @@ async function sendMessage() {
     parentId: null,
     children: [],
     branchId: null,
+    model: currentModel, // Track generating model
   }
 
   chat.messages.push(assistantMessage)
@@ -601,7 +631,7 @@ async function sendMessage() {
 
   await apiService.streamResponse(
     messages,
-    appState.settings.chat.model,
+    currentModel,
     (token) => {
       // On token received
       assistantMessage.content += token
@@ -775,22 +805,41 @@ function updateChatDisplay() {
             `
     } else {
       const messageContent = getCurrentMessageContent(message)
-      messageDiv.innerHTML = `
+      const chat = getCurrentChat()
+      const currentChatModel = chat?.model || appState.settings.chat.model
+      const showModelIndicator = message.role === 'assistant' && message.model && message.model !== currentChatModel
+      const isModelChangeNotification = message.isModelChange
+      
+      if (isModelChangeNotification) {
+        messageDiv.className = `message system model-change`
+        messageDiv.innerHTML = `
+          <div class="model-change-notification">
+            <span class="model-change-icon">🔄</span>
+            <span class="model-change-text">${messageContent}</span>
+          </div>
+        `
+      } else {
+        messageDiv.innerHTML = `
               <div class="message-content">${messageContent || (message.isStreaming ? '' : 'No response')}</div>
-              ${
-                hasBranches
-                  ? `
-                <div class="branch-navigation">
-                  <button class="branch-nav-btn" onclick="switchToBranch('${message.id}', ${branchInfo.current - 1 - 1})" ${!branchInfo.hasPrevious ? 'disabled' : ''}>◀</button>
-                  <span class="branch-indicator">
-                    <span>🌿</span>
-                    <span>${branchInfo.current}/${branchInfo.total}</span>
-                  </span>
-                  <button class="branch-nav-btn" onclick="switchToBranch('${message.id}', ${branchInfo.current - 1 + 1})" ${!branchInfo.hasNext ? 'disabled' : ''}>▶</button>
+              ${(showModelIndicator || hasBranches) ? `
+                <div class="message-meta">
+                  ${
+                    hasBranches
+                      ? `
+                    <div class="branch-navigation">
+                      <button class="branch-nav-btn" onclick="switchToBranch('${message.id}', ${branchInfo.current - 1 - 1})" ${!branchInfo.hasPrevious ? 'disabled' : ''}>◀</button>
+                      <span class="branch-indicator">
+                        <span>🌿</span>
+                        <span>${branchInfo.current}/${branchInfo.total}</span>
+                      </span>
+                      <button class="branch-nav-btn" onclick="switchToBranch('${message.id}', ${branchInfo.current - 1 + 1})" ${!branchInfo.hasNext ? 'disabled' : ''}>▶</button>
+                    </div>
+                  `
+                      : '<div></div>'
+                  }
+                  ${showModelIndicator ? `<div class="message-model-indicator" title="Generated by ${message.model}">${message.model}</div>` : ''}
                 </div>
-              `
-                  : ''
-              }
+              ` : ''}
               ${
                 !message.isStreaming
                   ? `
@@ -802,6 +851,7 @@ function updateChatDisplay() {
                   : ''
               }
             `
+      }
     }
     chatArea.appendChild(messageDiv)
   })
@@ -814,6 +864,66 @@ function updateHeader() {
   const chatTitle = document.getElementById('chatTitle')
   const chat = getCurrentChat()
   chatTitle.textContent = chat ? chat.title : 'New Chat'
+  updateChatModelSelector()
+}
+
+function updateChatModelSelector() {
+  const select = document.getElementById('chatModelSelect')
+  const chat = getCurrentChat()
+  
+  // Clear existing options
+  select.innerHTML = ''
+  
+  // Add available models
+  appState.settings.api.availableModels.forEach((model) => {
+    const option = document.createElement('option')
+    option.value = model
+    option.textContent = model
+    select.appendChild(option)
+  })
+  
+  // Set current value
+  if (chat && chat.model) {
+    select.value = chat.model
+  } else {
+    select.value = appState.settings.chat.model
+  }
+}
+
+function handleModelChange(newModel) {
+  const chat = getCurrentChat()
+  if (!chat || !newModel) return
+  
+  const oldModel = chat.model || appState.settings.chat.model
+  if (oldModel === newModel) return
+  
+  updateChatModel(chat.id, newModel)
+  updateUI()
+  
+  // Add model change notification to chat
+  addModelChangeNotification(chat.id, oldModel, newModel)
+}
+
+function addModelChangeNotification(chatId, fromModel, toModel) {
+  const chat = appState.chats.get(chatId)
+  if (!chat) return
+  
+  const notification = {
+    id: generateId(),
+    role: 'system',
+    content: `Switched from ${fromModel} to ${toModel}`,
+    timestamp: Date.now(),
+    isStreaming: false,
+    isEditing: false,
+    parentId: null,
+    children: [],
+    branchId: null,
+    isModelChange: true,
+  }
+  
+  chat.messages.push(notification)
+  chat.updatedAt = Date.now()
+  appState.save()
 }
 
 function updateInputState() {
@@ -1075,6 +1185,12 @@ function setupEventListeners() {
   document.getElementById('availableModels').addEventListener('input', () => {
     updateModelDropdown()
     updateTitleModelDropdown()
+    updateChatModelSelector()
+  })
+
+  // Chat model selector change
+  document.getElementById('chatModelSelect').addEventListener('change', (e) => {
+    handleModelChange(e.target.value)
   })
 
   // Confirm modal

@@ -96,6 +96,33 @@ body {
   background: var(--hover-color);
 }
 
+.model-selector {
+  display: flex;
+  align-items: center;
+}
+
+.model-select {
+  background: var(--secondary-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: 6px 12px;
+  font-size: 14px;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: var(--transition);
+  min-width: 120px;
+}
+
+.model-select:hover {
+  border-color: var(--accent-color);
+}
+
+.model-select:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
 .chat-title-input {
   font-size: 18px;
   font-weight: 600;
@@ -381,6 +408,54 @@ body {
   }
 }
 
+/* Model-related styles */
+.message-model-indicator {
+  font-size: 11px;
+  background: var(--accent-color);
+  color: white;
+  padding: 2px 6px;
+  border-radius: 12px;
+  opacity: 0.7;
+  transition: var(--transition);
+}
+
+.message-model-indicator:hover {
+  opacity: 1;
+}
+
+.message-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+}
+
+.message.system.model-change {
+  align-self: center;
+  background: var(--tertiary-bg);
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin: 8px 0;
+  padding: 8px 16px;
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
+}
+
+.model-change-notification {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+}
+
+.model-change-icon {
+  font-size: 14px;
+}
+
+.model-change-text {
+  font-style: italic;
+}
+
 .empty-state {
   flex: 1;
   display: flex;
@@ -647,15 +722,9 @@ body {
   align-items: center;
   gap: 8px;
   margin: 8px 0;
-  padding: 6px 12px;
-  background: rgba(0, 0, 0, 0.05);
-  border-radius: 4px;
+  padding: 4px 0;
   font-size: 12px;
   color: var(--text-secondary);
-}
-
-[data-theme='dark'] .branch-navigation {
-  background: rgba(255, 255, 255, 0.05);
 }
 
 .branch-nav-btn {
@@ -700,16 +769,6 @@ body {
   position: relative;
 }
 
-.message.has-branches::before {
-  content: '';
-  position: absolute;
-  left: -6px;
-  top: 8px;
-  width: 6px;
-  height: 6px;
-  background: var(--accent-color);
-  border-radius: 50%;
-}
 
 /* Utility classes */
 .hidden {
