@@ -701,10 +701,12 @@ function updateChatList() {
   // Active chats section
   if (activeChats.length > 0) {
     const activeSection = document.createElement('div')
-    activeSection.className = 'chat-section'
+    activeSection.className = 'chat-section active-section'
     activeSection.innerHTML = `
             <div class="chat-section-header">
-              <span>Recent Chats</span>
+              <div class="section-title">
+                <span>Recent Chats</span>
+              </div>
             </div>
             <div class="chat-section-content" id="activeChats"></div>
           `
@@ -719,12 +721,18 @@ function updateChatList() {
 
   // Archive section
   if (archivedChats.length > 0) {
+    const savedState = localStorage.getItem('archiveSectionCollapsed')
+    const isCollapsed = savedState !== 'false' // Default to collapsed
+    
     const archiveSection = document.createElement('div')
-    archiveSection.className = 'chat-section collapsed'
+    archiveSection.className = `chat-section archive-section ${isCollapsed ? 'collapsed' : ''}`
     archiveSection.innerHTML = `
             <div class="chat-section-header" onclick="toggleArchiveSection()">
-              <span>Archive (${archivedChats.length})</span>
-              <span class="chat-section-toggle">▼</span>
+              <div class="section-title">
+                <span>Archived Chats</span>
+                <span class="chat-section-count">${archivedChats.length}</span>
+              </div>
+              <span class="chat-section-toggle">${isCollapsed ? '▶' : '▼'}</span>
             </div>
             <div class="chat-section-content" id="archivedChats"></div>
           `
@@ -761,9 +769,17 @@ function createChatItem(chat, isArchived) {
 }
 
 function toggleArchiveSection() {
-  const archiveSection = document.querySelector('.chat-section.collapsed')
+  const archiveSection = document.querySelector('.archive-section')
   if (archiveSection) {
     archiveSection.classList.toggle('collapsed')
+    
+    // Update toggle arrow direction
+    const toggle = archiveSection.querySelector('.chat-section-toggle')
+    const isCollapsed = archiveSection.classList.contains('collapsed')
+    toggle.textContent = isCollapsed ? '▶' : '▼'
+    
+    // Save state to localStorage
+    localStorage.setItem('archiveSectionCollapsed', isCollapsed.toString())
   }
 }
 
@@ -1240,6 +1256,7 @@ function initializeApp() {
   // Focus message input
   document.getElementById('messageInput').focus()
 }
+
 
 // Start the app when DOM is loaded
 if (document.readyState === 'loading') {
