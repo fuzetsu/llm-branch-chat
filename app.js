@@ -22,6 +22,10 @@ class AppState {
     this.ui = {
       sidebarCollapsed: false,
       isGenerating: false,
+      editTextareaSize: {
+        width: '100%',
+        height: '120px',
+      },
     }
   }
 
@@ -56,12 +60,12 @@ class AppState {
               currentBranches: new Map(chat.currentBranches || []),
               // Migration: Add model property to existing chats
               model: chat.model || this.settings.chat.model,
-              modelHistory: chat.modelHistory || [{ model: chat.model || this.settings.chat.model, timestamp: chat.createdAt || Date.now() }],
               // Migration: Add model property to existing messages
-              messages: (chat.messages || []).map(msg => ({
+              messages: (chat.messages || []).map((msg) => ({
                 ...msg,
-                model: msg.model || (msg.role === 'assistant' ? this.settings.chat.model : undefined)
-              }))
+                model:
+                  msg.model || (msg.role === 'assistant' ? this.settings.chat.model : undefined),
+              })),
             },
           ]),
         )
@@ -84,6 +88,7 @@ class APIService {
 
   async streamResponse(messages, model, onToken, onComplete, onError, entropy) {
     try {
+      const cleanMessages = messages.filter((mess) => mess.role !== 'system')
       const response = await fetch(
         this.baseUrl + (entropy ? '?rand=' + Date.now() + Math.random().toString(32).slice(2) : ''),
         {
@@ -93,7 +98,7 @@ class APIService {
             Authorization: `Bearer ${this.apiKey}`,
           },
           body: JSON.stringify({
-            messages: messages,
+            messages: cleanMessages,
             model: model,
             stream: true,
             temperature: appState.settings.chat.temperature,
@@ -176,7 +181,8 @@ class APIService {
       }
 
       const data = await response.json()
-      return data.choices[0].message.content.trim().replace(/['"]/g, '')
+      const title = data.choices[0].message.content.trim().replace(/['"]/g, '')
+      return title.length > 50 ? title.substring(0, 50).trim() + '...' : title
     } catch (error) {
       console.error('Title generation failed:', error)
       return null
@@ -218,7 +224,6 @@ function createNewChat() {
     isGeneratingTitle: false,
     isArchived: false,
     model: appState.settings.chat.model, // Current model for this chat
-    modelHistory: [{ model: appState.settings.chat.model, timestamp: Date.now() }], // Track model changes
   }
 
   appState.chats.set(chatId, chat)
@@ -300,7 +305,6 @@ function updateChatModel(chatId, newModel) {
   if (!chat || chat.model === newModel) return
 
   chat.model = newModel
-  chat.modelHistory.push({ model: newModel, timestamp: Date.now() })
   chat.updatedAt = Date.now()
   appState.save()
 }
@@ -317,25 +321,49 @@ function editMessage(messageId) {
   appState.save()
   updateChatDisplay()
 
-  // Focus the textarea
+  // Focus the textarea and apply saved size
   setTimeout(() => {
     const textarea = document.querySelector(
       `[data-message-id="${messageId}"] .message-edit-textarea`,
     )
     if (textarea) {
+      // Apply saved size
+      textarea.style.width = appState.ui.editTextareaSize.width
+      textarea.style.height = appState.ui.editTextareaSize.height
+
+      // Add resize listener to save size changes
+      const resizeObserver = new ResizeObserver(() => {
+        saveTextareaSize(textarea)
+      })
+      resizeObserver.observe(textarea)
+
+      // Store observer for cleanup
+      textarea._resizeObserver = resizeObserver
+
       textarea.focus()
       textarea.setSelectionRange(textarea.value.length, textarea.value.length)
     }
   }, 10)
 }
 
+function saveTextareaSize(textarea) {
+  if (textarea && textarea.offsetWidth > 0 && textarea.offsetHeight > 0) {
+    appState.ui.editTextareaSize = {
+      width: textarea.style.width || `${textarea.offsetWidth}px`,
+      height: textarea.style.height || `${textarea.offsetHeight}px`,
+    }
+    appState.save()
+  }
+}
+
 function saveMessageEdit(messageId) {
   const chat = getCurrentChat()
   if (!chat) return
 
-  const message = chat.messages.find((m) => m.id === messageId)
-  if (!message) return
+  const messageIndex = chat.messages.findIndex((m) => m.id === messageId)
+  if (messageIndex === -1) return
 
+  const message = chat.messages[messageIndex]
   const textarea = document.querySelector(`[data-message-id="${messageId}"] .message-edit-textarea`)
   if (!textarea) return
 
@@ -345,11 +373,151 @@ function saveMessageEdit(messageId) {
     return
   }
 
+  // Don't create a branch if content hasn't changed
+  if (message.content === newContent) {
+    message.isEditing = false
+    updateChatDisplay()
+    return
+  }
+
+  // Initialize branches for this message if they don't exist
+  if (!chat.messageBranches.has(messageId)) {
+    // Preserve existing children (messages after this one)
+    const childrenAfterBranch = chat.messages.slice(messageIndex + 1).map((msg) => ({
+      ...msg,
+      id: generateId(), // Give each child a new ID for the branch
+    }))
+
+    chat.messageBranches.set(messageId, [
+      {
+        content: message.content, // Original content as first branch
+        children: childrenAfterBranch,
+      },
+    ])
+    chat.currentBranches.set(messageId, 0)
+  }
+
+  // Preserve the current conversation path as a branch before editing
+  const currentBranches = chat.messageBranches.get(messageId)
+  const currentBranchIndex = chat.currentBranches.get(messageId) || 0
+  const currentBranch = currentBranches[currentBranchIndex]
+
+  // If there are messages after this one, preserve them in the current branch
+  if (chat.messages.length > messageIndex + 1) {
+    const existingChildren = chat.messages.slice(messageIndex + 1).map((msg) => ({ ...msg }))
+    currentBranch.children = existingChildren
+  }
+
+  // Create new branch with edited content
+  const newBranch = {
+    content: newContent,
+    children: [], // Start fresh - user will need to regenerate assistant responses
+  }
+
+  currentBranches.push(newBranch)
+  const newBranchIndex = currentBranches.length - 1
+  chat.currentBranches.set(messageId, newBranchIndex)
+
+  // Clean up resize observer
+  if (textarea && textarea._resizeObserver) {
+    textarea._resizeObserver.disconnect()
+  }
+
+  // Update the message content and truncate conversation
   message.content = newContent
   message.isEditing = false
+
+  // Truncate conversation at this point since we're starting a new branch
+  chat.messages = chat.messages.slice(0, messageIndex + 1)
+
   chat.updatedAt = Date.now()
   appState.save()
   updateChatDisplay()
+
+  // If editing a user message, automatically generate assistant response
+  if (message.role === 'user') {
+    setTimeout(generateAssistantResponseForEdit, 10)
+  }
+}
+
+async function generateAssistantResponseForEdit() {
+  const chat = getCurrentChat()
+  if (!chat || appState.ui.isGenerating) return
+
+  // Validate API settings
+  if (!appState.settings.api.apiKey || !appState.settings.api.baseUrl) {
+    alert('Please configure your API settings first.')
+    showSettingsModal()
+    return
+  }
+
+  // Set generating state
+  appState.ui.isGenerating = true
+  appState.save()
+  updateUI()
+
+  // Add assistant message placeholder
+  const currentModel = getEffectiveModel()
+  const assistantMessage = {
+    id: generateId(),
+    role: 'assistant',
+    content: '',
+    timestamp: Date.now(),
+    isStreaming: true,
+    isEditing: false,
+    parentId: null,
+    children: [],
+    branchId: null,
+    model: currentModel,
+  }
+
+  chat.messages.push(assistantMessage)
+  chat.updatedAt = Date.now()
+  appState.save()
+  updateChatDisplay()
+
+  try {
+    const apiService = new APIService(appState.settings.api.baseUrl, appState.settings.api.apiKey)
+    const messages = chat.messages
+      .filter((m) => !m.isStreaming || m.content)
+      .map((m) => ({ role: m.role, content: m.content }))
+
+    await apiService.streamResponse(
+      messages,
+      currentModel,
+      (token) => {
+        // On token received
+        assistantMessage.content += token
+        updateChatDisplay()
+      },
+      () => {
+        // On completion
+        assistantMessage.isStreaming = false
+        chat.updatedAt = Date.now()
+        appState.ui.isGenerating = false
+        appState.save()
+        updateUI()
+      },
+      (error) => {
+        // On error
+        throw error
+      },
+    )
+  } catch (error) {
+    console.error('Error generating response:', error)
+
+    // Remove the failed assistant message
+    const messageIndex = chat.messages.findIndex((m) => m.id === assistantMessage.id)
+    if (messageIndex !== -1) {
+      chat.messages.splice(messageIndex, 1)
+    }
+
+    alert('Error generating response. Please try again.')
+  } finally {
+    appState.ui.isGenerating = false
+    appState.save()
+    updateUI()
+  }
 }
 
 function cancelMessageEdit(messageId) {
@@ -358,6 +526,12 @@ function cancelMessageEdit(messageId) {
 
   const message = chat.messages.find((m) => m.id === messageId)
   if (!message) return
+
+  // Clean up resize observer
+  const textarea = document.querySelector(`[data-message-id="${messageId}"] .message-edit-textarea`)
+  if (textarea && textarea._resizeObserver) {
+    textarea._resizeObserver.disconnect()
+  }
 
   message.isEditing = false
   appState.save()
@@ -723,7 +897,7 @@ function updateChatList() {
   if (archivedChats.length > 0) {
     const savedState = localStorage.getItem('archiveSectionCollapsed')
     const isCollapsed = savedState !== 'false' // Default to collapsed
-    
+
     const archiveSection = document.createElement('div')
     archiveSection.className = `chat-section archive-section ${isCollapsed ? 'collapsed' : ''}`
     archiveSection.innerHTML = `
@@ -772,12 +946,12 @@ function toggleArchiveSection() {
   const archiveSection = document.querySelector('.archive-section')
   if (archiveSection) {
     archiveSection.classList.toggle('collapsed')
-    
+
     // Update toggle arrow direction
     const toggle = archiveSection.querySelector('.chat-section-toggle')
     const isCollapsed = archiveSection.classList.contains('collapsed')
     toggle.textContent = isCollapsed ? '▶' : '▼'
-    
+
     // Save state to localStorage
     localStorage.setItem('archiveSectionCollapsed', isCollapsed.toString())
   }
@@ -801,10 +975,42 @@ function updateChatDisplay() {
     return
   }
 
-  chat.messages.forEach((message) => {
+  let previousAssistantModel = null
+
+  chat.messages.forEach((message, index) => {
     const messageDiv = document.createElement('div')
     const branchInfo = getMessageBranchInfo(message.id)
     const hasBranches = branchInfo && branchInfo.total > 1
+
+    // Check if we need to show a model change notification
+    let showModelChangeNotification = false
+    let fromModel = previousAssistantModel
+    if (
+      message.role === 'assistant' &&
+      message.model &&
+      previousAssistantModel &&
+      message.model !== previousAssistantModel
+    ) {
+      showModelChangeNotification = true
+    }
+
+    // Add model change notification if needed
+    if (showModelChangeNotification) {
+      const modelChangeDiv = document.createElement('div')
+      modelChangeDiv.className = 'message system model-change'
+      modelChangeDiv.innerHTML = `
+        <div class="model-change-notification">
+          <span class="model-change-icon">🔄</span>
+          <span class="model-change-text">Switched from ${fromModel} to ${message.model}</span>
+        </div>
+      `
+      chatArea.appendChild(modelChangeDiv)
+    }
+
+    // Update previous assistant model for next iteration
+    if (message.role === 'assistant' && message.model) {
+      previousAssistantModel = message.model
+    }
 
     messageDiv.className = `message ${message.role} ${message.isStreaming ? 'streaming' : ''} ${message.isEditing ? 'editing' : ''} ${hasBranches ? 'has-branches' : ''}`
     messageDiv.dataset.messageId = message.id
@@ -823,21 +1029,14 @@ function updateChatDisplay() {
       const messageContent = getCurrentMessageContent(message)
       const chat = getCurrentChat()
       const currentChatModel = chat?.model || appState.settings.chat.model
-      const showModelIndicator = message.role === 'assistant' && message.model && message.model !== currentChatModel
-      const isModelChangeNotification = message.isModelChange
-      
-      if (isModelChangeNotification) {
-        messageDiv.className = `message system model-change`
-        messageDiv.innerHTML = `
-          <div class="model-change-notification">
-            <span class="model-change-icon">🔄</span>
-            <span class="model-change-text">${messageContent}</span>
-          </div>
-        `
-      } else {
-        messageDiv.innerHTML = `
+      const showModelIndicator =
+        message.role === 'assistant' && message.model && message.model !== currentChatModel
+
+      messageDiv.innerHTML = `
               <div class="message-content">${messageContent || (message.isStreaming ? '' : 'No response')}</div>
-              ${(showModelIndicator || hasBranches) ? `
+              ${
+                showModelIndicator || hasBranches
+                  ? `
                 <div class="message-meta">
                   ${
                     hasBranches
@@ -855,7 +1054,9 @@ function updateChatDisplay() {
                   }
                   ${showModelIndicator ? `<div class="message-model-indicator" title="Generated by ${message.model}">${message.model}</div>` : ''}
                 </div>
-              ` : ''}
+              `
+                  : ''
+              }
               ${
                 !message.isStreaming
                   ? `
@@ -867,13 +1068,16 @@ function updateChatDisplay() {
                   : ''
               }
             `
-      }
     }
     chatArea.appendChild(messageDiv)
   })
 
-  // Scroll to bottom
-  chatArea.scrollTop = chatArea.scrollHeight
+  // Only auto-scroll if user is near the bottom (within 100px) or if not currently streaming
+  const isNearBottom = chatArea.scrollHeight - chatArea.scrollTop - chatArea.clientHeight <= 20
+
+  if (isNearBottom) {
+    chatArea.scrollTop = chatArea.scrollHeight
+  }
 }
 
 function updateHeader() {
@@ -886,10 +1090,10 @@ function updateHeader() {
 function updateChatModelSelector() {
   const select = document.getElementById('chatModelSelect')
   const chat = getCurrentChat()
-  
+
   // Clear existing options
   select.innerHTML = ''
-  
+
   // Add available models
   appState.settings.api.availableModels.forEach((model) => {
     const option = document.createElement('option')
@@ -897,7 +1101,7 @@ function updateChatModelSelector() {
     option.textContent = model
     select.appendChild(option)
   })
-  
+
   // Set current value
   if (chat && chat.model) {
     select.value = chat.model
@@ -909,37 +1113,12 @@ function updateChatModelSelector() {
 function handleModelChange(newModel) {
   const chat = getCurrentChat()
   if (!chat || !newModel) return
-  
+
   const oldModel = chat.model || appState.settings.chat.model
   if (oldModel === newModel) return
-  
+
   updateChatModel(chat.id, newModel)
   updateUI()
-  
-  // Add model change notification to chat
-  addModelChangeNotification(chat.id, oldModel, newModel)
-}
-
-function addModelChangeNotification(chatId, fromModel, toModel) {
-  const chat = appState.chats.get(chatId)
-  if (!chat) return
-  
-  const notification = {
-    id: generateId(),
-    role: 'system',
-    content: `Switched from ${fromModel} to ${toModel}`,
-    timestamp: Date.now(),
-    isStreaming: false,
-    isEditing: false,
-    parentId: null,
-    children: [],
-    branchId: null,
-    isModelChange: true,
-  }
-  
-  chat.messages.push(notification)
-  chat.updatedAt = Date.now()
-  appState.save()
 }
 
 function updateInputState() {
@@ -975,7 +1154,9 @@ function saveTitleEdit() {
   const newTitle = titleInput.value.trim()
 
   if (newTitle && newTitle !== chat.title) {
-    chat.title = newTitle
+    const truncatedTitle =
+      newTitle.length > 50 ? newTitle.substring(0, 50).trim() + '...' : newTitle
+    chat.title = truncatedTitle
     chat.updatedAt = Date.now()
     appState.save()
   }
@@ -1256,7 +1437,6 @@ function initializeApp() {
   // Focus message input
   document.getElementById('messageInput').focus()
 }
-
 
 // Start the app when DOM is loaded
 if (document.readyState === 'loading') {
