@@ -144,11 +144,20 @@ export class ApiService {
       })
 
       if (!response.ok) {
-        throw new Error('Title generation failed')
+        const errorText = await response.text()
+        throw new Error(
+          `Title generation failed: ${response.status} ${response.statusText} - ${errorText}`,
+        )
+      }
+
+      const contentType = response.headers.get('content-type')
+      if (!contentType?.includes('application/json')) {
+        const responseText = await response.text()
+        return this.truncateTitle(responseText)
       }
 
       const data: ApiResponse = await response.json()
-      const title = data.choices[0]?.message?.content?.trim().replace(/['"]/g, '') || ''
+      const title = data.choices[0]?.message?.content?.trim().replace(/['"*]\*?/g, '') || ''
 
       return this.truncateTitle(title)
     } catch (error) {
