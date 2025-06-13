@@ -390,11 +390,11 @@ body {
   border: 1px solid var(--border-color);
 }
 
-.message.streaming {
+.message.streaming .message-content {
   position: relative;
 }
 
-.message.streaming::after {
+.message.streaming .message-content::after {
   content: '▋';
   animation: blink 1s infinite;
   margin-left: 2px;

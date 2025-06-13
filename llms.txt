@@ -1,0 +1,168 @@
+# LLM Chat Application - Technical Overview
+
+## Architecture
+
+This is a modular TypeScript chat application built with a clean separation of concerns:
+
+### Core Modules
+- **AppState** (`src/state/`): Centralized state management with localStorage persistence
+- **ApiService** (`src/services/`): OpenAI-compatible API client with streaming support
+- **ChatManager** (`src/features/`): Chat lifecycle (create, delete, archive, model switching)
+- **MessageManager** (`src/features/`): Message handling, editing, branching, and regeneration
+- **UIManager** (`src/ui/`): DOM manipulation and rendering
+- **SettingsManager** (`src/ui/`): Configuration and modal management
+- **App** (`src/App.ts`): Main orchestrator and event coordination
+
+### Key Features
+- **Message Branching**: Multiple conversation paths from any message
+- **Real-time Streaming**: Token-by-token response streaming
+- **Chat Archiving**: Active/archived chat organization
+- **Model Per Chat**: Each chat can use different AI models
+- **Message Editing**: Edit messages and regenerate responses
+- **Auto Titles**: Automatic chat title generation
+
+## Data Flow
+
+1. **User Input** → App.ts → MessageManager → ApiService → UI Update
+2. **State Changes** → AppState.save() → localStorage persistence
+3. **UI Events** → Event delegation → App methods → Manager actions
+
+## TypeScript Structure
+
+### Core Types (`src/types/index.ts`)
+```typescript
+interface Message {
+  id: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  model?: string; // Track which model generated this
+  // ... metadata
+}
+
+interface Chat {
+  messages: Message[];
+  messageBranches: Map<string, MessageBranch[]>; // Conversation branches
+  currentBranches: Map<string, number>; // Active branch per message
+  model: string; // Chat's current model
+  // ... metadata
+}
+```
+
+### State Management Pattern
+- **AppState**: Single source of truth with Map-based collections
+- **Serialization**: Custom logic for Map serialization to localStorage
+- **Migrations**: Backward compatibility for schema changes
+
+### Event Handling
+- **Data Attributes**: `data-action`, `data-message-id` for event delegation
+- **No Inline Handlers**: All events handled through TypeScript methods
+- **Global Exposure**: Managers exposed on `window` for HTML compatibility
+
+## Development Patterns
+
+### Error Handling
+- **Async/Await**: Consistent async pattern throughout
+- **Try/Catch**: Proper error boundaries in UI operations
+- **User Feedback**: Alert dialogs for critical errors
+
+### UI Updates
+- **Reactive**: UI updates triggered by state changes
+- **Event Delegation**: Single listeners handle multiple dynamic elements
+- **DOM Manipulation**: Direct DOM API usage (no framework dependencies)
+
+### API Integration
+- **Streaming**: Server-sent events for real-time responses
+- **Configurable**: Support for different API endpoints/models
+- **Error Recovery**: Graceful handling of API failures
+
+## File Organization
+
+```
+src/
+├── types/           # TypeScript interfaces
+├── state/           # State management
+├── services/        # External API clients
+├── features/        # Business logic modules
+├── ui/             # User interface management
+├── utils/          # Shared utilities
+├── App.ts          # Main application class
+└── main.ts         # Entry point
+```
+
+## Build System
+
+- **TypeScript 5.x**: Strict mode with exact optional properties
+- **ES Modules**: Native browser module support
+- **No Bundler**: Direct TypeScript compilation to JavaScript
+- **Development**: `npm run build` → `npm run serve`
+
+## Key Implementation Details
+
+### Message Branching System
+- Each message can have multiple response branches
+- Branches store conversation continuations
+- UI allows switching between branches with navigation controls
+
+### State Persistence
+- localStorage with JSON serialization
+- Map objects converted to arrays for storage
+- Migration system for schema updates
+
+### API Streaming
+- Real-time token display during generation
+- Proper handling of SSE data format
+- Error recovery and cleanup
+
+### Memory Management
+- ResizeObserver cleanup for textarea elements
+- Event listener removal on component destruction
+- Proper Map/Set usage for collections
+
+## Extension Points
+
+### Adding New Models
+1. Update `availableModels` in settings
+2. Modify API service if needed for different formats
+3. Model indicators automatically update in UI
+
+### New Message Types
+1. Extend `MessageRole` type in types/index.ts
+2. Add rendering logic in UIManager
+3. Update API message preparation if needed
+
+### Custom Themes
+1. Add theme option to AppSettings interface
+2. Implement theme logic in SettingsManager.applyTheme()
+3. Add corresponding CSS variables
+
+## Common Patterns
+
+### State Updates
+```typescript
+// Always save after state changes
+this.appState.updateChat(chatId, { title: newTitle });
+this.uiManager.updateAll(); // Trigger UI refresh
+```
+
+### Error Handling
+```typescript
+try {
+  await this.messageManager.sendMessage(content);
+} catch (error) {
+  console.error('Operation failed:', error);
+  alert('User-friendly error message');
+} finally {
+  this.uiManager.updateAll(); // Ensure UI consistency
+}
+```
+
+### Event Delegation
+```typescript
+element.addEventListener('click', (e) => {
+  const target = e.target as HTMLElement;
+  const action = target.dataset.action;
+  // Handle based on data attributes
+});
+```
+
+This architecture prioritizes maintainability, type safety, and clear separation of concerns while maintaining the simplicity of a vanilla TypeScript application.
