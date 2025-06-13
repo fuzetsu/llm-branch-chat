@@ -41,12 +41,15 @@ This is a client-side TypeScript chat application with a modular architecture:
 
 ### Message Branching System
 
-Messages support branching for conversation alternatives:
+Messages support branching for conversation alternatives with full metadata tracking:
 
 - Each message can have multiple branches (alternative responses)
-- `messageBranches` Map stores branches per message ID
+- `messageBranches` Map stores branches per message ID with metadata
 - `currentBranches` Map tracks active branch index per message
-- UI provides navigation between branches
+- Each branch stores: content, children, timestamp, and model used
+- UI provides navigation between branches with branch-specific timestamps
+- Editing or regenerating messages creates new branches with fresh timestamps
+- Data migration ensures backward compatibility for existing branches
 
 ### API Integration
 
@@ -55,10 +58,27 @@ Messages support branching for conversation alternatives:
 - Per-chat model selection with fallback to global setting
 - Automatic title generation using separate model
 
+## UI Features
+
+### Message Display
+
+- Relative timestamps on all messages (e.g., "5m ago", "Just now")
+- Branch-specific timestamps that update when editing/regenerating
+- Hover tooltips showing full date/time information
+- Model indicators for messages generated with different models
+
+### Mobile Optimization
+
+- Responsive design with collapsible sidebar
+- Fixed viewport height to prevent scroll issues
+- Proper header/nav positioning in mobile views
+- Touch-friendly interface elements
+
 ## Development Notes
 
-- TypeScript with strict configuration
+- TypeScript with strict configuration and exact optional property types
 - No external dependencies beyond TypeScript
 - ES modules with bundler module resolution
 - HTML uses inline event handlers that call global manager methods
-
+- Automatic data migration for schema changes
+- Comprehensive timestamp tracking for conversation history

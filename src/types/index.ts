@@ -15,6 +15,8 @@ export interface Message {
 export interface MessageBranch {
   content: string
   children: Message[]
+  timestamp: number
+  model?: string
 }
 
 export interface Chat {

@@ -2,6 +2,7 @@ import type { Message, MessageBranch, BranchInfo, ApiMessage } from '../types/in
 import type { AppState } from '../state/AppState.js'
 import type { ApiService } from '../services/ApiService.js'
 import { generateId, delay } from '../utils/index.js'
+import { UIManager } from '../ui/UIManager.js'
 
 export class MessageManager {
   constructor(
@@ -17,31 +18,20 @@ export class MessageManager {
     }
   }
 
-  private triggerScrollUpdate(): void {
-    // Auto-scroll if user is near bottom
-    const uiManager = (window as any).uiManager
-    if (uiManager && typeof uiManager.scrollToBottom === 'function') {
-      uiManager.scrollToBottom()
+  private getUIManager(): UIManager {
+    const uiManager: UIManager | unknown = (window as any).uiManager
+    if (uiManager && uiManager instanceof UIManager) {
+      return uiManager
     }
+    throw new Error('Critical error: UIManager was not on the window object')
+  }
+
+  private scrollChatToBottom(): void {
+    this.getUIManager().scrollToBottom()
   }
 
   private shouldAutoScroll(): boolean {
-    // Check if user is near bottom before content changes
-    const chatArea = document.getElementById('chatArea')
-    if (!chatArea) return false
-    
-    const isNearBottom = chatArea.scrollHeight - chatArea.scrollTop - chatArea.clientHeight <= 10
-    return isNearBottom
-  }
-
-  private forceScrollToBottom(): void {
-    // Force scroll to bottom without checking position
-    const chatArea = document.getElementById('chatArea')
-    if (chatArea) {
-      requestAnimationFrame(() => {
-        chatArea.scrollTop = chatArea.scrollHeight
-      })
-    }
+    return this.getUIManager().isScrolledBottom()
   }
 
   private validateApiSettings(): void {
@@ -64,7 +54,7 @@ export class MessageManager {
       onToken: (token: string) => {
         // Check if we should auto-scroll before making changes
         const shouldScroll = this.shouldAutoScroll()
-        
+
         message.content += token
 
         // Update branch content to keep in sync
@@ -90,7 +80,7 @@ export class MessageManager {
 
         // Auto-scroll if user was near bottom before the change
         if (shouldScroll) {
-          this.forceScrollToBottom()
+          this.scrollChatToBottom()
         }
       },
       onComplete: () => {
@@ -259,6 +249,8 @@ export class MessageManager {
         {
           content: message.content,
           children: childrenAfterBranch,
+          timestamp: message.timestamp,
+          ...(message.model && { model: message.model }),
         },
       ])
       chat.currentBranches.set(messageId, 0)
@@ -279,6 +271,8 @@ export class MessageManager {
     const newBranch: MessageBranch = {
       content: newContent,
       children: [],
+      timestamp: Date.now(),
+      ...(message.model && { model: message.model }),
     }
 
     currentBranches.push(newBranch)
@@ -377,6 +371,8 @@ export class MessageManager {
         {
           content: originalMessage.content,
           children: childrenAfterBranch,
+          timestamp: originalMessage.timestamp,
+          ...(originalMessage.model && { model: originalMessage.model }),
         },
       ])
       chat.currentBranches.set(messageId, 0)
@@ -393,15 +389,17 @@ export class MessageManager {
       currentBranch.children = existingChildren
     }
 
+    // Set up for regeneration - we'll stream directly into the original message
+    const currentModel = chat.model || this.appState.settings.chat.model
+
     // Create a new branch for the regenerated content
     currentBranches.push({
       content: '', // Will be filled during streaming
       children: [],
+      timestamp: Date.now(),
+      model: currentModel,
     })
     chat.currentBranches.set(messageId, currentBranches.length - 1)
-
-    // Set up for regeneration - we'll stream directly into the original message
-    const currentModel = chat.model || this.appState.settings.chat.model
 
     // Clear content and set streaming state on original message
     originalMessage.content = ''
@@ -453,6 +451,30 @@ export class MessageManager {
     const currentBranchIndex = chat.currentBranches.get(message.id) || 0
     const currentBranch = branches[currentBranchIndex]
     return currentBranch ? currentBranch.content : message.content
+  }
+
+  public getCurrentMessageTimestamp(message: Message): number {
+    const chat = this.appState.getCurrentChat()
+    if (!chat || !chat.messageBranches.has(message.id)) {
+      return message.timestamp
+    }
+
+    const branches = chat.messageBranches.get(message.id)!
+    const currentBranchIndex = chat.currentBranches.get(message.id) || 0
+    const currentBranch = branches[currentBranchIndex]
+    return currentBranch ? currentBranch.timestamp : message.timestamp
+  }
+
+  public getCurrentMessageModel(message: Message): string | undefined {
+    const chat = this.appState.getCurrentChat()
+    if (!chat || !chat.messageBranches.has(message.id)) {
+      return message.model
+    }
+
+    const branches = chat.messageBranches.get(message.id)!
+    const currentBranchIndex = chat.currentBranches.get(message.id) || 0
+    const currentBranch = branches[currentBranchIndex]
+    return currentBranch ? currentBranch.model : message.model
   }
 
   public switchToBranch(messageId: string, branchIndex: number): void {

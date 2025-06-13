@@ -93,9 +93,27 @@ export class AppState implements AppStateData {
   }
 
   private deserializeChat(chat: SerializableChat): Chat {
+    const messageBranches = new Map(chat.messageBranches || [])
+    
+    // Migration: Add timestamp and model to existing branches
+    messageBranches.forEach((branches, messageId) => {
+      const message = (chat.messages || []).find(m => m.id === messageId)
+      messageBranches.set(messageId, branches.map(branch => {
+        const migratedBranch: any = {
+          ...branch,
+          timestamp: branch.timestamp || message?.timestamp || Date.now(),
+        }
+        const branchModel = branch.model || message?.model || (message?.role === 'assistant' ? this.settings.chat.model : undefined)
+        if (branchModel) {
+          migratedBranch.model = branchModel
+        }
+        return migratedBranch
+      }))
+    })
+
     return {
       ...chat,
-      messageBranches: new Map(chat.messageBranches || []),
+      messageBranches,
       currentBranches: new Map(chat.currentBranches || []),
       // Migration: Add model property to existing chats
       model: chat.model || this.settings.chat.model,
