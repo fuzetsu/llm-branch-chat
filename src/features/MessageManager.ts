@@ -75,6 +75,7 @@ export class MessageManager {
           `[data-message-id="${message.id}"] .message-content`,
         )
         if (messageElement) {
+          // For streaming, show plain text to avoid partial markdown rendering issues
           messageElement.textContent = message.content
         }
 
@@ -92,6 +93,10 @@ export class MessageManager {
         this.appState.updateUISettings({ isGenerating: false })
         this.appState.save()
         this.triggerUIUpdate()
+
+        // Render markdown for completed message
+        const uiManager = this.getUIManager()
+        uiManager.renderMessageMarkdown(messageId)
 
         // Execute any additional completion logic
         if (onCompleteExtra) {
@@ -124,9 +129,6 @@ export class MessageManager {
     chat.messages.push(userMessage)
     chat.updatedAt = Date.now()
 
-    // Update UI to show user message immediately
-    this.triggerUIUpdate()
-
     // Set generating state
     this.appState.updateUISettings({ isGenerating: true })
 
@@ -139,6 +141,7 @@ export class MessageManager {
 
     // Update UI to show assistant placeholder immediately
     this.triggerUIUpdate()
+    this.scrollChatToBottom()
 
     try {
       // Send to API
@@ -510,6 +513,12 @@ export class MessageManager {
     chat.updatedAt = Date.now()
     this.appState.save()
     this.triggerUIUpdate()
+
+    // Render markdown for the switched branch content (if not streaming)
+    const uiManager = this.getUIManager()
+    if (message && !message.isStreaming) {
+      uiManager.renderMessageMarkdown(messageId)
+    }
   }
 
   private rebuildConversationFromBranches(messageId: string): void {
@@ -528,11 +537,25 @@ export class MessageManager {
     const currentBranch = branches?.[currentBranchIndex]
 
     if (currentBranch?.children) {
-      // Add children messages and recursively build their branches
+      // Add children messages
       currentBranch.children.forEach((childMessage) => {
-        chat.messages.push({ ...childMessage })
+        const newMessage = { ...childMessage }
 
-        // If this child has branches, apply the current branch selection
+        // If this child has branches, update its content to match current branch
+        if (chat.messageBranches.has(childMessage.id)) {
+          const childBranches = chat.messageBranches.get(childMessage.id)!
+          const childBranchIndex = chat.currentBranches.get(childMessage.id) || 0
+          const childBranch = childBranches[childBranchIndex]
+          if (childBranch) {
+            newMessage.content = childBranch.content
+          }
+        }
+
+        chat.messages.push(newMessage)
+      })
+
+      // Now recursively rebuild for each child that has branches
+      currentBranch.children.forEach((childMessage) => {
         if (chat.messageBranches.has(childMessage.id)) {
           this.rebuildConversationFromBranches(childMessage.id)
         }

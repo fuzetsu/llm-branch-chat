@@ -131,3 +131,11 @@ export function deepClone<T>(obj: T): T {
   return obj
 }
 
+/**
+ * Renders markdown content to HTML
+ */
+export async function renderMarkdown(content: string): Promise<string> {
+  const { marked } = await import('marked')
+  const result = marked(content)
+  return await result
+}

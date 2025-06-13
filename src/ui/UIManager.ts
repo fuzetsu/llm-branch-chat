@@ -2,7 +2,7 @@ import type { Chat, BranchInfo } from '../types/index.js'
 import type { AppState } from '../state/AppState.js'
 import type { ChatManager } from '../features/ChatManager.js'
 import type { MessageManager } from '../features/MessageManager.js'
-import { getElementById, querySelector, formatTime } from '../utils/index.js'
+import { getElementById, querySelector, formatTime, renderMarkdown } from '../utils/index.js'
 
 export class UIManager {
   constructor(
@@ -198,6 +198,11 @@ export class UIManager {
 
       const messageDiv = this.createMessageElement(message, hasBranches, branchInfo)
       chatArea.appendChild(messageDiv)
+
+      // Render markdown for message content after DOM is added (but not for streaming messages)
+      if (!message.isStreaming) {
+        this.renderMessageMarkdown(message.id)
+      }
     })
   }
 
@@ -272,16 +277,17 @@ export class UIManager {
     const showModelIndicator =
       message.role === 'assistant' && currentModel && currentModel !== currentChatModel
     const timestamp = formatTime(currentTimestamp)
+    const isAnyMessageStreaming = chat?.messages.some((m) => m.isStreaming) || false
 
     return `
-      <div class="message-content">${messageContent || (message.isStreaming ? '' : 'No response')}</div>
+      <div class="message-content" data-message-id="${message.id}">${messageContent || (message.isStreaming ? '' : 'No response')}</div>
       <div class="message-timestamp" title="${new Date(currentTimestamp).toLocaleString()}">${timestamp}</div>
       ${
         showModelIndicator || hasBranches
           ? `
         <div class="message-meta">
           ${
-            hasBranches && branchInfo
+            hasBranches && branchInfo && !isAnyMessageStreaming
               ? `
             <div class="branch-navigation">
               <button class="branch-nav-btn" data-action="switch-branch" data-message-id="${message.id}" data-branch-index="${branchInfo.current - 2}" ${!branchInfo.hasPrevious ? 'disabled' : ''}>◀</button>
@@ -300,7 +306,7 @@ export class UIManager {
           : ''
       }
       ${
-        !message.isStreaming
+        !message.isStreaming && !isAnyMessageStreaming
           ? `
         <div class="message-actions">
           <button class="message-action-btn" data-action="edit-message" data-message-id="${message.id}" title="Edit">✏️</button>
@@ -499,7 +505,11 @@ export class UIManager {
         if (textarea && messageId) {
           ;(window as any).app.handleMessageEdit(messageId, textarea.value)
         } else {
-          console.error('Save edit failed: textarea or messageId missing', { textarea, messageId, target })
+          console.error('Save edit failed: textarea or messageId missing', {
+            textarea,
+            messageId,
+            target,
+          })
         }
         break
       case 'cancel-edit':
@@ -510,5 +520,25 @@ export class UIManager {
         ;(window as any).app.handleSwitchToBranch(messageId, branchIndex)
         break
     }
+  }
+
+  public renderMessageMarkdown(messageId: string): void {
+    const messageContentElement = document.querySelector(
+      `[data-message-id="${messageId}"] .message-content`,
+    ) as HTMLElement
+    
+    if (!messageContentElement) return
+
+    const content = messageContentElement.textContent || messageContentElement.innerHTML || ''
+    if (!content.trim()) return
+
+    // Render markdown asynchronously
+    renderMarkdown(content).then((html) => {
+      messageContentElement.innerHTML = html
+    }).catch((error) => {
+      console.error('Error rendering markdown:', error)
+      // Fallback to plain text if markdown rendering fails
+      messageContentElement.textContent = content
+    })
   }
 }
