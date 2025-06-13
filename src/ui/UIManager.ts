@@ -311,11 +311,15 @@ export class UIManager {
 
   public scrollToBottom(chatArea?: HTMLElement): void {
     const area = chatArea || getElementById('chatArea')
-    const isNearBottom = area.scrollHeight - area.scrollTop - area.clientHeight <= 10
+    
+    // Use requestAnimationFrame to ensure DOM updates are processed first
+    requestAnimationFrame(() => {
+      const isNearBottom = area.scrollHeight - area.scrollTop - area.clientHeight <= 10
 
-    if (isNearBottom) {
-      area.scrollTop = area.scrollHeight
-    }
+      if (isNearBottom) {
+        area.scrollTop = area.scrollHeight
+      }
+    })
   }
 
   public updateHeader(): void {

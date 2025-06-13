@@ -25,6 +25,25 @@ export class MessageManager {
     }
   }
 
+  private shouldAutoScroll(): boolean {
+    // Check if user is near bottom before content changes
+    const chatArea = document.getElementById('chatArea')
+    if (!chatArea) return false
+    
+    const isNearBottom = chatArea.scrollHeight - chatArea.scrollTop - chatArea.clientHeight <= 10
+    return isNearBottom
+  }
+
+  private forceScrollToBottom(): void {
+    // Force scroll to bottom without checking position
+    const chatArea = document.getElementById('chatArea')
+    if (chatArea) {
+      requestAnimationFrame(() => {
+        chatArea.scrollTop = chatArea.scrollHeight
+      })
+    }
+  }
+
   private validateApiSettings(): void {
     if (!this.appState.settings.api.baseUrl) {
       throw new Error(
@@ -43,6 +62,9 @@ export class MessageManager {
   ) {
     return {
       onToken: (token: string) => {
+        // Check if we should auto-scroll before making changes
+        const shouldScroll = this.shouldAutoScroll()
+        
         message.content += token
 
         // Update branch content to keep in sync
@@ -66,8 +88,10 @@ export class MessageManager {
           messageElement.textContent = message.content
         }
 
-        // Auto-scroll if user is near bottom
-        this.triggerScrollUpdate()
+        // Auto-scroll if user was near bottom before the change
+        if (shouldScroll) {
+          this.forceScrollToBottom()
+        }
       },
       onComplete: () => {
         message.isStreaming = false
