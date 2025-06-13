@@ -74,6 +74,36 @@ Messages support branching for conversation alternatives with full metadata trac
 - Proper header/nav positioning in mobile views
 - Touch-friendly interface elements
 
+## CSS Architecture
+
+The application uses a modular CSS architecture to prevent conflicts and improve maintainability:
+
+### CSS Modules
+
+- **`css/variables.css`**: CSS custom properties and theme definitions
+- **`css/base.css`**: Reset styles and utility classes
+- **`css/layout.css`**: Main app layout (header, sidebar, main-content)
+- **`css/messages.css`**: Message display, editing, and branching features
+- **`css/components.css`**: Reusable UI components (buttons, chat lists, etc.)
+- **`css/forms.css`**: Input areas and form elements
+- **`css/modals.css`**: Modal dialog components
+- **`css/responsive.css`**: Mobile and responsive styles
+
+### CSS Variables
+
+Key layout constants are defined in `variables.css`:
+
+- `--header-height`: 60px (header content height)
+- `--header-total-height`: 61px (height + border, used for padding-top)
+
+### Layout System
+
+- Fixed header with `position: fixed` and `z-index: 100`
+- Sidebar and main content use `padding-top: var(--header-total-height)` to avoid header overlap
+- Mobile responsive design with collapsible sidebar overlay
+- Flexbox layout for reliable cross-browser compatibility
+- **Important**: Mobile styles avoid double-accounting for header height (use padding-top OR height calc, not both)
+
 ## Development Notes
 
 - TypeScript with strict configuration and exact optional property types
@@ -82,3 +112,4 @@ Messages support branching for conversation alternatives with full metadata trac
 - HTML uses inline event handlers that call global manager methods
 - Automatic data migration for schema changes
 - Comprehensive timestamp tracking for conversation history
+- Modular CSS prevents layout conflicts and improves maintainability

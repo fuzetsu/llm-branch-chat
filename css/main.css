@@ -1,0 +1,19 @@
+/* 
+ * Modular CSS Architecture for LLM Chat App
+ * Each module handles a specific aspect of the UI to prevent conflicts
+ */
+
+/* Core Modules */
+@import url('./variables.css'); /* CSS custom properties and themes */
+@import url('./base.css'); /* Reset styles and utilities */
+@import url('./layout.css'); /* Main app layout structure */
+
+/* Feature Modules */
+@import url('./messages.css'); /* Message display and editing */
+@import url('./components.css'); /* Reusable UI components */
+@import url('./forms.css'); /* Input areas and form elements */
+@import url('./modals.css'); /* Modal dialogs */
+
+/* Responsive Module */
+@import url('./responsive.css'); /* Mobile and responsive styles */
+

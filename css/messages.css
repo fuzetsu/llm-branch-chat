@@ -1,0 +1,259 @@
+/* Message Display and Editing */
+.message {
+  max-width: 80%;
+  padding: 12px 16px;
+  border-radius: var(--border-radius);
+  line-height: 1.5;
+  position: relative;
+  cursor: pointer;
+}
+
+.message-content {
+  white-space: pre-wrap;
+}
+
+.message-timestamp {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+  opacity: 0.7;
+  text-align: right;
+}
+
+.message:hover .message-actions {
+  opacity: 1;
+}
+
+.message-actions {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: var(--transition);
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  padding: 2px;
+}
+
+.message.user .message-actions {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.message-action-btn {
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  padding: 4px 6px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text-primary);
+  transition: var(--transition);
+}
+
+.message-action-btn:hover {
+  background: rgba(255, 255, 255, 1);
+}
+
+.message.user {
+  align-self: flex-end;
+  background: var(--accent-color);
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+
+.message.assistant {
+  align-self: flex-start;
+  background: var(--secondary-bg);
+  color: var(--text-primary);
+  border-bottom-left-radius: 4px;
+  border: 1px solid var(--border-color);
+}
+
+.message.streaming .message-content {
+  position: relative;
+}
+
+.message.streaming .message-content::after {
+  content: '▋';
+  animation: blink 1s infinite;
+  margin-left: 2px;
+}
+
+@keyframes blink {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  51%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Message Editing */
+.message.editing {
+  background: var(--tertiary-bg) !important;
+  border: 2px solid var(--accent-color);
+}
+
+.message-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.message-edit-textarea {
+  width: 100%;
+  min-width: 200px;
+  max-width: 100%;
+  min-height: 120px;
+  max-height: 400px;
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--primary-bg);
+  color: var(--text-primary);
+  font-family: var(--font-family);
+  font-size: 14px;
+  line-height: 1.5;
+  resize: both;
+  box-sizing: border-box;
+}
+
+.message-edit-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.message-edit-btn {
+  padding: 4px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: var(--transition);
+}
+
+.message-edit-btn.save {
+  background: var(--accent-color);
+  color: white;
+  border-color: var(--accent-color);
+}
+
+.message-edit-btn.save:disabled {
+  background: var(--border-color);
+  color: var(--text-secondary);
+  border-color: var(--border-color);
+  cursor: not-allowed;
+}
+
+.message-edit-btn.cancel {
+  background: var(--primary-bg);
+  color: var(--text-primary);
+}
+
+/* Model and Branch Features */
+.message-model-indicator {
+  font-size: 11px;
+  background: var(--accent-color);
+  color: white;
+  padding: 2px 6px;
+  border-radius: 12px;
+  opacity: 0.7;
+  transition: var(--transition);
+}
+
+.message-model-indicator:hover {
+  opacity: 1;
+}
+
+.message-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+}
+
+.message.system.model-change {
+  align-self: center;
+  background: var(--tertiary-bg);
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin: 8px 0;
+  padding: 8px 16px;
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
+}
+
+.model-change-notification {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+}
+
+.model-change-icon {
+  font-size: 14px;
+}
+
+.model-change-text {
+  font-style: italic;
+}
+
+/* Branch Navigation */
+.branch-navigation {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+  padding: 4px 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.branch-nav-btn {
+  background: none;
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  padding: 2px 6px;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text-secondary);
+  transition: var(--transition);
+}
+
+.branch-nav-btn:hover {
+  background: var(--hover-color);
+  color: var(--text-primary);
+}
+
+.branch-nav-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.branch-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  padding: 2px 6px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+}
+
+[data-theme='dark'] .branch-indicator {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.message.has-branches {
+  border-left: 3px solid var(--accent-color);
+  padding-left: 13px;
+  position: relative;
+}
+

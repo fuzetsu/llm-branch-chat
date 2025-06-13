@@ -250,9 +250,9 @@ export class UIManager {
     const messageContent = this.messageManager.getCurrentMessageContent(message)
     return `
       <div class="message-edit-form">
-        <textarea class="message-edit-textarea" rows="4">${messageContent || ''}</textarea>
+        <textarea class="message-edit-textarea" rows="4" data-original-content="${(messageContent || '').replace(/"/g, '&quot;')}">${messageContent || ''}</textarea>
         <div class="message-edit-actions">
-          <button class="message-edit-btn save" data-action="save-edit" data-message-id="${message.id}">Save</button>
+          <button class="message-edit-btn save" data-action="save-edit" data-message-id="${message.id}" disabled title="No changes made">Save</button>
           <button class="message-edit-btn cancel" data-action="cancel-edit" data-message-id="${message.id}">Cancel</button>
         </div>
       </div>
@@ -422,6 +422,13 @@ export class UIManager {
         // Store observer for cleanup
         ;(textareaElement as any)._resizeObserver = resizeObserver
 
+        // Add input listener to enable/disable save button
+        const inputHandler = () => {
+          this.updateSaveButtonState(textareaElement)
+        }
+        textareaElement.addEventListener('input', inputHandler)
+        ;(textareaElement as any)._inputHandler = inputHandler
+
         textareaElement.focus()
         textareaElement.setSelectionRange(
           textareaElement.value.length,
@@ -442,12 +449,29 @@ export class UIManager {
     }
   }
 
+  private updateSaveButtonState(textarea: HTMLTextAreaElement): void {
+    const originalContent = textarea.dataset.originalContent || ''
+    const currentContent = textarea.value
+    const saveButton = textarea
+      .closest('.message-edit-form')
+      ?.querySelector('.message-edit-btn.save') as HTMLButtonElement
+
+    if (saveButton) {
+      const hasChanges = currentContent !== originalContent
+      saveButton.disabled = !hasChanges
+      saveButton.title = hasChanges ? 'Save changes' : 'No changes made'
+    }
+  }
+
   public cleanupTextareaObserver(messageId: string): void {
     const textarea = document.querySelector(
       `[data-message-id="${messageId}"] .message-edit-textarea`,
     ) as any
     if (textarea?._resizeObserver) {
       textarea._resizeObserver.disconnect()
+    }
+    if (textarea?._inputHandler) {
+      textarea.removeEventListener('input', textarea._inputHandler)
     }
   }
 
@@ -472,8 +496,10 @@ export class UIManager {
         const textarea = target
           .closest('.message-edit-form')
           ?.querySelector('.message-edit-textarea') as HTMLTextAreaElement
-        if (textarea) {
+        if (textarea && messageId) {
           ;(window as any).app.handleMessageEdit(messageId, textarea.value)
+        } else {
+          console.error('Save edit failed: textarea or messageId missing', { textarea, messageId, target })
         }
         break
       case 'cancel-edit':
