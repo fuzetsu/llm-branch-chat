@@ -7,7 +7,11 @@ import ChatArea from './ChatArea'
 const Layout: Component = () => {
   const store = useAppStore()
 
-  console.log('hi!')
+  const handleBackdropClick = () => {
+    if (!store.state.ui.sidebarCollapsed) {
+      store.setUI({ sidebarCollapsed: true })
+    }
+  }
 
   return (
     <div class="flex h-screen flex-col">
@@ -15,6 +19,14 @@ const Layout: Component = () => {
 
       <div class="flex flex-1 overflow-hidden">
         <Sidebar />
+
+        {/* Mobile sidebar backdrop */}
+        <Show when={!store.state.ui.sidebarCollapsed}>
+          <div
+            class="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
+            onClick={handleBackdropClick}
+          />
+        </Show>
 
         {/* Main Content */}
         <main class="flex-1 lg:ml-80 pt-16 flex flex-col h-screen">
@@ -26,4 +38,3 @@ const Layout: Component = () => {
 }
 
 export default Layout
-

@@ -1,35 +1,35 @@
-import { Component, createSignal } from 'solid-js';
-import { useAppStore } from '../store/AppStore';
+import { Component, createSignal } from 'solid-js'
+import { useAppStore } from '../store/AppStore'
 
 const MessageInput: Component = () => {
-  const store = useAppStore();
-  const [inputValue, setInputValue] = createSignal('');
-  const [isDisabled, setIsDisabled] = createSignal(false);
+  const store = useAppStore()
+  const [inputValue, setInputValue] = createSignal('')
+  const [isDisabled, setIsDisabled] = createSignal(false)
 
   const handleSend = () => {
-    const message = inputValue().trim();
-    if (!message || isDisabled()) return;
+    const message = inputValue().trim()
+    if (!message || isDisabled()) return
 
     // TODO: Implement message sending logic
-    console.log('Sending message:', message);
-    setInputValue('');
-  };
+    console.log('Sending message:', message)
+    setInputValue('')
+  }
 
   const handleKeyPress = (e: KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
+      e.preventDefault()
+      handleSend()
     }
-  };
+  }
 
   const handleInput = (e: Event) => {
-    const target = e.target as HTMLTextAreaElement;
-    setInputValue(target.value);
-    
+    const target = e.target as HTMLTextAreaElement
+    setInputValue(target.value)
+
     // Auto-resize textarea
-    target.style.height = 'auto';
-    target.style.height = target.scrollHeight + 'px';
-  };
+    target.style.height = 'auto'
+    target.style.height = target.scrollHeight + 'px'
+  }
 
   return (
     <div class="flex space-x-3">
@@ -42,7 +42,7 @@ const MessageInput: Component = () => {
         onKeyPress={handleKeyPress}
         disabled={isDisabled()}
       />
-      <button 
+      <button
         class="px-6 py-3 bg-primary hover:bg-blue-600 dark:bg-primary-dark dark:hover:bg-primary-darker disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors"
         onClick={handleSend}
         disabled={isDisabled() || !inputValue().trim()}
@@ -50,7 +50,8 @@ const MessageInput: Component = () => {
         Send
       </button>
     </div>
-  );
-};
+  )
+}
 
-export default MessageInput;
+export default MessageInput
+

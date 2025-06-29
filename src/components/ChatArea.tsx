@@ -1,18 +1,18 @@
-import { Component, Show } from 'solid-js';
-import { useAppStore } from '../store/AppStore';
-import MessageList from './MessageList';
-import MessageInput from './MessageInput';
+import { Component, Show } from 'solid-js'
+import { useAppStore } from '../store/AppStore'
+import MessageList from './MessageList'
+import MessageInput from './MessageInput'
 
 const ChatArea: Component = () => {
-  const store = useAppStore();
-  
-  const currentChat = () => store.getCurrentChat();
+  const store = useAppStore()
+
+  const currentChat = () => store.getCurrentChat()
 
   return (
     <>
       <div class="flex-1 overflow-y-auto p-4">
-        <Show 
-          when={currentChat()} 
+        <Show
+          when={currentChat()}
           fallback={
             <div class="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
               <div class="text-center">
@@ -32,7 +32,8 @@ const ChatArea: Component = () => {
         </div>
       </div>
     </>
-  );
-};
+  )
+}
 
-export default ChatArea;
+export default ChatArea
+
