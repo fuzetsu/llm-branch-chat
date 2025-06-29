@@ -63,8 +63,8 @@ const Message: Component<MessageProps> = (props) => {
   }
 
   const handleRegenerate = () => {
-    // TODO: Implement regeneration with API
-    console.log('Regenerating message:', props.message.id)
+    if (!isAssistant() || props.isStreaming) return
+    store.regenerateMessage(props.chat.id, props.message.id)
   }
 
   const renderMessageActions = () => {

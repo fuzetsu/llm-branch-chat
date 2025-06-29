@@ -52,6 +52,7 @@ interface AppStoreContextType {
   stopStreaming: () => void
   // Message sending
   sendMessage: (content: string) => Promise<void>
+  regenerateMessage: (chatId: string, messageId: string) => Promise<void>
   generateChatTitle: (chatId: string) => Promise<void>
 }
 
@@ -67,7 +68,7 @@ function createDefaultSettings(): AppSettings {
       availableModels: ['llama', 'openai', 'openai-large', 'evil'],
     },
     chat: {
-      model: 'openai',
+      model: 'llama',
       temperature: 0.7,
       maxTokens: 2048,
       availableModels: ['llama', 'openai', 'openai-large', 'evil'],
@@ -541,6 +542,132 @@ export const AppStoreProvider: ParentComponent = (props) => {
     }
   }
 
+  // Regenerate message with API
+  const regenerateMessage = async (chatId: string, messageId: string) => {
+    const chat = state.chats.get(chatId)
+    if (!chat) return
+
+    const messageIndex = chat.messages.findIndex((m) => m.id === messageId)
+    if (messageIndex === -1) return
+
+    const message = chat.messages[messageIndex]
+    if (!message || message.role !== 'assistant') return
+
+    // Get all messages up to (but not including) the current message
+    const conversationHistory = chat.messages.slice(0, messageIndex)
+
+    try {
+      // Check if this message already has branches
+      const existingBranches = chat.messageBranches.get(messageId) || []
+
+      // If this is the first regeneration, create initial branch from current content
+      if (existingBranches.length === 0) {
+        const initialBranch: MessageBranch = {
+          content: message.content,
+          children: [],
+          timestamp: message.timestamp,
+          model: message.model || chat.model || state.settings.chat.model,
+        }
+        addMessageBranch(chatId, messageId, initialBranch)
+      }
+
+      // Create new branch for regenerated content
+      const newBranch: MessageBranch = {
+        content: '',
+        children: [],
+        timestamp: Date.now(),
+        model: message.model || chat.model || state.settings.chat.model,
+      }
+
+      // Add the new branch and switch to it
+      addMessageBranch(chatId, messageId, newBranch)
+
+      // Start streaming for regeneration
+      startStreaming(messageId)
+
+      // Initialize API service
+      const apiService = new SolidApiService(state.settings.api.baseUrl, state.settings.api.key)
+
+      // Convert conversation history to API format
+      const apiMessages: ApiMessage[] = conversationHistory.map((msg) => ({
+        role: msg.role,
+        content: msg.content,
+      }))
+
+      // Stream the regenerated response with entropy to prevent caching
+      await apiService.streamToSignals(
+        apiMessages,
+        newBranch.model || state.settings.chat.model,
+        {
+          onToken: (token: string) => {
+            appendStreamingContent(token)
+          },
+          onComplete: () => {
+            // Update the new branch with the complete content
+            const finalContent = state.streaming.currentContent
+            const currentChat = state.chats.get(chatId)
+            if (currentChat) {
+              const branches = currentChat.messageBranches.get(messageId)
+              if (branches && branches.length > 0) {
+                const lastBranchIndex = branches.length - 1
+                const updatedBranches = [...branches]
+                updatedBranches[lastBranchIndex] = {
+                  ...updatedBranches[lastBranchIndex],
+                  content: finalContent,
+                  timestamp: Date.now(),
+                  children: [],
+                }
+
+                // Update the chat with the new branch content
+                updateChat(chatId, {
+                  messageBranches: new Map(currentChat.messageBranches).set(
+                    messageId,
+                    updatedBranches,
+                  ),
+                  updatedAt: Date.now(),
+                })
+              }
+            }
+            stopStreaming()
+          },
+          onError: (error: Error) => {
+            console.error('Regeneration error:', error)
+            // Update the new branch with error message
+            const currentChat = state.chats.get(chatId)
+            if (currentChat) {
+              const branches = currentChat.messageBranches.get(messageId)
+              if (branches && branches.length > 0) {
+                const lastBranchIndex = branches.length - 1
+                const updatedBranches = [...branches]
+                updatedBranches[lastBranchIndex] = {
+                  ...updatedBranches[lastBranchIndex],
+                  content: `Error: ${error.message}`,
+                  timestamp: Date.now(),
+                  children: [],
+                }
+
+                updateChat(chatId, {
+                  messageBranches: new Map(currentChat.messageBranches).set(
+                    messageId,
+                    updatedBranches,
+                  ),
+                  updatedAt: Date.now(),
+                })
+              }
+            }
+            stopStreaming()
+          },
+        },
+        state.settings.chat.temperature,
+        state.settings.chat.maxTokens,
+        true, // Enable entropy to prevent API caching
+      )
+    } catch (error) {
+      console.error('Failed to regenerate message:', error)
+      stopStreaming()
+    }
+  }
+
   // Auto-generate chat title
   const generateChatTitle = async (chatId: string) => {
     const chat = state.chats.get(chatId)
@@ -589,6 +716,7 @@ export const AppStoreProvider: ParentComponent = (props) => {
     appendStreamingContent,
     stopStreaming,
     sendMessage,
+    regenerateMessage,
     generateChatTitle,
   }
 
