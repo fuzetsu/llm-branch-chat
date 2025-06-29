@@ -7,7 +7,6 @@ import type {
   SerializableAppState,
   SerializableChat,
   MessageNode,
-  ApiMessage,
 } from '../types/index.js'
 import { generateChatId } from '../utils/index.js'
 import {
@@ -19,6 +18,8 @@ import {
   getBranchInfo,
 } from '../utils/messageTree.js'
 import { SolidApiService } from '../services/ApiService'
+import { MessageService, MessageServiceCallbacks } from '../services/MessageService'
+import { TitleService, TitleServiceCallbacks } from '../services/TitleService'
 
 interface AppStateStore {
   chats: Map<string, Chat>
@@ -193,6 +194,12 @@ function saveStateToStorage(state: AppStateStore) {
 export const AppStoreProvider: ParentComponent = (props) => {
   const initialState = loadStateFromStorage()
   const [state, setState] = createStore<AppStateStore>(initialState)
+
+  // Initialize API service
+  const apiService = new SolidApiService(
+    initialState.settings.api.baseUrl,
+    initialState.settings.api.key,
+  )
 
   // Save to localStorage whenever state changes
   createEffect(() => {
@@ -420,193 +427,60 @@ export const AppStoreProvider: ParentComponent = (props) => {
     })
   }
 
-  // Message sending function with full API integration
+  // Initialize message service callbacks
+  const messageServiceCallbacks: MessageServiceCallbacks = {
+    onAddMessage: addMessage,
+    onUpdateMessage: updateMessage,
+    onStartStreaming: startStreaming,
+    onStopStreaming: stopStreaming,
+    onAppendStreamingContent: appendStreamingContent,
+    onGetStreamingContent: () => state.streaming.currentContent,
+    onGetVisibleMessages: getVisibleMessages,
+  }
+
+  // Initialize message service
+  const messageService = new MessageService(apiService, messageServiceCallbacks)
+
+  // Message sending function using MessageService
   const sendMessage = async (content: string) => {
     const currentChat = getCurrentChat()
     if (!currentChat) return
 
-    // Find the last message in the conversation to use as parent
-    const visibleMessages = getVisibleMessages(currentChat.id)
-    const lastMessage = visibleMessages[visibleMessages.length - 1]
-    const parentId = lastMessage?.id || null
+    await messageService.sendMessage(content, currentChat, state.settings)
 
-    // Add user message
-    const userMessage = createMessageNode('user', content.trim(), 'user', parentId)
-
-    addMessage(currentChat.id, userMessage, parentId || undefined)
-
-    // Create assistant message placeholder
-    const assistantMessage = createMessageNode(
-      'assistant',
-      '',
-      currentChat.model || state.settings.chat.model,
-      userMessage.id,
-    )
-
-    addMessage(currentChat.id, assistantMessage, userMessage.id)
-    startStreaming(assistantMessage.id)
-
-    try {
-      // Initialize API service
-      const apiService = new SolidApiService(state.settings.api.baseUrl, state.settings.api.key)
-
-      // Convert messages to API format
-      const visibleMessages = getVisibleMessages(currentChat.id)
-      const apiMessages: ApiMessage[] = visibleMessages.map((msg) => ({
-        role: msg.role,
-        content: msg.content,
-      }))
-
-      // Stream response
-      await apiService.streamToSignals(
-        apiMessages,
-        assistantMessage.model || state.settings.chat.model,
-        {
-          onToken: (token: string) => {
-            appendStreamingContent(token)
-          },
-          onComplete: () => {
-            // Save the current streaming content before stopping
-            const finalContent = state.streaming.currentContent
-            stopStreaming()
-
-            // Update final message with complete content
-            updateMessage(currentChat.id, assistantMessage.id, {
-              content: finalContent,
-              timestamp: Date.now(),
-            })
-
-            // Auto-generate title if this is the first exchange
-            const messageCount = getVisibleMessages(currentChat.id).length
-            if (
-              messageCount === state.settings.chat.titleGenerationTrigger &&
-              state.settings.chat.autoGenerateTitle
-            ) {
-              generateChatTitle(currentChat.id)
-            }
-          },
-          onError: (error: Error) => {
-            console.error('Streaming error:', error)
-            updateMessage(currentChat.id, assistantMessage.id, {
-              content: `Error: ${error.message}`,
-              timestamp: Date.now(),
-            })
-            stopStreaming()
-          },
-        },
-        state.settings.chat.temperature,
-        state.settings.chat.maxTokens,
-      )
-    } catch (error) {
-      console.error('Failed to send message:', error)
-      updateMessage(currentChat.id, assistantMessage.id, {
-        content: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        timestamp: Date.now(),
-      })
-      stopStreaming()
+    // Auto-generate title if this is the first exchange
+    const messageCount = getVisibleMessages(currentChat.id).length
+    if (
+      messageCount === state.settings.chat.titleGenerationTrigger &&
+      state.settings.chat.autoGenerateTitle
+    ) {
+      generateChatTitle(currentChat.id)
     }
   }
 
-  // Regenerate message with API
+  // Regenerate message using MessageService
   const regenerateMessage = async (chatId: string, messageId: string) => {
     const chat = state.chats.get(chatId)
-    if (!chat || !chat.messageTree) return
+    if (!chat) return
 
-    const message = findNodeById(chat.messageTree, messageId)
-    if (!message || message.role !== 'assistant') return
-
-    // Get conversation history up to this message
-    const visibleMessages = getVisibleMessages(chatId)
-    const messageIndex = visibleMessages.findIndex((m) => m.id === messageId)
-    if (messageIndex === -1) return
-
-    const conversationHistory = visibleMessages.slice(0, messageIndex)
-
-    try {
-      // Create new branch (sibling) for regenerated content
-      const newBranchMessage = createMessageNode(
-        'assistant',
-        '',
-        message.model || chat.model || state.settings.chat.model,
-        message.parentId,
-      )
-
-      // Add the new branch as a sibling
-      if (message.parentId) {
-        addMessage(chatId, newBranchMessage, message.parentId)
-      }
-
-      // Start streaming for regeneration
-      startStreaming(newBranchMessage.id)
-
-      // Initialize API service
-      const apiService = new SolidApiService(state.settings.api.baseUrl, state.settings.api.key)
-
-      // Convert conversation history to API format
-      const apiMessages: ApiMessage[] = conversationHistory.map((msg) => ({
-        role: msg.role,
-        content: msg.content,
-      }))
-
-      // Stream the regenerated response with entropy to prevent caching
-      await apiService.streamToSignals(
-        apiMessages,
-        newBranchMessage.model || state.settings.chat.model,
-        {
-          onToken: (token: string) => {
-            appendStreamingContent(token)
-          },
-          onComplete: () => {
-            // Update the new branch with the complete content
-            const finalContent = state.streaming.currentContent
-            updateMessage(chatId, newBranchMessage.id, {
-              content: finalContent,
-              timestamp: Date.now(),
-            })
-            stopStreaming()
-          },
-          onError: (error: Error) => {
-            console.error('Regeneration error:', error)
-            updateMessage(chatId, newBranchMessage.id, {
-              content: `Error: ${error.message}`,
-              timestamp: Date.now(),
-            })
-            stopStreaming()
-          },
-        },
-        state.settings.chat.temperature,
-        state.settings.chat.maxTokens,
-        true, // Enable entropy to prevent API caching
-      )
-    } catch (error) {
-      console.error('Failed to regenerate message:', error)
-      stopStreaming()
-    }
+    await messageService.regenerateMessage(chatId, messageId, chat, state.settings)
   }
 
-  // Auto-generate chat title
+  // Initialize title service callbacks
+  const titleServiceCallbacks: TitleServiceCallbacks = {
+    onUpdateChat: updateChat,
+    onGetVisibleMessages: getVisibleMessages,
+  }
+
+  // Initialize title service
+  const titleService = new TitleService(apiService, titleServiceCallbacks)
+
+  // Auto-generate chat title using TitleService
   const generateChatTitle = async (chatId: string) => {
     const chat = state.chats.get(chatId)
-    const visibleMessages = getVisibleMessages(chatId)
-    if (!chat || visibleMessages.length < 2 || chat.isGeneratingTitle) return
+    if (!chat) return
 
-    try {
-      updateChat(chatId, { isGeneratingTitle: true })
-
-      const apiService = new SolidApiService(state.settings.api.baseUrl, state.settings.api.key)
-
-      const title = await apiService.generateTitle(visibleMessages, state.settings.chat.titleModel)
-
-      if (title) {
-        updateChat(chatId, {
-          title,
-          isGeneratingTitle: false,
-        })
-      }
-    } catch (error) {
-      console.error('Title generation failed:', error)
-      updateChat(chatId, { isGeneratingTitle: false })
-    }
+    await titleService.generateChatTitle(chatId, chat, state.settings.chat.titleModel)
   }
 
   const storeValue: AppStoreContextType = {

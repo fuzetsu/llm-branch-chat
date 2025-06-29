@@ -145,4 +145,9 @@ src/
 ## Current Status
 
 - ✅ **Message regeneration moved from component to store** (improving separation of concerns)
-- 🔄 **Ready for service extraction phase** (AppStore now contains all business logic to be extracted)
+- ✅ **Phase 1 Complete: Service Extraction** 
+  - ✅ Created `MessageService.ts` with `sendMessage` and `regenerateMessage` methods
+  - ✅ Created `TitleService.ts` with `generateChatTitle` method
+  - ✅ Updated AppStore to use new services instead of inline implementations
+  - ✅ **AppStore reduced from 651 lines to ~500 lines** (150+ lines extracted to services)
+- 🔄 **Ready for Phase 2: Operation Module Extraction**
