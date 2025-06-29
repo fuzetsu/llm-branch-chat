@@ -5,7 +5,9 @@
   "scripts": {
     "build": "vite build",
     "dev": "vite",
-    "serve": "vite preview"
+    "serve": "vite preview",
+    "type-check": "tsc --noEmit",
+    "verify-build": "npm run type-check && npm run build"
   },
   "devDependencies": {
     "@types/node": "^24.0.7",

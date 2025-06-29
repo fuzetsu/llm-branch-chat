@@ -2,6 +2,7 @@ import { Component, createSignal, Show } from 'solid-js'
 import { Message as MessageType, Chat } from '../types/index.js'
 import { useAppStore } from '../store/AppStore'
 import MessageBranching from './MessageBranching'
+import Icon from './Icon'
 
 interface MessageProps {
   message: MessageType
@@ -75,7 +76,7 @@ const Message: Component<MessageProps> = (props) => {
           onClick={startEdit}
           title="Edit message"
         >
-          ✏️
+          <Icon name="edit" size="sm" />
         </button>
         <Show when={isAssistant()}>
           <button
@@ -83,7 +84,7 @@ const Message: Component<MessageProps> = (props) => {
             onClick={handleRegenerate}
             title="Regenerate response"
           >
-            🔄
+            <Icon name="regenerate" size="sm" />
           </button>
         </Show>
       </div>

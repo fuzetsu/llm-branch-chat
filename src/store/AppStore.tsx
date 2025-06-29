@@ -30,6 +30,7 @@ interface AppStoreContextType {
   setChats: (chats: Map<string, Chat>) => void
   setCurrentChatId: (id: string | null) => void
   setSettings: (settings: Partial<AppSettings>) => void
+  updateSettings: (settings: AppSettings) => void
   setUI: (ui: Partial<UISettings>) => void
   addChat: (chat: Chat) => void
   updateChat: (chatId: string, updates: Partial<Chat>) => void
@@ -56,30 +57,40 @@ interface AppStoreContextType {
 
 const AppStoreContext = createContext<AppStoreContextType>()
 
-const STORAGE_KEY = 'llm-chat-state'
+const STORAGE_KEY = 'llm-chat-state-2'
 
 function createDefaultSettings(): AppSettings {
   return {
-    autoGenerateTitle: true,
-    titleGenerationTrigger: 2,
-    titleModel: 'evil',
     api: {
       baseUrl: 'https://text.pollinations.ai',
-      apiKey: 'dummym',
-      availableModels: ['evil', 'openai', 'openai-large', 'llama'],
+      key: 'dummym',
+      availableModels: ['llama', 'openai', 'openai-large', 'evil'],
     },
     chat: {
       model: 'openai',
       temperature: 0.7,
       maxTokens: 2048,
+      availableModels: ['llama', 'openai', 'openai-large', 'evil'],
+      autoGenerateTitle: true,
+      titleGenerationTrigger: 2,
+      titleModel: 'llama',
     },
-    theme: 'dark',
+    ui: {
+      sidebarCollapsed: false,
+      theme: 'dark' as const,
+      isGenerating: false,
+      editTextareaSize: {
+        width: '100%',
+        height: '120px',
+      },
+    },
   }
 }
 
 function createDefaultUISettings(): UISettings {
   return {
     sidebarCollapsed: false,
+    theme: 'dark' as const,
     isGenerating: false,
     editTextareaSize: {
       width: '100%',
@@ -219,6 +230,10 @@ export const AppStoreProvider: ParentComponent = (props) => {
     setState('settings', (settings) => ({ ...settings, ...newSettings }))
   }
 
+  const updateSettings = (newSettings: AppSettings) => {
+    setState('settings', newSettings)
+  }
+
   const setUI = (newUI: Partial<UISettings>) => {
     setState('ui', (ui) => ({ ...ui, ...newUI }))
   }
@@ -309,7 +324,15 @@ export const AppStoreProvider: ParentComponent = (props) => {
         const messageIndex = chat.messages.findIndex((m) => m.id === messageId)
         if (messageIndex >= 0) {
           const updatedMessages = [...chat.messages]
-          updatedMessages[messageIndex] = { ...updatedMessages[messageIndex], ...updates }
+          const currentMessage = updatedMessages[messageIndex]
+          if (currentMessage) {
+            updatedMessages[messageIndex] = {
+              ...currentMessage,
+              ...updates,
+              // Ensure model is defined if provided in updates
+              model: updates.model !== undefined ? updates.model : currentMessage.model,
+            }
+          }
           newChats.set(chatId, {
             ...chat,
             messages: updatedMessages,
@@ -329,10 +352,10 @@ export const AppStoreProvider: ParentComponent = (props) => {
         const newBranches = new Map(chat.messageBranches)
         const existingBranches = newBranches.get(messageId) || []
         newBranches.set(messageId, [...existingBranches, branch])
-        
+
         const newCurrentBranches = new Map(chat.currentBranches)
         newCurrentBranches.set(messageId, existingBranches.length)
-        
+
         newChats.set(chatId, {
           ...chat,
           messageBranches: newBranches,
@@ -367,17 +390,17 @@ export const AppStoreProvider: ParentComponent = (props) => {
     return chat.messages.map((message) => {
       const branches = chat.messageBranches.get(message.id)
       const currentBranchIndex = chat.currentBranches.get(message.id) || 0
-      
+
       if (branches && branches[currentBranchIndex]) {
         const branch = branches[currentBranchIndex]
         return {
           ...message,
           content: branch.content,
           timestamp: branch.timestamp,
-          model: branch.model,
+          model: branch.model || message.model,
         }
       }
-      
+
       return message
     })
   }
@@ -418,8 +441,14 @@ export const AppStoreProvider: ParentComponent = (props) => {
       role: 'user',
       content: content.trim(),
       timestamp: Date.now(),
+      model: 'user',
+      isStreaming: false,
+      isEditing: false,
+      parentId: null,
+      children: [],
+      branchId: null,
     }
-    
+
     addMessage(currentChat.id, userMessage)
 
     // Create assistant message placeholder
@@ -429,6 +458,11 @@ export const AppStoreProvider: ParentComponent = (props) => {
       content: '',
       timestamp: Date.now(),
       model: currentChat.model || state.settings.chat.model,
+      isStreaming: false,
+      isEditing: false,
+      parentId: null,
+      children: [],
+      branchId: null,
     }
 
     addMessage(currentChat.id, assistantMessage)
@@ -436,13 +470,10 @@ export const AppStoreProvider: ParentComponent = (props) => {
 
     try {
       // Initialize API service
-      const apiService = new SolidApiService(
-        state.settings.api.baseUrl,
-        state.settings.api.apiKey
-      )
+      const apiService = new SolidApiService(state.settings.api.baseUrl, state.settings.api.key)
 
       // Convert messages to API format
-      const apiMessages: ApiMessage[] = [...currentChat.messages, userMessage].map(msg => ({
+      const apiMessages: ApiMessage[] = [...currentChat.messages, userMessage].map((msg) => ({
         role: msg.role,
         content: msg.content,
       }))
@@ -456,15 +487,18 @@ export const AppStoreProvider: ParentComponent = (props) => {
             appendStreamingContent(token)
           },
           onComplete: () => {
+            // Save the current streaming content before stopping
+            const finalContent = state.streaming.currentContent
+            stopStreaming()
+
             // Update final message with complete content
             updateMessage(currentChat.id, assistantMessage.id, {
-              content: state.streaming.currentContent,
+              content: finalContent,
               timestamp: Date.now(),
             })
-            stopStreaming()
-            
+
             // Auto-generate title if this is the first exchange
-            if (currentChat.messages.length === 0 && state.settings.autoGenerateTitle) {
+            if (currentChat.messages.length === 0 && state.settings.chat.autoGenerateTitle) {
               generateChatTitle(currentChat.id)
             }
           },
@@ -478,7 +512,7 @@ export const AppStoreProvider: ParentComponent = (props) => {
           },
         },
         state.settings.chat.temperature,
-        state.settings.chat.maxTokens
+        state.settings.chat.maxTokens,
       )
     } catch (error) {
       console.error('Failed to send message:', error)
@@ -497,21 +531,15 @@ export const AppStoreProvider: ParentComponent = (props) => {
 
     try {
       updateChat(chatId, { isGeneratingTitle: true })
-      
-      const apiService = new SolidApiService(
-        state.settings.api.baseUrl,
-        state.settings.api.apiKey
-      )
-      
-      const title = await apiService.generateTitle(
-        chat.messages,
-        state.settings.titleModel
-      )
-      
+
+      const apiService = new SolidApiService(state.settings.api.baseUrl, state.settings.api.key)
+
+      const title = await apiService.generateTitle(chat.messages, state.settings.chat.titleModel)
+
       if (title) {
-        updateChat(chatId, { 
+        updateChat(chatId, {
           title,
-          isGeneratingTitle: false 
+          isGeneratingTitle: false,
         })
       }
     } catch (error) {
@@ -525,6 +553,7 @@ export const AppStoreProvider: ParentComponent = (props) => {
     setChats,
     setCurrentChatId,
     setSettings,
+    updateSettings,
     setUI,
     addChat,
     updateChat,
@@ -556,4 +585,3 @@ export const useAppStore = () => {
   }
   return context
 }
-

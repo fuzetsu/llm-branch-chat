@@ -9,7 +9,7 @@ export interface Message {
   parentId: string | null
   children: string[]
   branchId: string | null
-  model?: string
+  model: string
 }
 
 export interface MessageBranch {
@@ -35,7 +35,7 @@ export interface Chat {
 // Settings types
 export interface ApiSettings {
   baseUrl: string
-  apiKey: string
+  key: string
   availableModels: string[]
 }
 
@@ -43,10 +43,15 @@ export interface ChatSettings {
   model: string
   temperature: number
   maxTokens: number
+  availableModels: string[]
+  autoGenerateTitle: boolean
+  titleGenerationTrigger: number
+  titleModel: string
 }
 
 export interface UISettings {
   sidebarCollapsed: boolean
+  theme: 'light' | 'dark' | 'auto'
   isGenerating: boolean
   editTextareaSize: {
     width: string
@@ -55,12 +60,9 @@ export interface UISettings {
 }
 
 export interface AppSettings {
-  autoGenerateTitle: boolean
-  titleGenerationTrigger: number
-  titleModel: string
   api: ApiSettings
   chat: ChatSettings
-  theme: 'light' | 'dark' | 'auto'
+  ui: UISettings
 }
 
 // State types

@@ -1,6 +1,8 @@
 import { Component, createSignal, Show } from 'solid-js'
 import { useAppStore } from '../store/AppStore'
 import type { Chat } from '../types/index.js'
+import Icon from './Icon'
+import ConfirmModal from './ConfirmModal'
 
 interface ChatItemProps {
   chat: Chat
@@ -13,6 +15,7 @@ const ChatItem: Component<ChatItemProps> = (props) => {
   const [showActions, setShowActions] = createSignal(false)
   const [isEditing, setIsEditing] = createSignal(false)
   const [editTitle, setEditTitle] = createSignal('')
+  const [showDeleteConfirm, setShowDeleteConfirm] = createSignal(false)
 
   const handleEdit = (e: Event) => {
     e.stopPropagation()
@@ -50,13 +53,16 @@ const ChatItem: Component<ChatItemProps> = (props) => {
 
   const handleDelete = (e: Event) => {
     e.stopPropagation()
-    if (confirm('Are you sure you want to delete this chat?')) {
-      store.deleteChat(props.chat.id)
-      if (props.isSelected) {
-        store.setCurrentChatId(null)
-      }
-    }
+    setShowDeleteConfirm(true)
     setShowActions(false)
+  }
+
+  const confirmDelete = () => {
+    store.deleteChat(props.chat.id)
+    if (props.isSelected) {
+      store.setCurrentChatId(null)
+    }
+    setShowDeleteConfirm(false)
   }
 
   const formatDate = (timestamp: number) => {
@@ -103,28 +109,14 @@ const ChatItem: Component<ChatItemProps> = (props) => {
                 class="p-1 text-green-600 hover:text-green-700 transition-colors"
                 title="Save"
               >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M5 13l4 4L19 7"
-                  ></path>
-                </svg>
+                <Icon name="plus" size="sm" />
               </button>
               <button
                 onClick={handleCancelEdit}
                 class="p-1 text-red-600 hover:text-red-700 transition-colors"
                 title="Cancel"
               >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M6 18L18 6M6 6l12 12"
-                  ></path>
-                </svg>
+                <Icon name="close" size="sm" />
               </button>
             </div>
           }
@@ -134,70 +126,43 @@ const ChatItem: Component<ChatItemProps> = (props) => {
               <div class="font-medium truncate">{props.chat.title}</div>
               <div class="text-sm opacity-70 mt-1">{formatDate(props.chat.updatedAt)}</div>
             </div>
-            <Show when={showActions() && !props.isSelected}>
+            <Show when={showActions()}>
               <div class="flex items-center space-x-1 ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button
                   onClick={handleEdit}
                   class="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                   title="Edit title"
                 >
-                  <svg
-                    class="w-4 h-4 text-gray-500 dark:text-gray-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                    ></path>
-                  </svg>
+                  <Icon name="edit" size="sm" class="text-gray-500 dark:text-gray-400" />
                 </button>
                 <button
                   onClick={handleArchive}
                   class="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                   title="Archive chat"
                 >
-                  <svg
-                    class="w-4 h-4 text-gray-500 dark:text-gray-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M5 8l4 4 4-4m0 0V4a1 1 0 011-1h4a1 1 0 011 1v4m-6 0a1 1 0 01-1 1H4a1 1 0 01-1-1V4a1 1 0 011-1h4a1 1 0 011 1v4z"
-                    ></path>
-                  </svg>
+                  <Icon name="archive" size="sm" class="text-gray-500 dark:text-gray-400" />
                 </button>
                 <button
                   onClick={handleDelete}
                   class="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900 transition-colors"
                   title="Delete chat"
                 >
-                  <svg
-                    class="w-4 h-4 text-red-500 dark:text-red-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                    ></path>
-                  </svg>
+                  <Icon name="delete" size="sm" class="text-red-500 dark:text-red-400" />
                 </button>
               </div>
             </Show>
           </div>
         </Show>
       </div>
+      <ConfirmModal
+        isOpen={showDeleteConfirm()}
+        title="Delete Chat"
+        message={`Are you sure you want to delete "${props.chat.title}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={confirmDelete}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />
     </div>
   )
 }
