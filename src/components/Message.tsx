@@ -15,7 +15,7 @@ const Message: Component<MessageProps> = (props) => {
   const [isEditing, setIsEditing] = createSignal(false)
   const [editContent, setEditContent] = createSignal('')
   const [isHovered, setIsHovered] = createSignal(false)
-  
+
   const isUser = () => props.message.role === 'user'
   const isAssistant = () => props.message.role === 'assistant'
 
@@ -43,9 +43,9 @@ const Message: Component<MessageProps> = (props) => {
   const saveEdit = () => {
     const newContent = editContent().trim()
     if (newContent && newContent !== props.message.content) {
-      store.updateMessage(props.chat.id, props.message.id, { 
+      store.updateMessage(props.chat.id, props.message.id, {
         content: newContent,
-        timestamp: Date.now() 
+        timestamp: Date.now(),
       })
     }
     setIsEditing(false)
@@ -103,33 +103,36 @@ const Message: Component<MessageProps> = (props) => {
         onMouseLeave={() => setIsHovered(false)}
       >
         {renderMessageActions()}
-        
-        <Show when={!isEditing()} fallback={
-          <div class="space-y-2">
-            <textarea
-              class="w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary"
-              value={editContent()}
-              onInput={(e) => setEditContent((e.target as HTMLTextAreaElement).value)}
-              onKeyDown={handleKeyDown}
-              rows={Math.max(2, editContent().split('\n').length)}
-              autofocus
-            />
-            <div class="flex justify-end space-x-2">
-              <button
-                class="px-2 py-1 text-xs bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-500 rounded transition-colors"
-                onClick={cancelEdit}
-              >
-                Cancel
-              </button>
-              <button
-                class="px-2 py-1 text-xs bg-primary hover:bg-blue-600 dark:bg-primary-dark dark:hover:bg-primary-darker text-white rounded transition-colors"
-                onClick={saveEdit}
-              >
-                Save
-              </button>
+
+        <Show
+          when={!isEditing()}
+          fallback={
+            <div class="space-y-2">
+              <textarea
+                class="w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary"
+                value={editContent()}
+                onInput={(e) => setEditContent((e.target as HTMLTextAreaElement).value)}
+                onKeyDown={handleKeyDown}
+                rows={Math.max(2, editContent().split('\n').length)}
+                autofocus
+              />
+              <div class="flex justify-end space-x-2">
+                <button
+                  class="px-2 py-1 text-xs bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-500 rounded transition-colors"
+                  onClick={cancelEdit}
+                >
+                  Cancel
+                </button>
+                <button
+                  class="px-2 py-1 text-xs bg-primary hover:bg-blue-600 dark:bg-primary-dark dark:hover:bg-primary-darker text-white rounded transition-colors"
+                  onClick={saveEdit}
+                >
+                  Save
+                </button>
+              </div>
             </div>
-          </div>
-        }>
+          }
+        >
           <div class="message-content whitespace-pre-wrap">
             {props.message.content}
             <Show when={props.isStreaming && !props.message.content}>
@@ -137,7 +140,7 @@ const Message: Component<MessageProps> = (props) => {
             </Show>
           </div>
         </Show>
-        
+
         <div
           class={`text-xs mt-2 ${isUser() ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'}`}
         >
@@ -147,7 +150,7 @@ const Message: Component<MessageProps> = (props) => {
             <span class="ml-2 animate-pulse">• generating...</span>
           </Show>
         </div>
-        
+
         <Show when={isAssistant() && !isEditing() && !props.isStreaming}>
           <MessageBranching messageId={props.message.id} chat={props.chat} />
         </Show>
@@ -157,4 +160,3 @@ const Message: Component<MessageProps> = (props) => {
 }
 
 export default Message
-

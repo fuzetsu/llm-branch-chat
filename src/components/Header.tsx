@@ -77,13 +77,9 @@ const Header: Component = () => {
           </button>
         </div>
       </div>
-      <SettingsModal 
-        isOpen={showSettings()} 
-        onClose={() => setShowSettings(false)} 
-      />
+      <SettingsModal isOpen={showSettings()} onClose={() => setShowSettings(false)} />
     </header>
   )
 }
 
 export default Header
-

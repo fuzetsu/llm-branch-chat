@@ -36,4 +36,3 @@ const ChatArea: Component = () => {
 }
 
 export default ChatArea
-

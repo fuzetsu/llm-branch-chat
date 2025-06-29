@@ -28,4 +28,3 @@ const ChatList: Component = () => {
 }
 
 export default ChatList
-

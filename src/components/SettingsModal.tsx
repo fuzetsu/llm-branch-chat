@@ -1,15 +1,15 @@
-import { Component, createEffect, createSignal, For, Show } from 'solid-js';
-import { useAppStore } from '../store/AppStore';
-import Icon from './Icon';
+import { Component, createEffect, createSignal, For, Show } from 'solid-js'
+import { useAppStore } from '../store/AppStore'
+import Icon from './Icon'
 
 interface SettingsModalProps {
-  isOpen: boolean;
-  onClose: () => void;
+  isOpen: boolean
+  onClose: () => void
 }
 
 const SettingsModal: Component<SettingsModalProps> = (props) => {
-  const store = useAppStore();
-  
+  const store = useAppStore()
+
   // Local form state
   const [formData, setFormData] = createSignal({
     apiBaseUrl: '',
@@ -21,21 +21,21 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
     autoGenerateTitle: true,
     titleGenerationTrigger: 2,
     titleModel: '',
-    theme: 'auto' as 'light' | 'dark' | 'auto'
-  });
+    theme: 'auto' as 'light' | 'dark' | 'auto',
+  })
 
   // Parse models from text area
   const availableModelsList = () => {
-    return formData().availableModels
-      .split('\n')
-      .map(model => model.trim())
-      .filter(model => model.length > 0);
-  };
+    return formData()
+      .availableModels.split('\n')
+      .map((model) => model.trim())
+      .filter((model) => model.length > 0)
+  }
 
   // Load current settings into form when modal opens
   createEffect(() => {
     if (props.isOpen) {
-      const settings = store.state.settings;
+      const settings = store.state.settings
       setFormData({
         apiBaseUrl: settings.api.baseUrl,
         apiKey: settings.api.key,
@@ -46,23 +46,23 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
         autoGenerateTitle: settings.chat.autoGenerateTitle,
         titleGenerationTrigger: settings.chat.titleGenerationTrigger,
         titleModel: settings.chat.titleModel,
-        theme: settings.ui.theme
-      });
+        theme: settings.ui.theme,
+      })
     }
-  });
+  })
 
   const handleInputChange = (field: string, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
+    setFormData((prev) => ({ ...prev, [field]: value }))
+  }
 
   const handleSave = () => {
-    const models = availableModelsList();
-    
+    const models = availableModelsList()
+
     store.updateSettings({
       api: {
         baseUrl: formData().apiBaseUrl,
         key: formData().apiKey,
-        availableModels: models
+        availableModels: models,
       },
       chat: {
         model: formData().defaultModel,
@@ -71,41 +71,39 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
         maxTokens: formData().maxTokens,
         autoGenerateTitle: formData().autoGenerateTitle,
         titleGenerationTrigger: formData().titleGenerationTrigger,
-        titleModel: formData().titleModel
+        titleModel: formData().titleModel,
       },
       ui: {
         theme: formData().theme,
         sidebarCollapsed: store.state.settings.ui.sidebarCollapsed,
         isGenerating: store.state.settings.ui.isGenerating,
-        editTextareaSize: store.state.settings.ui.editTextareaSize
-      }
-    });
-    
-    props.onClose();
-  };
+        editTextareaSize: store.state.settings.ui.editTextareaSize,
+      },
+    })
+
+    props.onClose()
+  }
 
   const handleCancel = () => {
-    props.onClose();
-  };
+    props.onClose()
+  }
 
   return (
     <Show when={props.isOpen}>
       <div class="fixed inset-0 z-50 flex items-center justify-center p-4 transition-opacity duration-300">
         {/* Backdrop */}
-        <div 
-          class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" 
+        <div
+          class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
           onClick={handleCancel}
         />
-        
+
         {/* Modal */}
         <div class="relative w-full max-w-md max-h-[90vh] overflow-hidden text-left align-middle transition-all transform bg-white dark:bg-dark-surface shadow-xl rounded-2xl border dark:border-dark-border flex flex-col">
           {/* Header */}
           <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-dark-border flex-shrink-0">
-            <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-white">
-              Settings
-            </h3>
-            <button 
-              class="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" 
+            <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-white">Settings</h3>
+            <button
+              class="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
               onClick={handleCancel}
             >
               <Icon name="close" class="text-gray-400" />
@@ -162,7 +160,7 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Default Model
                 </label>
-                <select 
+                <select
                   class="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-dark-surface text-gray-900 dark:text-white"
                   value={formData().defaultModel}
                   onChange={(e) => handleInputChange('defaultModel', e.currentTarget.value)}
@@ -177,7 +175,8 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
               {/* Temperature */}
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Temperature <span class="text-primary font-semibold">{formData().temperature}</span>
+                  Temperature{' '}
+                  <span class="text-primary font-semibold">{formData().temperature}</span>
                 </label>
                 <input
                   type="range"
@@ -186,7 +185,9 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
                   max="2"
                   step="0.1"
                   value={formData().temperature}
-                  onInput={(e) => handleInputChange('temperature', parseFloat(e.currentTarget.value))}
+                  onInput={(e) =>
+                    handleInputChange('temperature', parseFloat(e.currentTarget.value))
+                  }
                 />
               </div>
 
@@ -229,7 +230,9 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
                   min="1"
                   max="20"
                   value={formData().titleGenerationTrigger}
-                  onInput={(e) => handleInputChange('titleGenerationTrigger', parseInt(e.currentTarget.value))}
+                  onInput={(e) =>
+                    handleInputChange('titleGenerationTrigger', parseInt(e.currentTarget.value))
+                  }
                 />
                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   Generate title after this many total messages (user + assistant)
@@ -241,7 +244,7 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Title Generation Model
                 </label>
-                <select 
+                <select
                   class="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-dark-surface text-gray-900 dark:text-white"
                   value={formData().titleModel}
                   onChange={(e) => handleInputChange('titleModel', e.currentTarget.value)}
@@ -258,10 +261,12 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Theme
                 </label>
-                <select 
+                <select
                   class="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-dark-surface text-gray-900 dark:text-white"
                   value={formData().theme}
-                  onChange={(e) => handleInputChange('theme', e.currentTarget.value as 'light' | 'dark' | 'auto')}
+                  onChange={(e) =>
+                    handleInputChange('theme', e.currentTarget.value as 'light' | 'dark' | 'auto')
+                  }
                 >
                   <option value="light">Light</option>
                   <option value="dark">Dark</option>
@@ -273,13 +278,13 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
 
           {/* Footer */}
           <div class="flex justify-end space-x-3 p-6 border-t border-gray-200 dark:border-dark-border flex-shrink-0">
-            <button 
+            <button
               class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
               onClick={handleCancel}
             >
               Cancel
             </button>
-            <button 
+            <button
               class="px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-blue-600 dark:bg-primary-dark dark:hover:bg-primary-darker rounded-md transition-colors"
               onClick={handleSave}
             >
@@ -289,7 +294,7 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
         </div>
       </div>
     </Show>
-  );
-};
+  )
+}
 
-export default SettingsModal;
+export default SettingsModal

@@ -10,4 +10,3 @@ render(
   ),
   document.getElementById('root')!,
 )
-

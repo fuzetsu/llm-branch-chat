@@ -168,4 +168,3 @@ const ChatItem: Component<ChatItemProps> = (props) => {
 }
 
 export default ChatItem
-
