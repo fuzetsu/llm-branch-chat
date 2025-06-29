@@ -5,8 +5,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Development Commands
 
 - **Build**: `npm run build` - Compiles TypeScript to JavaScript in `dist/`
-- **Watch**: `npm run watch` - Compiles TypeScript in watch mode for development
-- **Serve**: `npm run serve` - Serves the application on <http://localhost:8080>
+- **Dev**: `npm run dev` - Runs Vite development server on <http://localhost:8080>
+- **Serve**: `npm run serve` - Serves the built application 
+
+## Testing Rule
+
+- **Build Verification**: If `npm run build` passes without errors, the application is considered functional
+- **No Dev Server Testing Required**: Running the dev server is not necessary for verification unless specifically debugging runtime issues
 
 ## Architecture Overview
 

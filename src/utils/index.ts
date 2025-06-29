@@ -13,6 +13,13 @@ export function generateChatId(): string {
 }
 
 /**
+ * Generates a unique message identifier
+ */
+export function generateMessageId(): string {
+  return generateId()
+}
+
+/**
  * Formats a timestamp into a human-readable relative time string
  */
 export function formatTime(timestamp: number): string {
