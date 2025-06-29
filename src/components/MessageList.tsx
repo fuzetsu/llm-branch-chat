@@ -21,7 +21,7 @@ const MessageList: Component<MessageListProps> = (props) => {
     const isStreaming = store.state.streaming.isStreaming
 
     if ((messages.length > 0 || isStreaming) && shouldAutoScroll()) {
-      messagesEndRef?.scrollIntoView({ behavior: 'smooth' })
+      messagesEndRef?.scrollIntoView()
     }
   })
 
