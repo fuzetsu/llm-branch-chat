@@ -105,7 +105,7 @@ const Icon: Component<IconProps> = (props) => {
             stroke-linecap="round"
             stroke-linejoin="round"
             stroke-width="2"
-            d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+            d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"
           />
         )
 

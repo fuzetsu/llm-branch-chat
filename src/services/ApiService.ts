@@ -115,7 +115,7 @@ export class ApiService {
     const data = line.slice(DATA_PREFIX.length).trim()
 
     if (data === '[DONE]') {
-      callbacks.onComplete()
+      // Don't call onComplete here - let the stream reader handle it
       return
     }
 

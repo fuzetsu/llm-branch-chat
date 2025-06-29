@@ -46,7 +46,7 @@ const MessageInput: Component = () => {
   }
 
   return (
-    <div class="border-t border-gray-200 dark:border-dark-border bg-white dark:bg-dark-surface p-4">
+    <div class="bg-white dark:bg-dark-surface">
       <Show
         when={!store.state.currentChatId}
         fallback={

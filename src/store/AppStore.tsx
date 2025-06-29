@@ -218,6 +218,18 @@ export const AppStoreProvider: ParentComponent = (props) => {
     saveStateToStorage(state)
   })
 
+  // Apply theme changes to document
+  createEffect(() => {
+    const theme = state.settings.ui.theme
+    const isDark = theme === 'dark' || (theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+    
+    if (isDark) {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
+  })
+
   const setChats = (chats: Map<string, Chat>) => {
     setState('chats', chats)
   }
@@ -498,7 +510,7 @@ export const AppStoreProvider: ParentComponent = (props) => {
             })
 
             // Auto-generate title if this is the first exchange
-            if (currentChat.messages.length === 0 && state.settings.chat.autoGenerateTitle) {
+            if (currentChat.messages.length === state.settings.chat.titleGenerationTrigger && state.settings.chat.autoGenerateTitle) {
               generateChatTitle(currentChat.id)
             }
           },
