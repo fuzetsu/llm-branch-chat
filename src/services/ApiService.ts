@@ -86,10 +86,32 @@ export class ApiService {
 
     const decoder = new TextDecoder()
     let buffer = ''
+    let lastTokenTime = Date.now()
+    let hasReceivedTokens = false
+    const TIMEOUT_MS = 1200 // 1.2 seconds after last token
 
     try {
       while (true) {
-        const { done, value } = await reader.read()
+        // Create a timeout promise that rejects after TIMEOUT_MS
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          setTimeout(() => {
+            if (hasReceivedTokens && Date.now() - lastTokenTime > TIMEOUT_MS) {
+              reject(new Error('STREAM_TIMEOUT'))
+            }
+          }, TIMEOUT_MS)
+        })
+
+        // Race between reading and timeout
+        const result = await Promise.race([reader.read(), timeoutPromise]).catch((error) => {
+          if (error.message === 'STREAM_TIMEOUT') {
+            // Treat timeout as completion
+            return { done: true, value: undefined }
+          }
+          throw error
+        })
+
+        const { done, value } = result
+
         if (done) break
 
         buffer += decoder.decode(value, { stream: true })
@@ -97,7 +119,11 @@ export class ApiService {
         buffer = lines.pop() || ''
 
         for (const line of lines) {
-          this.processStreamLine(line, callbacks)
+          const hadToken = this.processStreamLine(line, callbacks)
+          if (hadToken) {
+            lastTokenTime = Date.now()
+            hasReceivedTokens = true
+          }
         }
       }
 
@@ -107,16 +133,16 @@ export class ApiService {
     }
   }
 
-  private processStreamLine(line: string, callbacks: StreamCallbacks): void {
+  private processStreamLine(line: string, callbacks: StreamCallbacks): boolean {
     const DATA_PREFIX = 'data: '
 
-    if (!line.startsWith(DATA_PREFIX)) return
+    if (!line.startsWith(DATA_PREFIX)) return false
 
     const data = line.slice(DATA_PREFIX.length).trim()
 
     if (data === '[DONE]') {
       // Don't call onComplete here - let the stream reader handle it
-      return
+      return false
     }
 
     try {
@@ -125,10 +151,13 @@ export class ApiService {
 
       if (content) {
         callbacks.onToken(content)
+        return true
       }
     } catch (error) {
       // Ignore parse errors for malformed chunks
     }
+
+    return false
   }
 
   public async generateTitle(messages: Message[], titleModel: string): Promise<string | null> {
