@@ -10,7 +10,13 @@ export class SettingsManager {
 
     // Populate form with current settings
     this.populateSettingsForm()
-    modal.classList.add('active')
+    modal.classList.remove('hidden')
+    
+    // Trigger transition
+    setTimeout(() => {
+      modal.classList.remove('opacity-0')
+      modal.classList.add('opacity-100')
+    }, 10)
   }
 
   private populateSettingsForm(): void {
@@ -35,7 +41,14 @@ export class SettingsManager {
   }
 
   public hideSettingsModal(): void {
-    getElementById('settingsModal').classList.remove('active')
+    const modal = getElementById('settingsModal')
+    modal.classList.remove('opacity-100')
+    modal.classList.add('opacity-0')
+    
+    // Hide after transition
+    setTimeout(() => {
+      modal.classList.add('hidden')
+    }, 300)
   }
 
   private updateModelDropdowns(): void {
@@ -130,7 +143,14 @@ export class SettingsManager {
   public showConfirmModal(options: ConfirmModalOptions): void {
     getElementById('confirmTitle').textContent = options.title
     getElementById('confirmMessage').textContent = options.message
-    getElementById('confirmModal').classList.add('active')
+    const modal = getElementById('confirmModal')
+    modal.classList.remove('hidden')
+    
+    // Trigger transition
+    setTimeout(() => {
+      modal.classList.remove('opacity-0')
+      modal.classList.add('opacity-100')
+    }, 10)
 
     const confirmBtn = getElementById('confirmAction')
     const newConfirmBtn = confirmBtn.cloneNode(true) as HTMLButtonElement
@@ -143,7 +163,14 @@ export class SettingsManager {
   }
 
   public hideConfirmModal(): void {
-    getElementById('confirmModal').classList.remove('active')
+    const modal = getElementById('confirmModal')
+    modal.classList.remove('opacity-100')
+    modal.classList.add('opacity-0')
+    
+    // Hide after transition
+    setTimeout(() => {
+      modal.classList.add('hidden')
+    }, 300)
   }
 
   public applyTheme(): void {
@@ -152,17 +179,17 @@ export class SettingsManager {
 
     switch (theme) {
       case 'dark':
-        root.setAttribute('data-theme', 'dark')
+        root.classList.add('dark')
         break
       case 'light':
-        root.removeAttribute('data-theme')
+        root.classList.remove('dark')
         break
       case 'auto':
         const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
         if (prefersDark) {
-          root.setAttribute('data-theme', 'dark')
+          root.classList.add('dark')
         } else {
-          root.removeAttribute('data-theme')
+          root.classList.remove('dark')
         }
         break
     }

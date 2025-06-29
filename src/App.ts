@@ -107,6 +107,10 @@ export class App {
   private handleNewChat(): void {
     this.chatManager.createNewChat()
     this.uiManager.updateAll()
+    // Scroll to bottom for new empty chat
+    setTimeout(() => {
+      this.uiManager.scrollToBottom()
+    }, 50)
   }
 
   private handleTitleInputKeydown(e: KeyboardEvent): void {
@@ -121,7 +125,7 @@ export class App {
 
   private toggleSidebar(): void {
     const sidebar = getElementById('sidebar')
-    sidebar.classList.toggle('open')
+    sidebar.classList.toggle('-translate-x-full')
   }
 
   private handleMessageInputKeydown(e: KeyboardEvent): void {
@@ -211,12 +215,12 @@ export class App {
     const toggle = getElementById('sidebarToggle')
 
     if (
-      window.innerWidth <= 768 &&
-      sidebar.classList.contains('open') &&
+      window.innerWidth <= 1024 &&
+      !sidebar.classList.contains('-translate-x-full') &&
       !sidebar.contains(target) &&
       !toggle.contains(target)
     ) {
-      sidebar.classList.remove('open')
+      sidebar.classList.add('-translate-x-full')
     }
   }
 
@@ -282,6 +286,10 @@ export class App {
   public handleSwitchToChat(chatId: string): void {
     this.chatManager.switchToChat(chatId)
     this.uiManager.updateAll()
+    // Scroll to bottom to show latest message
+    setTimeout(() => {
+      this.uiManager.scrollToBottom()
+    }, 50)
   }
 
   public onSettingsUpdated(): void {

@@ -2,7 +2,7 @@ import type { Chat, BranchInfo } from '../types/index.js'
 import type { AppState } from '../state/AppState.js'
 import type { ChatManager } from '../features/ChatManager.js'
 import type { MessageManager } from '../features/MessageManager.js'
-import { getElementById, querySelector, formatTime, renderMarkdown } from '../utils/index.js'
+import { getElementById, formatTime, renderMarkdown } from '../utils/index.js'
 
 export class UIManager {
   constructor(
@@ -40,14 +40,14 @@ export class UIManager {
 
   private createActiveChatSection(activeChats: Chat[]): HTMLElement {
     const activeSection = document.createElement('div')
-    activeSection.className = 'chat-section active-section'
+    activeSection.className = 'mb-6'
     activeSection.innerHTML = `
-      <div class="chat-section-header">
-        <div class="section-title">
-          <span>Recent Chats</span>
-        </div>
+      <div class="mb-3">
+        <h3 class="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wide">
+          Recent Chats
+        </h3>
       </div>
-      <div class="chat-section-content" id="activeChats"></div>
+      <div class="space-y-2" id="activeChats"></div>
     `
 
     const activeChatContainer = activeSection.querySelector('#activeChats')!
@@ -64,16 +64,20 @@ export class UIManager {
     const isCollapsed = savedState !== 'false'
 
     const archiveSection = document.createElement('div')
-    archiveSection.className = `chat-section archive-section ${isCollapsed ? 'collapsed' : ''}`
+    archiveSection.className = 'mb-6'
     archiveSection.innerHTML = `
-      <div class="chat-section-header" data-action="toggle-archive">
-        <div class="section-title">
-          <span>Archived Chats</span>
-          <span class="chat-section-count">${archivedChats.length}</span>
-        </div>
-        <span class="chat-section-toggle">${isCollapsed ? '▶' : '▼'}</span>
+      <div class="mb-3">
+        <button class="flex items-center justify-between w-full text-left" data-action="toggle-archive">
+          <div class="flex items-center space-x-2">
+            <h3 class="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wide">Archived Chats</h3>
+            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">${archivedChats.length}</span>
+          </div>
+          <svg class="w-4 h-4 text-gray-500 transition-transform ${isCollapsed ? '' : 'rotate-180'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+          </svg>
+        </button>
       </div>
-      <div class="chat-section-content" id="archivedChats"></div>
+      <div class="space-y-2 ${isCollapsed ? 'hidden' : ''}" id="archivedChats"></div>
     `
 
     const archivedChatContainer = archiveSection.querySelector('#archivedChats')!
@@ -83,32 +87,50 @@ export class UIManager {
     })
 
     // Add event listener for archive section toggle
-    const header = archiveSection.querySelector('.chat-section-header')!
-    header.addEventListener('click', () => this.toggleArchiveSection())
+    const toggleButton = archiveSection.querySelector('[data-action="toggle-archive"]')!
+    toggleButton.addEventListener('click', () => this.toggleArchiveSection())
 
     return archiveSection
   }
 
   private createChatItem(chat: Chat, isArchived: boolean): HTMLElement {
     const chatItem = document.createElement('div')
-    chatItem.className = `chat-item ${chat.id === this.appState.currentChatId ? 'active' : ''} ${isArchived ? 'archived' : ''}`
+    const isActive = chat.id === this.appState.currentChatId
+    chatItem.className = `group flex items-center justify-between p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors ${
+      isActive ? 'bg-accent/10 dark:bg-accent/20 border border-accent/30' : ''
+    }`
     chatItem.innerHTML = `
-      <div class="chat-item-title">${chat.title}</div>
-      <div class="chat-item-actions">
+      <div class="flex-1 min-w-0">
+        <p class="text-sm font-medium text-gray-900 dark:text-white truncate ${isActive ? 'text-accent' : ''}">${chat.title}</p>
+      </div>
+      <div class="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
         ${
           isArchived
-            ? `<button class="chat-action-btn" data-action="restore" data-chat-id="${chat.id}" title="Restore">📤</button>`
-            : `<button class="chat-action-btn" data-action="archive" data-chat-id="${chat.id}" title="Archive">📁</button>`
+            ? `<button class="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600" data-action="restore" data-chat-id="${chat.id}" title="Restore">
+                 <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16l-4-4m0 0l4-4m-4 4h18"></path>
+                 </svg>
+               </button>`
+            : `<button class="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600" data-action="archive" data-chat-id="${chat.id}" title="Archive">
+                 <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8l6 6 6-6"></path>
+                 </svg>
+               </button>`
         }
-        <button class="chat-action-btn" data-action="delete" data-chat-id="${chat.id}" title="Delete">🗑️</button>
+        <button class="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 text-red-500 hover:text-red-600" data-action="delete" data-chat-id="${chat.id}" title="Delete">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+          </svg>
+        </button>
       </div>
     `
 
     chatItem.addEventListener('click', (e) => {
       const target = e.target as HTMLElement
-      if (target.classList.contains('chat-action-btn')) {
-        const action = target.dataset.action
-        const chatId = target.dataset.chatId
+      if (target.closest('button[data-action]')) {
+        const actionButton = target.closest('button[data-action]') as HTMLElement
+        const action = actionButton.dataset.action
+        const chatId = actionButton.dataset.chatId
         if (!chatId) return
 
         switch (action) {
@@ -131,17 +153,22 @@ export class UIManager {
   }
 
   public toggleArchiveSection(): void {
-    const archiveSection = querySelector('.archive-section')
-    if (archiveSection) {
-      archiveSection.classList.toggle('collapsed')
+    const archivedChats = document.querySelector('#archivedChats')
+    const toggleIcon = document.querySelector('[data-action="toggle-archive"] svg')
 
-      // Update toggle arrow direction
-      const toggle = archiveSection.querySelector('.chat-section-toggle')!
-      const isCollapsed = archiveSection.classList.contains('collapsed')
-      toggle.textContent = isCollapsed ? '▶' : '▼'
+    if (archivedChats && toggleIcon) {
+      const isCollapsed = archivedChats.classList.contains('hidden')
+
+      if (isCollapsed) {
+        archivedChats.classList.remove('hidden')
+        toggleIcon.classList.add('rotate-180')
+      } else {
+        archivedChats.classList.add('hidden')
+        toggleIcon.classList.remove('rotate-180')
+      }
 
       // Save state to localStorage
-      localStorage.setItem('archiveSectionCollapsed', isCollapsed.toString())
+      localStorage.setItem('archiveSectionCollapsed', (!isCollapsed).toString())
     }
   }
 
@@ -161,10 +188,30 @@ export class UIManager {
 
   private showEmptyState(chatArea: HTMLElement): void {
     const emptyState = document.createElement('div')
-    emptyState.className = 'empty-state'
+    emptyState.className = 'flex flex-col items-center justify-center h-full text-center'
     emptyState.innerHTML = `
-      <h2>Welcome to LLM Chat</h2>
-      <p>Start a conversation by typing a message below.</p>
+      <div class="max-w-md mx-auto">
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Welcome to LLM Chat</h2>
+        <p class="text-gray-600 dark:text-gray-400 mb-8">Start a conversation by typing a message below.</p>
+        <div class="grid grid-cols-1 gap-3 text-sm">
+          <div class="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+            <div class="flex-shrink-0">
+              <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+              </svg>
+            </div>
+            <span class="text-gray-700 dark:text-gray-300">Ask questions and get intelligent responses</span>
+          </div>
+          <div class="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+            <div class="flex-shrink-0">
+              <svg class="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 011-1h1a2 2 0 100-4H7a1 1 0 01-1-1V7a1 1 0 011-1h3a1 1 0 001-1V4z"></path>
+              </svg>
+            </div>
+            <span class="text-gray-700 dark:text-gray-300">Multiple conversations with branching support</span>
+          </div>
+        </div>
+      </div>
     `
     chatArea.appendChild(emptyState)
   }
@@ -220,11 +267,13 @@ export class UIManager {
 
   private createModelChangeNotification(fromModel: string, toModel: string): HTMLElement {
     const modelChangeDiv = document.createElement('div')
-    modelChangeDiv.className = 'message system model-change'
+    modelChangeDiv.className = 'flex justify-center my-4'
     modelChangeDiv.innerHTML = `
-      <div class="model-change-notification">
-        <span class="model-change-icon">🔄</span>
-        <span class="model-change-text">Switched from ${fromModel} to ${toModel}</span>
+      <div class="inline-flex items-center space-x-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-full text-sm">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+        </svg>
+        <span>Switched from ${fromModel} to ${toModel}</span>
       </div>
     `
     return modelChangeDiv
@@ -236,7 +285,8 @@ export class UIManager {
     branchInfo: BranchInfo | null,
   ): HTMLElement {
     const messageDiv = document.createElement('div')
-    messageDiv.className = `message ${message.role} ${message.isStreaming ? 'streaming' : ''} ${message.isEditing ? 'editing' : ''} ${hasBranches ? 'has-branches' : ''}`
+    const isUser = message.role === 'user'
+    messageDiv.className = `flex ${isUser ? 'justify-end' : 'justify-start'} mb-6`
     messageDiv.dataset.messageId = message.id
 
     if (message.isEditing) {
@@ -253,12 +303,15 @@ export class UIManager {
 
   private createEditingMessageContent(message: any): string {
     const messageContent = this.messageManager.getCurrentMessageContent(message)
+    const isUser = message.role === 'user'
     return `
-      <div class="message-edit-form">
-        <textarea class="message-edit-textarea" rows="4" data-original-content="${(messageContent || '').replace(/"/g, '&quot;')}">${messageContent || ''}</textarea>
-        <div class="message-edit-actions">
-          <button class="message-edit-btn save" data-action="save-edit" data-message-id="${message.id}" disabled title="No changes made">Save</button>
-          <button class="message-edit-btn cancel" data-action="cancel-edit" data-message-id="${message.id}">Cancel</button>
+      <div class="max-w-3xl ${isUser ? 'ml-auto' : 'mr-auto'} w-full">
+        <div class="${isUser ? 'bg-primary dark:bg-user-dark text-white' : 'bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border text-gray-900 dark:text-gray-100'} rounded-lg p-4">
+          <textarea class="w-full min-h-[100px] p-3 border border-gray-300 dark:border-dark-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-dark focus:border-transparent bg-white dark:bg-dark-surface text-gray-900 dark:text-white resize-none" rows="4" data-original-content="${(messageContent || '').replace(/"/g, '&quot;')}">${messageContent || ''}</textarea>
+          <div class="flex justify-end space-x-2 mt-3">
+            <button class="px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors" data-action="cancel-edit" data-message-id="${message.id}">Cancel</button>
+            <button class="px-4 py-2 text-sm bg-primary hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-md transition-colors" data-action="save-edit" data-message-id="${message.id}" disabled title="No changes made">Save</button>
+          </div>
         </div>
       </div>
     `
@@ -278,43 +331,61 @@ export class UIManager {
       message.role === 'assistant' && currentModel && currentModel !== currentChatModel
     const timestamp = formatTime(currentTimestamp)
     const isAnyMessageStreaming = chat?.messages.some((m) => m.isStreaming) || false
+    const isUser = message.role === 'user'
 
     return `
-      <div class="message-content" data-message-id="${message.id}">${messageContent || (message.isStreaming ? '' : 'No response')}</div>
-      <div class="message-timestamp" title="${new Date(currentTimestamp).toLocaleString()}">${timestamp}</div>
-      ${
-        showModelIndicator || hasBranches
-          ? `
-        <div class="message-meta">
-          ${
-            hasBranches && branchInfo && !isAnyMessageStreaming
-              ? `
-            <div class="branch-navigation">
-              <button class="branch-nav-btn" data-action="switch-branch" data-message-id="${message.id}" data-branch-index="${branchInfo.current - 2}" ${!branchInfo.hasPrevious ? 'disabled' : ''}>◀</button>
-              <span class="branch-indicator">
-                <span>🌿</span>
-                <span>${branchInfo.current}/${branchInfo.total}</span>
-              </span>
-              <button class="branch-nav-btn" data-action="switch-branch" data-message-id="${message.id}" data-branch-index="${branchInfo.current}" ${!branchInfo.hasNext ? 'disabled' : ''}>▶</button>
+      <div class="max-w-3xl ${isUser ? 'ml-auto' : 'mr-auto'} w-full group">
+        <div class="${isUser ? 'bg-primary dark:bg-user-dark text-white' : 'bg-white dark:bg-assistant-dark border border-gray-200 dark:border-dark-border text-gray-900 dark:text-gray-100'} rounded-lg p-4 shadow-sm">
+          <div class="prose prose-sm max-w-none ${isUser ? 'prose-invert' : 'dark:prose-invert'} message-content" data-message-id="${message.id}">${messageContent || (message.isStreaming ? '<div class="animate-pulse">Thinking...</div>' : 'No response')}</div>
+          
+          <div class="flex items-center justify-between mt-3 pt-2 border-t ${isUser ? 'border-gray-300 dark:border-gray-500' : 'border-gray-200 dark:border-dark-border'} min-h-[32px]">
+            <div class="flex items-center space-x-3">
+              <span class="text-xs ${isUser ? 'text-gray-200' : 'text-gray-500 dark:text-gray-400'}" title="${new Date(currentTimestamp).toLocaleString()}">${timestamp}</span>
+              ${showModelIndicator ? `<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200" title="Generated by ${currentModel}">${currentModel}</span>` : ''}
+              ${
+                hasBranches && branchInfo && !isAnyMessageStreaming
+                  ? `
+                <div class="flex items-center space-x-1">
+                  <button class="p-1 rounded ${isUser ? 'hover:bg-white/20' : 'hover:bg-gray-200 dark:hover:bg-gray-600'} disabled:opacity-50 disabled:cursor-not-allowed" data-action="switch-branch" data-message-id="${message.id}" data-branch-index="${branchInfo.current - 2}" ${!branchInfo.hasPrevious ? 'disabled' : ''}>
+                    <svg class="w-4 h-4 ${isUser ? 'text-gray-200' : 'text-gray-500'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                  </button>
+                  <span class="flex items-center space-x-1 text-xs ${isUser ? 'text-gray-200' : 'text-gray-500 dark:text-gray-400'}">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21l3-3-3-3M14 21l3-3-3-3M4 3h16M4 9h16M4 15h16"></path>
+                    </svg>
+                    <span>${branchInfo.current}/${branchInfo.total}</span>
+                  </span>
+                  <button class="p-1 rounded ${isUser ? 'hover:bg-white/20' : 'hover:bg-gray-200 dark:hover:bg-gray-600'} disabled:opacity-50 disabled:cursor-not-allowed" data-action="switch-branch" data-message-id="${message.id}" data-branch-index="${branchInfo.current}" ${!branchInfo.hasNext ? 'disabled' : ''}>
+                    <svg class="w-4 h-4 ${isUser ? 'text-gray-200' : 'text-gray-500'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                  </button>
+                </div>
+              `
+                  : ''
+              }
             </div>
-          `
-              : '<div></div>'
-          }
-          ${showModelIndicator ? `<div class="message-model-indicator" title="Generated by ${currentModel}">${currentModel}</div>` : ''}
+            <div class="flex items-center space-x-1 ${!message.isStreaming && !isAnyMessageStreaming ? 'opacity-0 group-hover:opacity-100' : 'opacity-0'} transition-opacity">
+              <button class="p-1 rounded ${isUser ? 'hover:bg-white/20' : 'hover:bg-gray-200 dark:hover:bg-gray-600'}" data-action="edit-message" data-message-id="${message.id}" title="Edit" ${message.isStreaming || isAnyMessageStreaming ? 'disabled style="pointer-events: none"' : ''}>
+                <svg class="w-4 h-4 ${isUser ? 'text-gray-200' : 'text-gray-500'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                </svg>
+              </button>
+              ${
+                message.role === 'assistant'
+                  ? `<button class="p-1 rounded ${isUser ? 'hover:bg-white/20' : 'hover:bg-gray-200 dark:hover:bg-gray-600'}" data-action="regenerate-message" data-message-id="${message.id}" title="Regenerate" ${message.isStreaming || isAnyMessageStreaming ? 'disabled style="pointer-events: none"' : ''}>
+                <svg class="w-4 h-4 ${isUser ? 'text-gray-200' : 'text-gray-500'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                </svg>
+              </button>`
+                  : ''
+              }
+            </div>
+          </div>
         </div>
-      `
-          : ''
-      }
-      ${
-        !message.isStreaming && !isAnyMessageStreaming
-          ? `
-        <div class="message-actions">
-          <button class="message-action-btn" data-action="edit-message" data-message-id="${message.id}" title="Edit">✏️</button>
-          ${message.role === 'assistant' ? `<button class="message-action-btn" data-action="regenerate-message" data-message-id="${message.id}" title="Regenerate">🔄</button>` : ''}
-        </div>
-      `
-          : ''
-      }
+      </div>
     `
   }
 
@@ -411,7 +482,7 @@ export class UIManager {
   public setupTextareaResize(): void {
     // This will be called after message edit is started
     setTimeout(() => {
-      const textareas = document.querySelectorAll('.message-edit-textarea')
+      const textareas = document.querySelectorAll('textarea[data-original-content]')
       textareas.forEach((textarea) => {
         const textareaElement = textarea as HTMLTextAreaElement
 
@@ -459,8 +530,8 @@ export class UIManager {
     const originalContent = textarea.dataset.originalContent || ''
     const currentContent = textarea.value
     const saveButton = textarea
-      .closest('.message-edit-form')
-      ?.querySelector('.message-edit-btn.save') as HTMLButtonElement
+      .closest('div')
+      ?.querySelector('button[data-action="save-edit"]') as HTMLButtonElement
 
     if (saveButton) {
       const hasChanges = currentContent !== originalContent
@@ -470,9 +541,7 @@ export class UIManager {
   }
 
   public cleanupTextareaObserver(messageId: string): void {
-    const textarea = document.querySelector(
-      `[data-message-id="${messageId}"] .message-edit-textarea`,
-    ) as any
+    const textarea = document.querySelector(`[data-message-id="${messageId}"] textarea`) as any
     if (textarea?._resizeObserver) {
       textarea._resizeObserver.disconnect()
     }
@@ -483,8 +552,12 @@ export class UIManager {
 
   private handleMessageActions(e: Event): void {
     const target = e.target as HTMLElement
-    const action = target.dataset.action
-    const messageId = target.dataset.messageId
+    const button = target.closest('button[data-action]') as HTMLElement
+
+    if (!button) return
+
+    const action = button.dataset.action
+    const messageId = button.dataset.messageId
 
     if (!action || !messageId) return
 
@@ -499,9 +572,9 @@ export class UIManager {
         ;(window as any).app.handleRegenerateMessage(messageId)
         break
       case 'save-edit':
-        const textarea = target
-          .closest('.message-edit-form')
-          ?.querySelector('.message-edit-textarea') as HTMLTextAreaElement
+        const textarea = document.querySelector<HTMLTextAreaElement>(
+          `[data-message-id=${messageId}] textarea`,
+        )
         if (textarea && messageId) {
           ;(window as any).app.handleMessageEdit(messageId, textarea.value)
         } else {
@@ -516,9 +589,48 @@ export class UIManager {
         ;(window as any).app.handleCancelMessageEdit(messageId)
         break
       case 'switch-branch':
-        const branchIndex = parseInt(target.dataset.branchIndex || '0')
+        const branchIndex = parseInt(button.dataset.branchIndex || '0')
         ;(window as any).app.handleSwitchToBranch(messageId, branchIndex)
         break
+    }
+  }
+
+  public updateMessageActions(messageId: string): void {
+    const messageElement = document.querySelector(`[data-message-id="${messageId}"]`)
+    if (!messageElement) return
+
+    const message = this.chatManager.getCurrentChat()?.messages.find((m) => m.id === messageId)
+    if (!message) return
+
+    const isAnyMessageStreaming =
+      this.chatManager.getCurrentChat()?.messages.some((m) => m.isStreaming) || false
+
+    // Find the actions container (right side of footer)
+    const actionsContainer = messageElement.querySelector('.flex.items-center.space-x-1')
+    if (actionsContainer) {
+      // Update opacity class based on streaming state
+      const newOpacityClass =
+        !message.isStreaming && !isAnyMessageStreaming
+          ? 'opacity-0 group-hover:opacity-100'
+          : 'opacity-0'
+
+      // Only update if the class actually changed
+      const currentClasses = actionsContainer.className
+      if (!currentClasses.includes(newOpacityClass)) {
+        actionsContainer.className = `flex items-center space-x-1 ${newOpacityClass} transition-opacity`
+
+        // Update button disabled states
+        const buttons = actionsContainer.querySelectorAll('button')
+        buttons.forEach((button) => {
+          if (message.isStreaming || isAnyMessageStreaming) {
+            button.setAttribute('disabled', '')
+            button.style.pointerEvents = 'none'
+          } else {
+            button.removeAttribute('disabled')
+            button.style.pointerEvents = ''
+          }
+        })
+      }
     }
   }
 
@@ -526,19 +638,47 @@ export class UIManager {
     const messageContentElement = document.querySelector(
       `[data-message-id="${messageId}"] .message-content`,
     ) as HTMLElement
-    
+
     if (!messageContentElement) return
 
-    const content = messageContentElement.textContent || messageContentElement.innerHTML || ''
+    // Get the plain text content (what was set during streaming)
+    const content = messageContentElement.textContent || ''
     if (!content.trim()) return
 
+    // Store current HTML to compare against new HTML
+    const currentHTML = messageContentElement.innerHTML
+
+    // Store scroll position to prevent twitch
+    const chatArea = document.getElementById('chatArea')
+    const scrollTop = chatArea?.scrollTop || 0
+    const shouldPreserveScroll = this.isScrolledBottom()
+
     // Render markdown asynchronously
-    renderMarkdown(content).then((html) => {
-      messageContentElement.innerHTML = html
-    }).catch((error) => {
-      console.error('Error rendering markdown:', error)
-      // Fallback to plain text if markdown rendering fails
-      messageContentElement.textContent = content
-    })
+    renderMarkdown(content)
+      .then((html) => {
+        // Normalize whitespace for comparison to avoid false positives
+        const normalizedCurrentHTML = currentHTML.replace(/\s+/g, ' ').trim()
+        const normalizedNewHTML = html.replace(/\s+/g, ' ').trim()
+
+        // Only update if content actually changed
+        if (normalizedCurrentHTML !== normalizedNewHTML) {
+          messageContentElement.innerHTML = html
+
+          // Restore scroll position if user wasn't at bottom
+          if (!shouldPreserveScroll && chatArea) {
+            chatArea.scrollTop = scrollTop
+          } else if (shouldPreserveScroll) {
+            // If user was at bottom, scroll to new bottom
+            this.scrollToBottom()
+          }
+        }
+      })
+      .catch((error) => {
+        console.error('Error rendering markdown:', error)
+        // Fallback to plain text if markdown rendering fails
+        if (messageContentElement.textContent !== content) {
+          messageContentElement.textContent = content
+        }
+      })
   }
 }

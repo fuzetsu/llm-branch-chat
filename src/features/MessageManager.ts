@@ -5,6 +5,9 @@ import { generateId, delay } from '../utils/index.js'
 import { UIManager } from '../ui/UIManager.js'
 
 export class MessageManager {
+  private streamingThrottles: Map<string, number> = new Map()
+  private streamingBuffers: Map<string, string> = new Map()
+
   constructor(
     private readonly appState: AppState,
     private readonly apiService: ApiService,
@@ -32,6 +35,82 @@ export class MessageManager {
 
   private shouldAutoScroll(): boolean {
     return this.getUIManager().isScrolledBottom()
+  }
+
+  private renderPartialMarkdown(content: string): string {
+    let html = content
+    
+    // Escape HTML first
+    html = html
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+    
+    // Handle code blocks (be forgiving of incomplete ones)
+    html = html.replace(/```(\w*)\n?([\s\S]*?)(?:```|$)/g, (match, lang, code) => {
+      return `<pre><code class="language-${lang || ''}">${code}</code></pre>`
+    })
+    
+    // Handle inline code (be forgiving of incomplete backticks)
+    html = html.replace(/`([^`]*)`/g, '<code>$1</code>')
+    html = html.replace(/`([^`]*)$/g, '<code>$1</code>') // Incomplete inline code
+    
+    // Handle headers
+    html = html.replace(/^(#{1,6})\s+(.*)$/gm, (match, hashes, text) => {
+      const level = hashes.length
+      return `<h${level}>${text}</h${level}>`
+    })
+    
+    // Handle bold and italic (be forgiving of incomplete markup)
+    html = html.replace(/\*\*([^*]*)\*\*/g, '<strong>$1</strong>')
+    html = html.replace(/\*\*([^*]*)$/g, '<strong>$1</strong>') // Incomplete bold
+    html = html.replace(/\*([^*]*)\*/g, '<em>$1</em>')
+    html = html.replace(/\*([^*]*)$/g, '<em>$1</em>') // Incomplete italic
+    
+    // Handle lists
+    html = html.replace(/^[\s]*[-*+]\s+(.*)$/gm, '<li>$1</li>')
+    html = html.replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>')
+    
+    // Handle line breaks
+    html = html.replace(/\n/g, '<br>')
+    
+    return html
+  }
+
+  private scheduleThrottledUpdate(messageId: string, content: string): void {
+    // Always update the buffer with latest content
+    this.streamingBuffers.set(messageId, content)
+
+    // Check if we're within throttle window
+    const lastUpdate = this.streamingThrottles.get(messageId) || 0
+    const now = Date.now()
+    const timeSinceLastUpdate = now - lastUpdate
+
+    if (timeSinceLastUpdate >= 500) {
+      // Enough time has passed, update immediately
+      this.performThrottledUpdate(messageId)
+      this.streamingThrottles.set(messageId, now)
+    }
+  }
+
+  private performThrottledUpdate(messageId: string): void {
+    const content = this.streamingBuffers.get(messageId)
+    if (!content) return
+
+    const messageElement = document.querySelector(
+      `[data-message-id="${messageId}"] .message-content`,
+    )
+    if (messageElement) {
+      const renderedHTML = this.renderPartialMarkdown(content)
+      if (messageElement.innerHTML !== renderedHTML) {
+        messageElement.innerHTML = renderedHTML
+      }
+    }
+  }
+
+  private cleanupStreamingState(messageId: string): void {
+    this.streamingThrottles.delete(messageId)
+    this.streamingBuffers.delete(messageId)
   }
 
   private validateApiSettings(): void {
@@ -70,14 +149,8 @@ export class MessageManager {
           }
         }
 
-        // Trigger immediate UI update for streaming
-        const messageElement = document.querySelector(
-          `[data-message-id="${message.id}"] .message-content`,
-        )
-        if (messageElement) {
-          // For streaming, show plain text to avoid partial markdown rendering issues
-          messageElement.textContent = message.content
-        }
+        // Schedule throttled markdown update for streaming
+        this.scheduleThrottledUpdate(message.id, message.content)
 
         // Auto-scroll if user was near bottom before the change
         if (shouldScroll) {
@@ -92,11 +165,20 @@ export class MessageManager {
         }
         this.appState.updateUISettings({ isGenerating: false })
         this.appState.save()
-        this.triggerUIUpdate()
 
-        // Render markdown for completed message
+        // Clean up throttling state and ensure final content is rendered
+        this.cleanupStreamingState(messageId)
+        
+        // Force final update with any remaining buffered content
+        this.performThrottledUpdate(messageId)
+        
+        // Render markdown for completed message (this will also update the message state)
         const uiManager = this.getUIManager()
         uiManager.renderMessageMarkdown(messageId)
+
+        // Only trigger a selective UI update for the footer/actions, not the full message
+        this.triggerUIUpdate()
+        //uiManager.updateMessageActions(messageId)
 
         // Execute any additional completion logic
         if (onCompleteExtra) {
@@ -107,6 +189,10 @@ export class MessageManager {
         message.isStreaming = false
         this.appState.updateUISettings({ isGenerating: false })
         this.appState.save()
+        
+        // Clean up throttling state on error
+        this.cleanupStreamingState(messageId)
+        
         throw error
       },
     }
@@ -487,6 +573,16 @@ export class MessageManager {
     const branches = chat.messageBranches.get(messageId)!
     if (branchIndex < 0 || branchIndex >= branches.length) return
 
+    // Store scroll position relative to the message being switched
+    const messageElement = document.querySelector(`[data-message-id="${messageId}"]`)
+    let scrollOffset = 0
+    if (messageElement) {
+      const chatArea = document.getElementById('chatArea')
+      if (chatArea) {
+        scrollOffset = chatArea.scrollTop
+      }
+    }
+
     // Preserve current children before switching branches
     const messageIndex = chat.messages.findIndex((m) => m.id === messageId)
     if (messageIndex !== -1 && chat.messages.length > messageIndex + 1) {
@@ -513,6 +609,17 @@ export class MessageManager {
     chat.updatedAt = Date.now()
     this.appState.save()
     this.triggerUIUpdate()
+
+    // Restore scroll position to keep the message in view
+    setTimeout(() => {
+      const newMessageElement = document.querySelector(`[data-message-id="${messageId}"]`)
+      if (newMessageElement) {
+        const chatArea = document.getElementById('chatArea')
+        if (chatArea) {
+          chatArea.scrollTop = scrollOffset
+        }
+      }
+    }, 10)
 
     // Render markdown for the switched branch content (if not streaming)
     const uiManager = this.getUIManager()
