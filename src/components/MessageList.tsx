@@ -1,5 +1,5 @@
 import { Component, For, createEffect, createSignal, Show } from 'solid-js'
-import { Chat, Message as MessageType } from '../types/index.js'
+import { Chat } from '../types/index.js'
 import { useAppStore } from '../store/AppStore'
 import Message from './Message'
 
@@ -33,27 +33,22 @@ const MessageList: Component<MessageListProps> = (props) => {
     setShouldAutoScroll(isAtBottom)
   }
 
-  // Get streaming content for the current message
-  const getStreamingContent = (messageId: string) => {
-    if (store.state.streaming.isStreaming && store.state.streaming.currentMessageId === messageId) {
-      return store.state.streaming.currentContent
-    }
-    return null
-  }
-
   return (
     <div class="flex-1 overflow-y-auto px-4 py-6 space-y-4" onScroll={handleScroll}>
       <For each={visibleMessages()}>
         {(message) => {
-          const streamingContent = getStreamingContent(message.id)
-          const messageWithStreaming =
-            streamingContent !== null ? { ...message, content: streamingContent } : message
-
+          // Make this reactive by accessing store.state.streaming directly in the JSX
           return (
             <Message
-              message={messageWithStreaming}
+              message={message}
               chat={props.chat}
               isStreaming={store.state.streaming.currentMessageId === message.id}
+              streamingContent={
+                store.state.streaming.isStreaming &&
+                store.state.streaming.currentMessageId === message.id
+                  ? store.state.streaming.currentContent
+                  : null
+              }
             />
           )
         }}

@@ -8,6 +8,7 @@ interface MessageProps {
   message: MessageType
   chat: Chat
   isStreaming?: boolean
+  streamingContent?: string | null
 }
 
 const Message: Component<MessageProps> = (props) => {
@@ -134,8 +135,8 @@ const Message: Component<MessageProps> = (props) => {
           }
         >
           <div class="message-content whitespace-pre-wrap">
-            {props.message.content}
-            <Show when={props.isStreaming && !props.message.content}>
+            {props.streamingContent || props.message.content}
+            <Show when={props.isStreaming}>
               <span class="animate-pulse">▋</span>
             </Show>
           </div>
