@@ -1,5 +1,5 @@
-// Core message and chat types
-export interface Message {
+// Core message and chat types - Tree-based structure
+export interface MessageNode {
   id: string
   role: 'user' | 'assistant' | 'system'
   content: string
@@ -7,24 +7,16 @@ export interface Message {
   isStreaming: boolean
   isEditing: boolean
   parentId: string | null
-  children: string[]
-  branchId: string | null
+  children: MessageNode[]
   model: string
-}
-
-export interface MessageBranch {
-  content: string
-  children: Message[]
-  timestamp: number
-  model?: string
+  // UI state: which child branch is currently active (0-indexed)
+  activeChildIndex: number
 }
 
 export interface Chat {
   id: string
   title: string
-  messages: Message[]
-  messageBranches: Map<string, MessageBranch[]>
-  currentBranches: Map<string, number>
+  messageTree: MessageNode | null
   createdAt: number
   updatedAt: number
   isGeneratingTitle: boolean
@@ -83,9 +75,7 @@ export interface SerializableAppState {
 export interface SerializableChat {
   id: string
   title: string
-  messages: Message[]
-  messageBranches: Array<[string, MessageBranch[]]>
-  currentBranches: Array<[string, number]>
+  messageTree: MessageNode | null
   createdAt: number
   updatedAt: number
   isGeneratingTitle: boolean

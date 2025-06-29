@@ -2,7 +2,7 @@ import type {
   ApiMessage,
   ApiRequestBody,
   ApiResponse,
-  Message,
+  MessageNode,
   StreamCallbacks,
 } from '../types/index.js'
 
@@ -160,7 +160,7 @@ export class ApiService {
     return false
   }
 
-  public async generateTitle(messages: Message[], titleModel: string): Promise<string | null> {
+  public async generateTitle(messages: MessageNode[], titleModel: string): Promise<string | null> {
     const titlePrompt = this.buildTitlePrompt(messages)
 
     try {
@@ -195,7 +195,7 @@ export class ApiService {
     }
   }
 
-  private buildTitlePrompt(messages: Message[]): ApiMessage[] {
+  private buildTitlePrompt(messages: MessageNode[]): ApiMessage[] {
     const conversationSample = messages
       .slice(0, 4)
       .map((message) => `${message.role}: ${message.content}`)

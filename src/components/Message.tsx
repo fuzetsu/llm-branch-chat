@@ -1,5 +1,5 @@
 import { Component, createSignal, Show } from 'solid-js'
-import { Message as MessageType, Chat } from '../types/index.js'
+import { MessageNode as MessageType, Chat } from '../types/index.js'
 import { useAppStore } from '../store/AppStore'
 import MessageBranching from './MessageBranching'
 import Icon from './Icon'

@@ -6,11 +6,18 @@ import type {
   UISettings,
   SerializableAppState,
   SerializableChat,
-  Message,
+  MessageNode,
   ApiMessage,
-  MessageBranch,
 } from '../types/index.js'
-import { generateChatId, generateMessageId } from '../utils/index.js'
+import { generateChatId } from '../utils/index.js'
+import {
+  createMessageNode,
+  addChildToNode,
+  getVisibleMessages as getVisibleMessagesFromTree,
+  findNodeById,
+  switchToBranch,
+  getBranchInfo,
+} from '../utils/messageTree.js'
 import { SolidApiService } from '../services/ApiService'
 
 interface AppStateStore {
@@ -40,11 +47,21 @@ interface AppStoreContextType {
   getActiveChats: () => Chat[]
   getArchivedChats: () => Chat[]
   // Message operations
-  addMessage: (chatId: string, message: Message) => void
-  updateMessage: (chatId: string, messageId: string, updates: Partial<Message>) => void
-  addMessageBranch: (chatId: string, messageId: string, branch: MessageBranch) => void
+  addMessage: (chatId: string, message: MessageNode, parentId?: string) => void
+  updateMessage: (chatId: string, messageId: string, updates: Partial<MessageNode>) => void
+  createMessageBranch: (
+    chatId: string,
+    parentId: string,
+    content: string,
+    role: 'user' | 'assistant' | 'system',
+    model: string,
+  ) => string
   switchMessageBranch: (chatId: string, messageId: string, branchIndex: number) => void
-  getVisibleMessages: (chatId: string) => Message[]
+  getVisibleMessages: (chatId: string) => MessageNode[]
+  getBranchInfo: (
+    chatId: string,
+    messageId: string,
+  ) => { total: number; current: number; hasPrevious: boolean; hasNext: boolean } | null
   // Streaming operations
   startStreaming: (messageId: string) => void
   updateStreamingContent: (content: string) => void
@@ -58,7 +75,7 @@ interface AppStoreContextType {
 
 const AppStoreContext = createContext<AppStoreContextType>()
 
-const STORAGE_KEY = 'llm-chat-state-2'
+const STORAGE_KEY = 'llm-chat-state-tree-v1'
 
 function createDefaultSettings(): AppSettings {
   return {
@@ -111,50 +128,13 @@ function createDefaultStreamingState() {
 function serializeChat(chat: Chat): SerializableChat {
   return {
     ...chat,
-    messageBranches: Array.from(chat.messageBranches.entries()),
-    currentBranches: Array.from(chat.currentBranches.entries()),
   }
 }
 
 function deserializeChat(chat: SerializableChat, settings: AppSettings): Chat {
-  const messageBranches = new Map(chat.messageBranches || [])
-
-  // Migration: Add timestamp and model to existing branches
-  messageBranches.forEach((branches, messageId) => {
-    const message = (chat.messages || []).find((m) => m.id === messageId)
-    messageBranches.set(
-      messageId,
-      branches.map((branch) => {
-        const migratedBranch: any = {
-          ...branch,
-          timestamp: branch.timestamp || message?.timestamp || Date.now(),
-        }
-        const branchModel =
-          branch.model ||
-          message?.model ||
-          (message?.role === 'assistant' ? settings.chat.model : undefined)
-        if (branchModel) {
-          migratedBranch.model = branchModel
-        }
-        return migratedBranch
-      }),
-    )
-  })
-
   return {
     ...chat,
-    messageBranches,
-    currentBranches: new Map(chat.currentBranches || []),
-    // Migration: Add model property to existing chats
     model: chat.model || settings.chat.model,
-    // Migration: Add model property to existing messages
-    messages: (chat.messages || []).map((msg) => {
-      const model = msg.model || (msg.role === 'assistant' ? settings.chat.model : undefined)
-      return {
-        ...msg,
-        ...(model && { model }),
-      }
-    }),
   }
 }
 
@@ -284,9 +264,7 @@ export const AppStoreProvider: ParentComponent = (props) => {
     const newChat: Chat = {
       id: generateChatId(),
       title: 'New Chat',
-      messages: [],
-      messageBranches: new Map(),
-      currentBranches: new Map(),
+      messageTree: null,
       isArchived: false,
       createdAt: Date.now(),
       updatedAt: Date.now(),
@@ -316,14 +294,23 @@ export const AppStoreProvider: ParentComponent = (props) => {
   }
 
   // Message operations
-  const addMessage = (chatId: string, message: Message) => {
+  const addMessage = (chatId: string, message: MessageNode, parentId?: string) => {
     setState('chats', (chats) => {
       const newChats = new Map(chats)
       const chat = newChats.get(chatId)
       if (chat) {
+        let newTree = chat.messageTree
+        if (!newTree && !parentId) {
+          // First message in conversation
+          newTree = message
+        } else if (parentId) {
+          // Add as child to existing node
+          newTree = addChildToNode(newTree, parentId, message)
+        }
+
         newChats.set(chatId, {
           ...chat,
-          messages: [...chat.messages, message],
+          messageTree: newTree,
           updatedAt: Date.now(),
         })
       }
@@ -331,26 +318,17 @@ export const AppStoreProvider: ParentComponent = (props) => {
     })
   }
 
-  const updateMessage = (chatId: string, messageId: string, updates: Partial<Message>) => {
+  const updateMessage = (chatId: string, messageId: string, updates: Partial<MessageNode>) => {
     setState('chats', (chats) => {
       const newChats = new Map(chats)
       const chat = newChats.get(chatId)
-      if (chat) {
-        const messageIndex = chat.messages.findIndex((m) => m.id === messageId)
-        if (messageIndex >= 0) {
-          const updatedMessages = [...chat.messages]
-          const currentMessage = updatedMessages[messageIndex]
-          if (currentMessage) {
-            updatedMessages[messageIndex] = {
-              ...currentMessage,
-              ...updates,
-              // Ensure model is defined if provided in updates
-              model: updates.model !== undefined ? updates.model : currentMessage.model,
-            }
-          }
+      if (chat && chat.messageTree) {
+        const node = findNodeById(chat.messageTree, messageId)
+        if (node) {
+          const updatedTree = updateNodeInTree(chat.messageTree, messageId, updates)
           newChats.set(chatId, {
             ...chat,
-            messages: updatedMessages,
+            messageTree: updatedTree,
             updatedAt: Date.now(),
           })
         }
@@ -359,65 +337,62 @@ export const AppStoreProvider: ParentComponent = (props) => {
     })
   }
 
-  const addMessageBranch = (chatId: string, messageId: string, branch: MessageBranch) => {
-    setState('chats', (chats) => {
-      const newChats = new Map(chats)
-      const chat = newChats.get(chatId)
-      if (chat) {
-        const newBranches = new Map(chat.messageBranches)
-        const existingBranches = newBranches.get(messageId) || []
-        newBranches.set(messageId, [...existingBranches, branch])
+  function updateNodeInTree(
+    tree: MessageNode | null,
+    nodeId: string,
+    updates: Partial<MessageNode>,
+  ): MessageNode | null {
+    if (!tree) return null
 
-        const newCurrentBranches = new Map(chat.currentBranches)
-        newCurrentBranches.set(messageId, existingBranches.length)
+    if (tree.id === nodeId) {
+      return { ...tree, ...updates }
+    }
 
-        newChats.set(chatId, {
-          ...chat,
-          messageBranches: newBranches,
-          currentBranches: newCurrentBranches,
-          updatedAt: Date.now(),
-        })
-      }
-      return newChats
-    })
+    const newChildren = tree.children.map(
+      (child) => updateNodeInTree(child, nodeId, updates) || child,
+    )
+    return { ...tree, children: newChildren }
+  }
+
+  const createMessageBranch = (
+    chatId: string,
+    parentId: string,
+    content: string,
+    role: 'user' | 'assistant' | 'system',
+    model: string,
+  ): string => {
+    const newMessage = createMessageNode(role, content, model, parentId)
+    addMessage(chatId, newMessage, parentId)
+    return newMessage.id
   }
 
   const switchMessageBranch = (chatId: string, messageId: string, branchIndex: number) => {
     setState('chats', (chats) => {
       const newChats = new Map(chats)
       const chat = newChats.get(chatId)
-      if (chat) {
-        const newCurrentBranches = new Map(chat.currentBranches)
-        newCurrentBranches.set(messageId, branchIndex)
+      if (chat && chat.messageTree) {
+        const newTree = switchToBranch(chat.messageTree, messageId, branchIndex)
         newChats.set(chatId, {
           ...chat,
-          currentBranches: newCurrentBranches,
+          messageTree: newTree,
         })
       }
       return newChats
     })
   }
 
-  const getVisibleMessages = (chatId: string): Message[] => {
+  const getVisibleMessages = (chatId: string): MessageNode[] => {
     const chat = state.chats.get(chatId)
     if (!chat) return []
 
-    return chat.messages.map((message) => {
-      const branches = chat.messageBranches.get(message.id)
-      const currentBranchIndex = chat.currentBranches.get(message.id) || 0
+    return getVisibleMessagesFromTree(chat.messageTree)
+  }
 
-      if (branches && branches[currentBranchIndex]) {
-        const branch = branches[currentBranchIndex]
-        return {
-          ...message,
-          content: branch.content,
-          timestamp: branch.timestamp,
-          model: branch.model || message.model,
-        }
-      }
+  const getBranchInfoForMessage = (chatId: string, messageId: string) => {
+    const chat = state.chats.get(chatId)
+    if (!chat) return null
 
-      return message
-    })
+    return getBranchInfo(chat.messageTree, messageId)
   }
 
   // Streaming operations
@@ -450,37 +425,25 @@ export const AppStoreProvider: ParentComponent = (props) => {
     const currentChat = getCurrentChat()
     if (!currentChat) return
 
-    // Add user message
-    const userMessage: Message = {
-      id: generateMessageId(),
-      role: 'user',
-      content: content.trim(),
-      timestamp: Date.now(),
-      model: 'user',
-      isStreaming: false,
-      isEditing: false,
-      parentId: null,
-      children: [],
-      branchId: null,
-    }
+    // Find the last message in the conversation to use as parent
+    const visibleMessages = getVisibleMessages(currentChat.id)
+    const lastMessage = visibleMessages[visibleMessages.length - 1]
+    const parentId = lastMessage?.id || null
 
-    addMessage(currentChat.id, userMessage)
+    // Add user message
+    const userMessage = createMessageNode('user', content.trim(), 'user', parentId)
+
+    addMessage(currentChat.id, userMessage, parentId || undefined)
 
     // Create assistant message placeholder
-    const assistantMessage: Message = {
-      id: generateMessageId(),
-      role: 'assistant',
-      content: '',
-      timestamp: Date.now(),
-      model: currentChat.model || state.settings.chat.model,
-      isStreaming: false,
-      isEditing: false,
-      parentId: null,
-      children: [],
-      branchId: null,
-    }
+    const assistantMessage = createMessageNode(
+      'assistant',
+      '',
+      currentChat.model || state.settings.chat.model,
+      userMessage.id,
+    )
 
-    addMessage(currentChat.id, assistantMessage)
+    addMessage(currentChat.id, assistantMessage, userMessage.id)
     startStreaming(assistantMessage.id)
 
     try {
@@ -488,7 +451,8 @@ export const AppStoreProvider: ParentComponent = (props) => {
       const apiService = new SolidApiService(state.settings.api.baseUrl, state.settings.api.key)
 
       // Convert messages to API format
-      const apiMessages: ApiMessage[] = [...currentChat.messages, userMessage].map((msg) => ({
+      const visibleMessages = getVisibleMessages(currentChat.id)
+      const apiMessages: ApiMessage[] = visibleMessages.map((msg) => ({
         role: msg.role,
         content: msg.content,
       }))
@@ -513,8 +477,9 @@ export const AppStoreProvider: ParentComponent = (props) => {
             })
 
             // Auto-generate title if this is the first exchange
+            const messageCount = getVisibleMessages(currentChat.id).length
             if (
-              currentChat.messages.length === state.settings.chat.titleGenerationTrigger &&
+              messageCount === state.settings.chat.titleGenerationTrigger &&
               state.settings.chat.autoGenerateTitle
             ) {
               generateChatTitle(currentChat.id)
@@ -545,45 +510,34 @@ export const AppStoreProvider: ParentComponent = (props) => {
   // Regenerate message with API
   const regenerateMessage = async (chatId: string, messageId: string) => {
     const chat = state.chats.get(chatId)
-    if (!chat) return
+    if (!chat || !chat.messageTree) return
 
-    const messageIndex = chat.messages.findIndex((m) => m.id === messageId)
-    if (messageIndex === -1) return
-
-    const message = chat.messages[messageIndex]
+    const message = findNodeById(chat.messageTree, messageId)
     if (!message || message.role !== 'assistant') return
 
-    // Get all messages up to (but not including) the current message
-    const conversationHistory = chat.messages.slice(0, messageIndex)
+    // Get conversation history up to this message
+    const visibleMessages = getVisibleMessages(chatId)
+    const messageIndex = visibleMessages.findIndex((m) => m.id === messageId)
+    if (messageIndex === -1) return
+
+    const conversationHistory = visibleMessages.slice(0, messageIndex)
 
     try {
-      // Check if this message already has branches
-      const existingBranches = chat.messageBranches.get(messageId) || []
+      // Create new branch (sibling) for regenerated content
+      const newBranchMessage = createMessageNode(
+        'assistant',
+        '',
+        message.model || chat.model || state.settings.chat.model,
+        message.parentId,
+      )
 
-      // If this is the first regeneration, create initial branch from current content
-      if (existingBranches.length === 0) {
-        const initialBranch: MessageBranch = {
-          content: message.content,
-          children: [],
-          timestamp: message.timestamp,
-          model: message.model || chat.model || state.settings.chat.model,
-        }
-        addMessageBranch(chatId, messageId, initialBranch)
+      // Add the new branch as a sibling
+      if (message.parentId) {
+        addMessage(chatId, newBranchMessage, message.parentId)
       }
-
-      // Create new branch for regenerated content
-      const newBranch: MessageBranch = {
-        content: '',
-        children: [],
-        timestamp: Date.now(),
-        model: message.model || chat.model || state.settings.chat.model,
-      }
-
-      // Add the new branch and switch to it
-      addMessageBranch(chatId, messageId, newBranch)
 
       // Start streaming for regeneration
-      startStreaming(messageId)
+      startStreaming(newBranchMessage.id)
 
       // Initialize API service
       const apiService = new SolidApiService(state.settings.api.baseUrl, state.settings.api.key)
@@ -597,7 +551,7 @@ export const AppStoreProvider: ParentComponent = (props) => {
       // Stream the regenerated response with entropy to prevent caching
       await apiService.streamToSignals(
         apiMessages,
-        newBranch.model || state.settings.chat.model,
+        newBranchMessage.model || state.settings.chat.model,
         {
           onToken: (token: string) => {
             appendStreamingContent(token)
@@ -605,56 +559,18 @@ export const AppStoreProvider: ParentComponent = (props) => {
           onComplete: () => {
             // Update the new branch with the complete content
             const finalContent = state.streaming.currentContent
-            const currentChat = state.chats.get(chatId)
-            if (currentChat) {
-              const branches = currentChat.messageBranches.get(messageId)
-              if (branches && branches.length > 0) {
-                const lastBranchIndex = branches.length - 1
-                const updatedBranches = [...branches]
-                updatedBranches[lastBranchIndex] = {
-                  ...updatedBranches[lastBranchIndex],
-                  content: finalContent,
-                  timestamp: Date.now(),
-                  children: [],
-                }
-
-                // Update the chat with the new branch content
-                updateChat(chatId, {
-                  messageBranches: new Map(currentChat.messageBranches).set(
-                    messageId,
-                    updatedBranches,
-                  ),
-                  updatedAt: Date.now(),
-                })
-              }
-            }
+            updateMessage(chatId, newBranchMessage.id, {
+              content: finalContent,
+              timestamp: Date.now(),
+            })
             stopStreaming()
           },
           onError: (error: Error) => {
             console.error('Regeneration error:', error)
-            // Update the new branch with error message
-            const currentChat = state.chats.get(chatId)
-            if (currentChat) {
-              const branches = currentChat.messageBranches.get(messageId)
-              if (branches && branches.length > 0) {
-                const lastBranchIndex = branches.length - 1
-                const updatedBranches = [...branches]
-                updatedBranches[lastBranchIndex] = {
-                  ...updatedBranches[lastBranchIndex],
-                  content: `Error: ${error.message}`,
-                  timestamp: Date.now(),
-                  children: [],
-                }
-
-                updateChat(chatId, {
-                  messageBranches: new Map(currentChat.messageBranches).set(
-                    messageId,
-                    updatedBranches,
-                  ),
-                  updatedAt: Date.now(),
-                })
-              }
-            }
+            updateMessage(chatId, newBranchMessage.id, {
+              content: `Error: ${error.message}`,
+              timestamp: Date.now(),
+            })
             stopStreaming()
           },
         },
@@ -671,14 +587,15 @@ export const AppStoreProvider: ParentComponent = (props) => {
   // Auto-generate chat title
   const generateChatTitle = async (chatId: string) => {
     const chat = state.chats.get(chatId)
-    if (!chat || chat.messages.length < 2 || chat.isGeneratingTitle) return
+    const visibleMessages = getVisibleMessages(chatId)
+    if (!chat || visibleMessages.length < 2 || chat.isGeneratingTitle) return
 
     try {
       updateChat(chatId, { isGeneratingTitle: true })
 
       const apiService = new SolidApiService(state.settings.api.baseUrl, state.settings.api.key)
 
-      const title = await apiService.generateTitle(chat.messages, state.settings.chat.titleModel)
+      const title = await apiService.generateTitle(visibleMessages, state.settings.chat.titleModel)
 
       if (title) {
         updateChat(chatId, {
@@ -708,9 +625,10 @@ export const AppStoreProvider: ParentComponent = (props) => {
     getArchivedChats,
     addMessage,
     updateMessage,
-    addMessageBranch,
+    createMessageBranch,
     switchMessageBranch,
     getVisibleMessages,
+    getBranchInfo: getBranchInfoForMessage,
     startStreaming,
     updateStreamingContent,
     appendStreamingContent,
