@@ -3,7 +3,7 @@ import { MessageNode as MessageType, Chat } from '../types/index.js'
 import { useAppStore } from '../store/AppStore'
 import MessageBranching from './MessageBranching'
 import Icon from './Icon'
-import { renderMarkdown, throttle } from '../utils/index.js'
+import { formatTimestamp, renderMarkdown, throttle } from '../utils/index.js'
 
 interface MessageProps {
   message: MessageType
@@ -20,17 +20,6 @@ const Message: Component<MessageProps> = (props) => {
 
   const isUser = () => props.message.role === 'user'
   const isAssistant = () => props.message.role === 'assistant'
-
-  const formatTimestamp = (timestamp: number) => {
-    const date = new Date(timestamp)
-    const now = new Date()
-    const diff = now.getTime() - date.getTime()
-
-    if (diff < 60000) return 'Just now'
-    if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`
-    if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`
-    return date.toLocaleDateString()
-  }
 
   const startEdit = () => {
     setEditContent(props.message.content)
