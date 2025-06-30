@@ -1,4 +1,4 @@
-import { Component, createEffect, createSignal, Show } from 'solid-js'
+import { Component, createEffect, Show } from 'solid-js'
 import { useAppStore } from '../store/AppStore'
 import Icon from './Icon'
 import FormField from './ui/FormField'
@@ -8,6 +8,7 @@ import Select from './ui/Select'
 import Checkbox from './ui/Checkbox'
 import Slider from './ui/Slider'
 import Button from './ui/Button'
+import { createStore } from 'solid-js/store'
 
 interface SettingsModalProps {
   isOpen: boolean
@@ -18,7 +19,7 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
   const store = useAppStore()
 
   // Local form state
-  const [formData, setFormData] = createSignal({
+  const [formData, setFormData] = createStore({
     apiBaseUrl: '',
     apiKey: '',
     availableModels: '',
@@ -33,8 +34,8 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
 
   // Parse models from text area
   const availableModelsList = () => {
-    return formData()
-      .availableModels.split('\n')
+    return formData.availableModels
+      .split('\n')
       .map((model) => model.trim())
       .filter((model) => model.length > 0)
   }
@@ -63,30 +64,26 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
     }
   })
 
-  const handleInputChange = (field: string, value: string | number | boolean) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
-  }
-
   const handleSave = () => {
     const models = availableModelsList()
 
     store.updateSettings({
       api: {
-        baseUrl: formData().apiBaseUrl,
-        key: formData().apiKey,
+        baseUrl: formData.apiBaseUrl,
+        key: formData.apiKey,
         availableModels: models,
       },
       chat: {
-        model: formData().defaultModel,
+        model: formData.defaultModel,
         availableModels: models,
-        temperature: formData().temperature,
-        maxTokens: formData().maxTokens,
-        autoGenerateTitle: formData().autoGenerateTitle,
-        titleGenerationTrigger: formData().titleGenerationTrigger,
-        titleModel: formData().titleModel,
+        temperature: formData.temperature,
+        maxTokens: formData.maxTokens,
+        autoGenerateTitle: formData.autoGenerateTitle,
+        titleGenerationTrigger: formData.titleGenerationTrigger,
+        titleModel: formData.titleModel,
       },
       ui: {
-        theme: formData().theme,
+        theme: formData.theme,
         sidebarCollapsed: store.state.settings.ui.sidebarCollapsed,
         archivedSectionCollapsed: store.state.settings.ui.archivedSectionCollapsed,
         isGenerating: store.state.settings.ui.isGenerating,
@@ -127,8 +124,8 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
                 <Input
                   type="text"
                   placeholder="https://api.openai.com/v1"
-                  value={formData().apiBaseUrl}
-                  onInput={(value) => handleInputChange('apiBaseUrl', value)}
+                  value={formData.apiBaseUrl}
+                  onInput={(value) => setFormData('apiBaseUrl', value)}
                 />
               </FormField>
 
@@ -136,8 +133,8 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
                 <Input
                   type="password"
                   placeholder="Your API key"
-                  value={formData().apiKey}
-                  onInput={(value) => handleInputChange('apiKey', value)}
+                  value={formData.apiKey}
+                  onInput={(value) => setFormData('apiKey', value)}
                 />
               </FormField>
 
@@ -145,15 +142,15 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
                 <Textarea
                   rows={4}
                   placeholder="gpt-4&#10;gpt-3.5-turbo&#10;claude-3-sonnet"
-                  value={formData().availableModels}
-                  onInput={(value) => handleInputChange('availableModels', value)}
+                  value={formData.availableModels}
+                  onInput={(value) => setFormData('availableModels', value)}
                 />
               </FormField>
 
               <FormField label="Default Model">
                 <Select
-                  value={formData().defaultModel}
-                  onChange={(value) => handleInputChange('defaultModel', value)}
+                  value={formData.defaultModel}
+                  onChange={(value) => setFormData('defaultModel', value)}
                   options={getModelOptions}
                   placeholder="Select a model"
                 />
@@ -161,8 +158,8 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
 
               <FormField label="Temperature">
                 <Slider
-                  value={formData().temperature}
-                  onInput={(value) => handleInputChange('temperature', value)}
+                  value={formData.temperature}
+                  onInput={(value) => setFormData('temperature', value)}
                   min={0}
                   max={2}
                   step={0.1}
@@ -173,16 +170,16 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
               <FormField label="Max Tokens">
                 <Input
                   type="number"
-                  value={formData().maxTokens}
-                  onInput={(value) => handleInputChange('maxTokens', parseInt(value))}
+                  value={formData.maxTokens}
+                  onInput={(value) => setFormData('maxTokens', parseInt(value))}
                   min="1"
                   max="4096"
                 />
               </FormField>
 
               <Checkbox
-                checked={formData().autoGenerateTitle}
-                onInput={(checked) => handleInputChange('autoGenerateTitle', checked)}
+                checked={formData.autoGenerateTitle}
+                onInput={(checked) => setFormData('autoGenerateTitle', checked)}
                 label="Auto-generate chat titles"
               />
 
@@ -192,8 +189,8 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
               >
                 <Input
                   type="number"
-                  value={formData().titleGenerationTrigger}
-                  onInput={(value) => handleInputChange('titleGenerationTrigger', parseInt(value))}
+                  value={formData.titleGenerationTrigger}
+                  onInput={(value) => setFormData('titleGenerationTrigger', parseInt(value))}
                   min="1"
                   max="20"
                 />
@@ -201,8 +198,8 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
 
               <FormField label="Title Generation Model">
                 <Select
-                  value={formData().titleModel}
-                  onChange={(value) => handleInputChange('titleModel', value)}
+                  value={formData.titleModel}
+                  onChange={(value) => setFormData('titleModel', value)}
                   options={getModelOptions}
                   placeholder="Select a model"
                 />
@@ -210,10 +207,8 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
 
               <FormField label="Theme">
                 <Select
-                  value={formData().theme}
-                  onChange={(value) =>
-                    handleInputChange('theme', value as 'light' | 'dark' | 'auto')
-                  }
+                  value={formData.theme}
+                  onChange={(value) => setFormData('theme', value as 'light' | 'dark' | 'auto')}
                   options={[
                     { value: 'light', label: 'Light' },
                     { value: 'dark', label: 'Dark' },
