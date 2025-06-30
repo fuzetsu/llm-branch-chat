@@ -23,144 +23,88 @@
 .message-content h4,
 .message-content h5,
 .message-content h6 {
-  font-weight: 600;
-  margin-top: 1.5em;
-  margin-bottom: 0.5em;
-  line-height: 1.2;
+  @apply font-semibold mt-6 mb-2 leading-tight;
 }
 
 .message-content h1 {
-  font-size: 1.5em;
+  @apply text-xl;
 }
 .message-content h2 {
-  font-size: 1.3em;
+  @apply text-lg;
 }
 .message-content h3 {
-  font-size: 1.1em;
+  @apply text-base font-medium;
 }
 .message-content h4,
 .message-content h5,
 .message-content h6 {
-  font-size: 1em;
+  @apply text-sm font-medium;
 }
 
 .message-content p {
-  margin-bottom: 1em;
-  line-height: 1.6;
+  @apply mb-4 leading-relaxed;
 }
 
 .message-content ul,
 .message-content ol {
-  margin: 1em 0;
-  padding-left: 1.5em;
+  @apply my-4 pl-6;
 }
 
 .message-content ul {
-  list-style-type: disc;
+  @apply list-disc;
 }
 
 .message-content ol {
-  list-style-type: decimal;
+  @apply list-decimal;
 }
 
 .message-content li {
-  margin-bottom: 0.5em;
-  display: list-item;
+  @apply mb-2;
 }
 
 .message-content code {
-  background-color: #f3f4f6;
-  color: #1f2937;
-  padding: 0.125rem 0.25rem;
-  border-radius: 0.25rem;
-  font-size: 0.875em;
-  font-family: ui-monospace, SFMono-Regular, 'SF Mono', monospace;
-}
-
-.dark .message-content code {
-  background-color: #374151;
-  color: #f9fafb;
+  @apply bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-1 py-0.5 rounded text-sm font-mono;
 }
 
 .message-content pre {
-  background-color: #1f2937;
-  color: #f9fafb;
-  padding: 1rem;
-  border-radius: 0.5rem;
-  overflow-x: auto;
-  margin: 1em 0;
+  @apply bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto my-4;
 }
 
 .message-content pre code {
-  background-color: transparent;
-  color: inherit;
-  padding: 0;
+  @apply bg-transparent text-inherit p-0;
 }
 
 .message-content blockquote {
-  border-left: 4px solid #3b82f6;
-  padding-left: 1rem;
-  margin: 1em 0;
-  font-style: italic;
-  color: #6b7280;
-}
-
-.dark .message-content blockquote {
-  color: #9ca3af;
+  @apply border-l-4 border-primary pl-4 my-4 italic text-gray-600 dark:text-gray-400;
 }
 
 .message-content a {
-  color: #3b82f6;
-  text-decoration: underline;
-}
-
-.message-content a:hover {
-  color: #2563eb;
+  @apply text-primary underline hover:text-blue-600;
 }
 
 .message-content table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 1em 0;
+  @apply w-full border-collapse my-4;
 }
 
 .message-content th,
 .message-content td {
-  border: 1px solid #d1d5db;
-  padding: 0.5rem 0.75rem;
-  text-align: left;
-}
-
-.dark .message-content th,
-.dark .message-content td {
-  border-color: #4b5563;
+  @apply border border-gray-300 dark:border-gray-600 px-3 py-2 text-left;
 }
 
 .message-content th {
-  background-color: #f9fafb;
-  font-weight: 600;
-}
-
-.dark .message-content th {
-  background-color: #374151;
+  @apply bg-gray-50 dark:bg-gray-700 font-semibold;
 }
 
 .message-content strong,
 .message-content b {
-  font-weight: 600;
+  @apply font-semibold;
 }
 
 .message-content em,
 .message-content i {
-  font-style: italic;
+  @apply italic;
 }
 
 .message-content hr {
-  margin: 2em 0;
-  border: none;
-  border-top: 1px solid #d1d5db;
-}
-
-.dark .message-content hr {
-  border-top-color: #4b5563;
+  @apply my-8 border-0 border-t border-gray-300 dark:border-gray-600;
 }
