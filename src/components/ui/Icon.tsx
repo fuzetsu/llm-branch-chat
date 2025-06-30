@@ -1,5 +1,5 @@
 import { Component } from 'solid-js'
-import { classnames } from '../utils'
+import { classnames } from '../../utils'
 
 export type IconName =
   | 'menu'

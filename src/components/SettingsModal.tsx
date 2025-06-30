@@ -1,6 +1,6 @@
 import { Component, createEffect, Show } from 'solid-js'
 import { useAppStore } from '../store/AppStore'
-import Icon from './Icon'
+import Icon from './ui/Icon'
 import FormField from './ui/FormField'
 import Input from './ui/Input'
 import Textarea from './ui/Textarea'

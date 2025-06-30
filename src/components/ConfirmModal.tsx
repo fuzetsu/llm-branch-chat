@@ -1,5 +1,5 @@
 import { Component, Show } from 'solid-js'
-import Icon from './Icon'
+import Icon from './ui/Icon'
 import Button from './ui/Button'
 
 interface ConfirmModalProps {

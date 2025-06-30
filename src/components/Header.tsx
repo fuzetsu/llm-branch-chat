@@ -1,6 +1,6 @@
 import { Component, createSignal, For } from 'solid-js'
 import { useAppStore } from '../store/AppStore'
-import Icon from './Icon'
+import Icon from './ui/Icon'
 import SettingsModal from './SettingsModal'
 import Button from './ui/Button'
 

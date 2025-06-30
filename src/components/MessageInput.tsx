@@ -1,6 +1,6 @@
 import { Component, createSignal, Show } from 'solid-js'
 import { useAppStore } from '../store/AppStore'
-import Icon from './Icon'
+import Icon from './ui/Icon'
 
 const MessageInput: Component = () => {
   const store = useAppStore()

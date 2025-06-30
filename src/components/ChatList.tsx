@@ -1,7 +1,7 @@
 import { Component, For, Show, createEffect } from 'solid-js'
 import { useAppStore } from '../store/AppStore'
 import ChatItem from './ChatItem'
-import Icon from './Icon'
+import Icon from './ui/Icon'
 import Button from './ui/Button'
 import { classnames } from '../utils'
 

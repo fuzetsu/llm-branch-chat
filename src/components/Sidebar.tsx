@@ -1,7 +1,7 @@
 import { Component } from 'solid-js'
 import { useAppStore } from '../store/AppStore'
 import ChatList from './ChatList'
-import Icon from './Icon'
+import Icon from './ui/Icon'
 import { classnames } from '../utils'
 
 const Sidebar: Component = () => {

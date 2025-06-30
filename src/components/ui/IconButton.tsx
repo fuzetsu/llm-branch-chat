@@ -1,5 +1,5 @@
 import { Component } from 'solid-js'
-import Icon, { IconName } from '../Icon'
+import Icon, { IconName } from './Icon'
 import { classnames } from '../../utils'
 
 type IconButtonVariant = 'ghost' | 'danger' | 'success' | 'cancel' | 'compact'
