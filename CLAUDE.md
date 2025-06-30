@@ -8,12 +8,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Dev**: `npm run dev` - Runs Vite development server on <http://localhost:8080>
 - **Serve**: `npm run serve` - Serves the built application
 - **Type Check**: `npm run type-check` - Runs TypeScript type checking without emitting files
-- **Verify Build**: `npm run verify-build` - Runs type checking AND build verification in one command 
+- **Lint**: `npm run lint` - Runs ESLint with SolidJS and TypeScript rules
+- **Verify Build**: `npm run verify-build` - Runs linting, type checking, AND build verification in one command 
 
 ## Testing Rule
 
-- **Primary Verification**: Use `npm run verify-build` for complete validation (type checking + build)
+- **Primary Verification**: Use `npm run verify-build` for complete validation (linting + type checking + build)
 - **Build Verification**: If `npm run verify-build` passes without errors, the application is considered functional
+- **Code Quality**: ESLint with SolidJS and TypeScript rules ensures code consistency and catches potential issues
 - **Type Safety**: TypeScript compilation with strict checking ensures code quality and prevents runtime errors
 - **No Dev Server Testing Required**: Running the dev server is not necessary for verification unless specifically debugging runtime issues
 
@@ -24,7 +26,8 @@ This is a modern SolidJS chat application with reactive state management and com
 ### Core Components
 
 - **App.tsx**: Root SolidJS component with global state provider and routing
-- **AppStore.tsx**: Reactive state management using SolidJS stores with localStorage persistence  
+- **AppStore.tsx**: Reactive state management using SolidJS stores with localStorage persistence and composed operations architecture
+- **AppStoreOperations.tsx**: Modular operations layer providing chat, message, and streaming functionality
 - **ApiService.ts**: HTTP client for chat API communication with streaming support and SolidJS integration
 
 ### Component Architecture
@@ -48,6 +51,8 @@ This is a modern SolidJS chat application with reactive state management and com
 - **Persistence**: Automatic localStorage persistence with effects
 - **Serialization**: Maps are serialized to arrays for JSON storage with backward compatibility
 - **Migration**: Automatic migration of older state formats maintained
+- **Composed Operations**: Modular operations architecture with dependency injection pattern
+- **Type-Safe Operations**: Strong typing for state operations with proper error handling
 
 ### Message Branching System
 
@@ -151,7 +156,8 @@ src/
 ├── App.tsx                 # Root component
 ├── main.tsx               # Application entry point
 ├── store/
-│   └── AppStore.tsx       # Global reactive state management
+│   ├── AppStore.tsx       # Global reactive state management
+│   └── AppStoreOperations.tsx # Modular operations layer
 ├── components/            # All SolidJS components
 │   ├── Layout.tsx         # Main layout structure
 │   ├── Header.tsx         # App header with navigation
@@ -185,11 +191,12 @@ src/
 ### Build Process
 
 - **Verification Command**: `npm run verify-build` provides complete validation pipeline
+- **Code Linting**: ESLint with SolidJS plugin enforces code quality and catches potential issues
 - **Type Checking**: Strict TypeScript compilation with `tsc --noEmit` before build
 - **Vite Configuration**: Optimized for SolidJS with TypeScript support
 - **Bundle Analysis**: Build process provides size analysis and optimization hints
 - **Production Ready**: Minified, tree-shaken, and optimized for deployment
-- **Quality Assurance**: Type safety ensures runtime error prevention
+- **Quality Assurance**: ESLint and type safety ensure code quality and runtime error prevention
 
 ### Backward Compatibility
 

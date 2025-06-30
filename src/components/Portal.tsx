@@ -7,16 +7,17 @@ export interface PortalProps {
 }
 
 const Portal: Component<PortalProps> = (props) => {
-  const mountElement = props.mount || document.body
-  const portalElement = document.createElement('div')
-
   let dispose: (() => void) | undefined
 
   createEffect(() => {
+    const mountElement = props.mount || document.body
+    const portalElement = document.createElement('div')
+    
     mountElement.appendChild(portalElement)
 
     // Render children into the portal element
-    dispose = render(() => props.children, portalElement)
+    const children = props.children
+    dispose = render(() => children, portalElement)
 
     onCleanup(() => {
       dispose?.()

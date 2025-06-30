@@ -2,35 +2,40 @@ import { SolidApiService } from './ApiService'
 import { createMessageNode, findNodeById } from '../utils/messageTree.js'
 import type { AppSettings, Chat, MessageNode, ApiMessage } from '../types/index.js'
 
-export interface MessageServiceCallbacks {
-  onAddMessage: (chatId: string, message: MessageNode, parentId?: string) => void
-  onUpdateMessage: (chatId: string, messageId: string, updates: Partial<MessageNode>) => void
-  onStartStreaming: (messageId: string) => void
-  onStopStreaming: () => void
-  onAppendStreamingContent: (content: string) => void
-  onGetStreamingContent: () => string
-  onGetVisibleMessages: (chatId: string) => MessageNode[]
+export interface MessageServiceDeps {
+  apiService: SolidApiService
+  addMessage: (chatId: string, message: MessageNode, parentId?: string) => void
+  updateMessage: (chatId: string, messageId: string, updates: Partial<MessageNode>) => void
+  startStreaming: (messageId: string) => void
+  stopStreaming: () => void
+  appendStreamingContent: (content: string) => void
+  getStreamingContent: () => string
+  getVisibleMessages: (chatId: string) => MessageNode[]
 }
 
-export class MessageService {
-  constructor(
-    private apiService: SolidApiService,
-    private callbacks: MessageServiceCallbacks
-  ) {}
-
+export const createMessageService = ({
+  apiService,
+  addMessage,
+  updateMessage,
+  startStreaming,
+  stopStreaming,
+  appendStreamingContent,
+  getStreamingContent,
+  getVisibleMessages,
+}: MessageServiceDeps) => ({
   async sendMessage(
     content: string,
     currentChat: Chat,
     settings: AppSettings
   ): Promise<void> {
     // Find the last message in the conversation to use as parent
-    const visibleMessages = this.callbacks.onGetVisibleMessages(currentChat.id)
+    const visibleMessages = getVisibleMessages(currentChat.id)
     const lastMessage = visibleMessages[visibleMessages.length - 1]
     const parentId = lastMessage?.id || null
 
     // Add user message
     const userMessage = createMessageNode('user', content.trim(), 'user', parentId)
-    this.callbacks.onAddMessage(currentChat.id, userMessage, parentId || undefined)
+    addMessage(currentChat.id, userMessage, parentId || undefined)
 
     // Create assistant message placeholder
     const assistantMessage = createMessageNode(
@@ -40,43 +45,43 @@ export class MessageService {
       userMessage.id,
     )
 
-    this.callbacks.onAddMessage(currentChat.id, assistantMessage, userMessage.id)
-    this.callbacks.onStartStreaming(assistantMessage.id)
+    addMessage(currentChat.id, assistantMessage, userMessage.id)
+    startStreaming(assistantMessage.id)
 
     try {
       // Convert messages to API format
-      const updatedVisibleMessages = this.callbacks.onGetVisibleMessages(currentChat.id)
+      const updatedVisibleMessages = getVisibleMessages(currentChat.id)
       const apiMessages: ApiMessage[] = updatedVisibleMessages.map((msg) => ({
         role: msg.role,
         content: msg.content,
       }))
 
       // Stream response
-      await this.apiService.streamToSignals(
+      await apiService.streamToSignals(
         apiMessages,
         assistantMessage.model || settings.chat.model,
         {
           onToken: (token: string) => {
-            this.callbacks.onAppendStreamingContent(token)
+            appendStreamingContent(token)
           },
           onComplete: () => {
             // Save the current streaming content before stopping
-            const finalContent = this.callbacks.onGetStreamingContent()
-            this.callbacks.onStopStreaming()
+            const finalContent = getStreamingContent()
+            stopStreaming()
 
             // Update final message with complete content
-            this.callbacks.onUpdateMessage(currentChat.id, assistantMessage.id, {
+            updateMessage(currentChat.id, assistantMessage.id, {
               content: finalContent,
               timestamp: Date.now(),
             })
           },
           onError: (error: Error) => {
             console.error('Streaming error:', error)
-            this.callbacks.onUpdateMessage(currentChat.id, assistantMessage.id, {
+            updateMessage(currentChat.id, assistantMessage.id, {
               content: `Error: ${error.message}`,
               timestamp: Date.now(),
             })
-            this.callbacks.onStopStreaming()
+            stopStreaming()
           },
         },
         settings.chat.temperature,
@@ -84,13 +89,13 @@ export class MessageService {
       )
     } catch (error) {
       console.error('Failed to send message:', error)
-      this.callbacks.onUpdateMessage(currentChat.id, assistantMessage.id, {
+      updateMessage(currentChat.id, assistantMessage.id, {
         content: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
         timestamp: Date.now(),
       })
-      this.callbacks.onStopStreaming()
+      stopStreaming()
     }
-  }
+  },
 
   async regenerateMessage(
     chatId: string,
@@ -104,7 +109,7 @@ export class MessageService {
     if (!message || message.role !== 'assistant') return
 
     // Get conversation history up to this message
-    const visibleMessages = this.callbacks.onGetVisibleMessages(chatId)
+    const visibleMessages = getVisibleMessages(chatId)
     const messageIndex = visibleMessages.findIndex((m) => m.id === messageId)
     if (messageIndex === -1) return
 
@@ -121,11 +126,11 @@ export class MessageService {
 
       // Add the new branch as a sibling
       if (message.parentId) {
-        this.callbacks.onAddMessage(chatId, newBranchMessage, message.parentId)
+        addMessage(chatId, newBranchMessage, message.parentId)
       }
 
       // Start streaming for regeneration
-      this.callbacks.onStartStreaming(newBranchMessage.id)
+      startStreaming(newBranchMessage.id)
 
       // Convert conversation history to API format
       const apiMessages: ApiMessage[] = conversationHistory.map((msg) => ({
@@ -134,29 +139,29 @@ export class MessageService {
       }))
 
       // Stream the regenerated response with entropy to prevent caching
-      await this.apiService.streamToSignals(
+      await apiService.streamToSignals(
         apiMessages,
         newBranchMessage.model || settings.chat.model,
         {
           onToken: (token: string) => {
-            this.callbacks.onAppendStreamingContent(token)
+            appendStreamingContent(token)
           },
           onComplete: () => {
             // Update the new branch with the complete content
-            const finalContent = this.callbacks.onGetStreamingContent()
-            this.callbacks.onUpdateMessage(chatId, newBranchMessage.id, {
+            const finalContent = getStreamingContent()
+            updateMessage(chatId, newBranchMessage.id, {
               content: finalContent,
               timestamp: Date.now(),
             })
-            this.callbacks.onStopStreaming()
+            stopStreaming()
           },
           onError: (error: Error) => {
             console.error('Regeneration error:', error)
-            this.callbacks.onUpdateMessage(chatId, newBranchMessage.id, {
+            updateMessage(chatId, newBranchMessage.id, {
               content: `Error: ${error.message}`,
               timestamp: Date.now(),
             })
-            this.callbacks.onStopStreaming()
+            stopStreaming()
           },
         },
         settings.chat.temperature,
@@ -165,7 +170,7 @@ export class MessageService {
       )
     } catch (error) {
       console.error('Failed to regenerate message:', error)
-      this.callbacks.onStopStreaming()
+      stopStreaming()
     }
   }
-}
+})

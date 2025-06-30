@@ -87,7 +87,7 @@ const ChatItem: Component<ChatItemProps> = (props) => {
           ? 'bg-primary dark:bg-primary-dark text-white shadow-md'
           : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white hover:shadow-sm'
       }`}
-      onClick={props.onSelect}
+      onClick={() => props.onSelect()}
       onMouseEnter={() => setShowActions(true)}
       onMouseLeave={() => setShowActions(false)}
     >

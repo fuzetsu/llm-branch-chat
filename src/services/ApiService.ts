@@ -153,7 +153,7 @@ export class ApiService {
         callbacks.onToken(content)
         return true
       }
-    } catch (error) {
+    } catch {
       // Ignore parse errors for malformed chunks
     }
 

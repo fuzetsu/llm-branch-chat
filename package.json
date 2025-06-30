@@ -7,10 +7,16 @@
     "dev": "vite",
     "serve": "vite preview",
     "type-check": "tsc --noEmit",
-    "verify-build": "npm run type-check && npm run build"
+    "verify-build": "npm run lint && npm run type-check && npm run build",
+    "lint": "eslint src --ext .ts,.tsx"
   },
   "devDependencies": {
     "@types/node": "^24.0.7",
+    "@typescript-eslint/eslint-plugin": "^8.35.0",
+    "@typescript-eslint/parser": "^8.35.0",
+    "eslint": "^9.30.0",
+    "eslint-plugin-solid": "^0.14.5",
+    "globals": "^16.2.0",
     "typescript": "^5.8.3",
     "vite": "^6.3.5",
     "vite-plugin-solid": "^2.11.7"
