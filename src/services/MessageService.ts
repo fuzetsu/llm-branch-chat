@@ -120,7 +120,7 @@ export const createMessageService = ({
       const newBranchMessage = createMessageNode(
         'assistant',
         '',
-        message.model || chat.model || settings.chat.model,
+        chat.model || settings.chat.model,
         message.parentId,
       )
 
