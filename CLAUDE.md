@@ -144,6 +144,11 @@ Centralized icon management with type safety:
 
 ## Development Notes
 
+### Code Conventions
+
+- **Flow Control**: Use proper Solid JS flow control components like Show, For, Index, Match
+  - Prefer these components over traditional JavaScript control structures for better reactivity and performance
+
 ### Technology Stack
 
 - **SolidJS**: Reactive UI framework with fine-grained reactivity
