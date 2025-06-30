@@ -9,7 +9,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Serve**: `npm run serve` - Serves the built application
 - **Type Check**: `npm run type-check` - Runs TypeScript type checking without emitting files
 - **Lint**: `npm run lint` - Runs ESLint with SolidJS and TypeScript rules
-- **Verify Build**: `npm run verify-build` - Runs linting, type checking, AND build verification in one command 
+- **Format**: `npm run format` - Formats code using Prettier
+- **Verify Build**: `npm run verify-build` - Runs linting, type checking, AND build verification in one command
 
 ## Testing Rule
 
@@ -17,6 +18,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Build Verification**: If `npm run verify-build` passes without errors, the application is considered functional
 - **Code Quality**: ESLint with SolidJS and TypeScript rules ensures code consistency and catches potential issues
 - **Type Safety**: TypeScript compilation with strict checking ensures code quality and prevents runtime errors
+- **Code Formatting**: Run `npm run format` at the end of task implementations to ensure proper code formatting
 - **No Dev Server Testing Required**: Running the dev server is not necessary for verification unless specifically debugging runtime issues
 
 ## Architecture Overview
