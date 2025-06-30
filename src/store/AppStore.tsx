@@ -44,8 +44,7 @@ type BaseOperations = Pick<
 interface AppStoreContextType extends BaseOperations {
   state: AppStateStore
   setCurrentChatId: (id: string | null) => void
-  setSettings: (settings: Partial<AppSettings>) => void
-  updateSettings: (settings: AppSettings) => void
+  updateSettings: (settings: Partial<AppSettings>) => void
   setUI: (ui: Partial<UISettings>) => void
   // Chat operations with wrapped signatures
   createNewChat: () => string
@@ -220,11 +219,7 @@ export const AppStoreProvider: ParentComponent = (props) => {
     setState('currentChatId', id)
   }
 
-  const setSettings = (newSettings: Partial<AppSettings>) => {
-    setState('settings', (settings) => ({ ...settings, ...newSettings }))
-  }
-
-  const updateSettings = (newSettings: AppSettings) => {
+  const updateSettings = (newSettings: Partial<AppSettings>) => {
     setState('settings', newSettings)
   }
 
@@ -276,7 +271,6 @@ export const AppStoreProvider: ParentComponent = (props) => {
   const storeValue: AppStoreContextType = {
     state,
     setCurrentChatId,
-    setSettings,
     updateSettings,
     setUI,
     // Chat operations

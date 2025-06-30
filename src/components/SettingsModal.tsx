@@ -1,6 +1,13 @@
-import { Component, createEffect, createSignal, For, Show } from 'solid-js'
+import { Component, createEffect, createSignal, Show } from 'solid-js'
 import { useAppStore } from '../store/AppStore'
 import Icon from './Icon'
+import FormField from './ui/FormField'
+import Input from './ui/Input'
+import Textarea from './ui/Textarea'
+import Select from './ui/Select'
+import Checkbox from './ui/Checkbox'
+import Slider from './ui/Slider'
+import Button from './ui/Button'
 
 interface SettingsModalProps {
   isOpen: boolean
@@ -30,6 +37,11 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
       .availableModels.split('\n')
       .map((model) => model.trim())
       .filter((model) => model.length > 0)
+  }
+
+  // Convert model list to Select options
+  const getModelOptions = () => {
+    return availableModelsList().map((model) => ({ value: model, label: model }))
   }
 
   // Load current settings into form when modal opens
@@ -93,10 +105,7 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
     <Show when={props.isOpen}>
       <div class="fixed inset-0 z-50 flex items-center justify-center p-4 transition-opacity duration-300">
         {/* Backdrop */}
-        <div
-          class="fixed inset-0 bg-gray-500/75 transition-opacity"
-          onClick={handleCancel}
-        />
+        <div class="fixed inset-0 bg-gray-500/75 transition-opacity" onClick={handleCancel} />
 
         {/* Modal */}
         <div class="relative w-full max-w-md max-h-[90vh] overflow-hidden text-left align-middle transition-all transform bg-white dark:bg-dark-surface shadow-xl rounded-2xl border dark:border-dark-border flex flex-col">
@@ -114,183 +123,116 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
           {/* Content */}
           <div class="flex-1 overflow-y-auto p-6">
             <div class="space-y-6">
-              {/* API Base URL */}
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  API Base URL
-                </label>
-                <input
+              <FormField label="API Base URL">
+                <Input
                   type="text"
-                  class="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-dark-surface text-gray-900 dark:text-white"
                   placeholder="https://api.openai.com/v1"
                   value={formData().apiBaseUrl}
-                  onInput={(e) => handleInputChange('apiBaseUrl', e.currentTarget.value)}
+                  onInput={(value) => handleInputChange('apiBaseUrl', value)}
                 />
-              </div>
+              </FormField>
 
-              {/* API Key */}
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  API Key
-                </label>
-                <input
+              <FormField label="API Key">
+                <Input
                   type="password"
-                  class="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-dark-surface text-gray-900 dark:text-white"
                   placeholder="Your API key"
                   value={formData().apiKey}
-                  onInput={(e) => handleInputChange('apiKey', e.currentTarget.value)}
+                  onInput={(value) => handleInputChange('apiKey', value)}
                 />
-              </div>
+              </FormField>
 
-              {/* Available Models */}
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Available Models (one per line)
-                </label>
-                <textarea
-                  class="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-dark-surface text-gray-900 dark:text-white"
+              <FormField label="Available Models (one per line)">
+                <Textarea
                   rows={4}
                   placeholder="gpt-4&#10;gpt-3.5-turbo&#10;claude-3-sonnet"
                   value={formData().availableModels}
-                  onInput={(e) => handleInputChange('availableModels', e.currentTarget.value)}
+                  onInput={(value) => handleInputChange('availableModels', value)}
                 />
-              </div>
+              </FormField>
 
-              {/* Default Model */}
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Default Model
-                </label>
-                <select
-                  class="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-dark-surface text-gray-900 dark:text-white"
+              <FormField label="Default Model">
+                <Select
                   value={formData().defaultModel}
-                  onChange={(e) => handleInputChange('defaultModel', e.currentTarget.value)}
-                >
-                  <option value="">Select a model</option>
-                  <For each={availableModelsList()}>
-                    {(model) => <option value={model}>{model}</option>}
-                  </For>
-                </select>
-              </div>
-
-              {/* Temperature */}
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Temperature{' '}
-                  <span class="text-primary font-semibold">{formData().temperature}</span>
-                </label>
-                <input
-                  type="range"
-                  class="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer"
-                  min="0"
-                  max="2"
-                  step="0.1"
-                  value={formData().temperature}
-                  onInput={(e) =>
-                    handleInputChange('temperature', parseFloat(e.currentTarget.value))
-                  }
+                  onChange={(value) => handleInputChange('defaultModel', value)}
+                  options={getModelOptions}
+                  placeholder="Select a model"
                 />
-              </div>
+              </FormField>
 
-              {/* Max Tokens */}
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Max Tokens
-                </label>
-                <input
+              <FormField label="Temperature">
+                <Slider
+                  value={formData().temperature}
+                  onInput={(value) => handleInputChange('temperature', value)}
+                  min={0}
+                  max={2}
+                  step={0.1}
+                  showValue={true}
+                />
+              </FormField>
+
+              <FormField label="Max Tokens">
+                <Input
                   type="number"
-                  class="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-dark-surface text-gray-900 dark:text-white"
+                  value={formData().maxTokens}
+                  onInput={(value) => handleInputChange('maxTokens', parseInt(value))}
                   min="1"
                   max="4096"
-                  value={formData().maxTokens}
-                  onInput={(e) => handleInputChange('maxTokens', parseInt(e.currentTarget.value))}
                 />
-              </div>
+              </FormField>
 
-              {/* Auto Generate Title */}
-              <div>
-                <label class="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300">
-                  <input
-                    type="checkbox"
-                    class="rounded border-gray-300 dark:border-gray-600 text-primary focus:ring-primary mr-3"
-                    checked={formData().autoGenerateTitle}
-                    onInput={(e) => handleInputChange('autoGenerateTitle', e.currentTarget.checked)}
-                  />
-                  Auto-generate chat titles
-                </label>
-              </div>
+              <Checkbox
+                checked={formData().autoGenerateTitle}
+                onInput={(checked) => handleInputChange('autoGenerateTitle', checked)}
+                label="Auto-generate chat titles"
+              />
 
-              {/* Title Generation Trigger */}
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Title Generation Trigger (total messages)
-                </label>
-                <input
+              <FormField
+                label="Title Generation Trigger (total messages)"
+                helpText="Generate title after this many total messages (user + assistant)"
+              >
+                <Input
                   type="number"
-                  class="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-dark-surface text-gray-900 dark:text-white"
+                  value={formData().titleGenerationTrigger}
+                  onInput={(value) => handleInputChange('titleGenerationTrigger', parseInt(value))}
                   min="1"
                   max="20"
-                  value={formData().titleGenerationTrigger}
-                  onInput={(e) =>
-                    handleInputChange('titleGenerationTrigger', parseInt(e.currentTarget.value))
-                  }
                 />
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  Generate title after this many total messages (user + assistant)
-                </p>
-              </div>
+              </FormField>
 
-              {/* Title Model */}
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Title Generation Model
-                </label>
-                <select
-                  class="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-dark-surface text-gray-900 dark:text-white"
+              <FormField label="Title Generation Model">
+                <Select
                   value={formData().titleModel}
-                  onChange={(e) => handleInputChange('titleModel', e.currentTarget.value)}
-                >
-                  <option value="">Select a model</option>
-                  <For each={availableModelsList()}>
-                    {(model) => <option value={model}>{model}</option>}
-                  </For>
-                </select>
-              </div>
+                  onChange={(value) => handleInputChange('titleModel', value)}
+                  options={getModelOptions}
+                  placeholder="Select a model"
+                />
+              </FormField>
 
-              {/* Theme */}
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Theme
-                </label>
-                <select
-                  class="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-dark-surface text-gray-900 dark:text-white"
+              <FormField label="Theme">
+                <Select
                   value={formData().theme}
-                  onChange={(e) =>
-                    handleInputChange('theme', e.currentTarget.value as 'light' | 'dark' | 'auto')
+                  onChange={(value) =>
+                    handleInputChange('theme', value as 'light' | 'dark' | 'auto')
                   }
-                >
-                  <option value="light">Light</option>
-                  <option value="dark">Dark</option>
-                  <option value="auto">Auto</option>
-                </select>
-              </div>
+                  options={[
+                    { value: 'light', label: 'Light' },
+                    { value: 'dark', label: 'Dark' },
+                    { value: 'auto', label: 'Auto' },
+                  ]}
+                  placeholder="Select theme"
+                />
+              </FormField>
             </div>
           </div>
 
           {/* Footer */}
           <div class="flex justify-end space-x-3 p-6 border-t border-gray-200 dark:border-dark-border flex-shrink-0">
-            <button
-              class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
-              onClick={handleCancel}
-            >
+            <Button variant="secondary" onClick={handleCancel}>
               Cancel
-            </button>
-            <button
-              class="px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-blue-600 dark:bg-primary-dark dark:hover:bg-primary-darker rounded-md transition-colors"
-              onClick={handleSave}
-            >
+            </Button>
+            <Button variant="primary" onClick={handleSave}>
               Save Settings
-            </button>
+            </Button>
           </div>
         </div>
       </div>

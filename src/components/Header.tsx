@@ -48,7 +48,7 @@ const Header: Component = () => {
                   if (chat) {
                     store.updateChat(chat.id, { model: selectedModel })
                   } else {
-                    store.setSettings({
+                    store.updateSettings({
                       chat: { ...store.state.settings.chat, model: selectedModel },
                     })
                   }
