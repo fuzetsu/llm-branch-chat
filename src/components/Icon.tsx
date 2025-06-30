@@ -12,6 +12,7 @@ export type IconName =
   | 'archive'
   | 'delete'
   | 'chevron'
+  | 'check'
 
 interface IconProps {
   name: IconName
@@ -132,6 +133,16 @@ const Icon: Component<IconProps> = (props) => {
             stroke-linejoin="round"
             stroke-width="2"
             d="M19 9l-7 7-7-7"
+          />
+        )
+
+      case 'check':
+        return (
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M5 13l4 4L19 7"
           />
         )
 

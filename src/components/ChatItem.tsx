@@ -15,32 +15,55 @@ const ChatItem: Component<ChatItemProps> = (props) => {
   const store = useAppStore()
   const [showActions, setShowActions] = createSignal(false)
   const [isEditing, setIsEditing] = createSignal(false)
-  const [editTitle, setEditTitle] = createSignal('')
   const [showDeleteConfirm, setShowDeleteConfirm] = createSignal(false)
+  let editableRef: HTMLDivElement | undefined
 
-  const handleEdit = () => {
-    setEditTitle(props.chat.title)
-    setIsEditing(true)
-  }
-
-  const handleSaveEdit = () => {
-    if (editTitle().trim()) {
-      store.updateChat(props.chat.id, { title: editTitle().trim() })
+  const handleContentEdit = () => {
+    if (editableRef) {
+      editableRef.contentEditable = 'true'
+      editableRef.focus()
+      // Select all text for easy editing
+      const range = document.createRange()
+      range.selectNodeContents(editableRef)
+      const selection = window.getSelection()
+      selection?.removeAllRanges()
+      selection?.addRange(range)
+      setIsEditing(true)
     }
-    setIsEditing(false)
   }
 
-  const handleCancelEdit = () => {
-    setIsEditing(false)
-    setEditTitle('')
+  const handleContentSave = () => {
+    if (editableRef) {
+      const newTitle = editableRef.textContent?.trim() || ''
+      if (newTitle && newTitle !== props.chat.title) {
+        store.updateChat(props.chat.id, { title: newTitle })
+      }
+      editableRef.contentEditable = 'false'
+      setIsEditing(false)
+    }
   }
 
-  const handleKeyDown = (e: KeyboardEvent) => {
+  const handleContentCancel = () => {
+    if (editableRef) {
+      editableRef.textContent = props.chat.title
+      editableRef.contentEditable = 'false'
+      setIsEditing(false)
+    }
+  }
+
+  const handleContentKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Enter') {
-      handleSaveEdit()
+      e.preventDefault()
+      handleContentSave()
     } else if (e.key === 'Escape') {
-      handleCancelEdit()
+      e.preventDefault()
+      handleContentCancel()
     }
+  }
+
+  const handleContentBlur = () => {
+    // Auto-save on blur
+    handleContentSave()
   }
 
   const handleArchive = () => {
@@ -82,49 +105,34 @@ const ChatItem: Component<ChatItemProps> = (props) => {
   }
 
   return (
-    <div
-      class={`mb-2 rounded-lg cursor-pointer transition-all duration-200 group relative ${
-        props.isSelected
-          ? 'bg-primary dark:bg-primary-dark text-white shadow-md'
-          : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white hover:shadow-sm'
-      }`}
-      onClick={() => props.onSelect()}
-      onMouseEnter={() => setShowActions(true)}
-      onMouseLeave={() => setShowActions(false)}
-    >
-      <div class="p-3">
-        <Show
-          when={!isEditing()}
-          fallback={
-            <div class="flex items-center space-x-2">
-              <input
-                type="text"
-                value={editTitle()}
-                onInput={(e) => setEditTitle(e.currentTarget.value)}
-                onKeyDown={handleKeyDown}
-                class="flex-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-2 py-1 text-sm rounded border focus:outline-none focus:ring-2 focus:ring-primary"
-                autofocus
-              />
-              <IconButton
-                icon="plus"
-                variant="success"
-                onClick={handleSaveEdit}
-                stopPropagation
-                title="Save"
-              />
-              <IconButton
-                icon="close"
-                variant="cancel"
-                onClick={handleCancelEdit}
-                stopPropagation
-                title="Cancel"
-              />
-            </div>
-          }
-        >
+    <>
+      <div
+        class={`mb-2 rounded-lg cursor-pointer transition-all duration-200 group relative ${
+          props.isSelected
+            ? 'bg-primary dark:bg-primary-dark text-white shadow-md'
+            : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white hover:shadow-sm'
+        }`}
+        onClick={() => props.onSelect()}
+        onMouseEnter={() => setShowActions(true)}
+        onMouseLeave={() => setShowActions(false)}
+      >
+        <div class="p-3">
           <div class="flex items-start justify-between">
             <div class="flex-1 min-w-0">
-              <div class="font-medium truncate">{props.chat.title}</div>
+              <div
+                ref={editableRef}
+                class={`font-medium truncate transition-all duration-200 cursor-text ${
+                  isEditing()
+                    ? 'bg-white/10 rounded px-2 py-1 -mx-2 -my-1 ring-1 ring-primary/30'
+                    : 'hover:bg-white/5 rounded px-2 py-1 -mx-2 -my-1'
+                }`}
+                onDblClick={handleContentEdit}
+                onKeyDown={handleContentKeyDown}
+                onBlur={handleContentBlur}
+                title="Double-click to edit"
+              >
+                {props.chat.title}
+              </div>
               <div class="text-sm opacity-70 mt-1">{formatDate(props.chat.updatedAt)}</div>
             </div>
             <Show when={showActions()}>
@@ -132,9 +140,9 @@ const ChatItem: Component<ChatItemProps> = (props) => {
                 <IconButton
                   icon="edit"
                   variant="ghost"
-                  onClick={handleEdit}
+                  onClick={handleContentEdit}
                   stopPropagation
-                  title="Edit title"
+                  title="Edit title (or double-click)"
                 />
                 <Show
                   when={!props.isArchived}
@@ -167,7 +175,7 @@ const ChatItem: Component<ChatItemProps> = (props) => {
               </div>
             </Show>
           </div>
-        </Show>
+        </div>
       </div>
       <ConfirmModal
         isOpen={showDeleteConfirm()}
@@ -178,7 +186,7 @@ const ChatItem: Component<ChatItemProps> = (props) => {
         onConfirm={confirmDelete}
         onCancel={() => setShowDeleteConfirm(false)}
       />
-    </div>
+    </>
   )
 }
 
