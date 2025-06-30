@@ -159,4 +159,3 @@ export function getNodeChildren(tree: MessageNode | null, nodeId: string): Messa
   const node = findNodeById(tree, nodeId)
   return node ? node.children : []
 }
-

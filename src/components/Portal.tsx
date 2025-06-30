@@ -12,7 +12,7 @@ const Portal: Component<PortalProps> = (props) => {
   createEffect(() => {
     const mountElement = props.mount || document.body
     const portalElement = document.createElement('div')
-    
+
     mountElement.appendChild(portalElement)
 
     // Render children into the portal element

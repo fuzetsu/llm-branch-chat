@@ -23,11 +23,7 @@ export const createMessageService = ({
   getStreamingContent,
   getVisibleMessages,
 }: MessageServiceDeps) => ({
-  async sendMessage(
-    content: string,
-    currentChat: Chat,
-    settings: AppSettings
-  ): Promise<void> {
+  async sendMessage(content: string, currentChat: Chat, settings: AppSettings): Promise<void> {
     // Find the last message in the conversation to use as parent
     const visibleMessages = getVisibleMessages(currentChat.id)
     const lastMessage = visibleMessages[visibleMessages.length - 1]
@@ -101,7 +97,7 @@ export const createMessageService = ({
     chatId: string,
     messageId: string,
     chat: Chat,
-    settings: AppSettings
+    settings: AppSettings,
   ): Promise<void> {
     if (!chat.messageTree) return
 
@@ -172,5 +168,5 @@ export const createMessageService = ({
       console.error('Failed to regenerate message:', error)
       stopStreaming()
     }
-  }
+  },
 })

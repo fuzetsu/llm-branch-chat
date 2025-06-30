@@ -54,9 +54,9 @@ const Header: Component = () => {
                   }
                 }}
               >
-                <For each={store.state.settings.chat.availableModels}>{(model) => (
-                  <option value={model}>{model}</option>
-                )}</For>
+                <For each={store.state.settings.chat.availableModels}>
+                  {(model) => <option value={model}>{model}</option>}
+                </For>
               </select>
             </div>
           </div>

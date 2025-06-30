@@ -65,5 +65,5 @@ export const createChatOperations = ({ setState, getState }: ChatOperationsDeps)
     return Array.from(chats.values())
       .filter((chat) => chat.isArchived)
       .sort((a, b) => b.updatedAt - a.updatedAt)
-  }
+  },
 })

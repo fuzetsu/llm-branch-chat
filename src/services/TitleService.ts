@@ -15,7 +15,7 @@ export const createTitleService = ({
   async generateChatTitle(
     chatId: string,
     chat: { isGeneratingTitle?: boolean },
-    titleModel: string
+    titleModel: string,
   ): Promise<void> {
     const visibleMessages = getVisibleMessages(chatId)
     if (visibleMessages.length < 2 || chat.isGeneratingTitle) return
@@ -35,5 +35,5 @@ export const createTitleService = ({
       console.error('Title generation failed:', error)
       updateChat(chatId, { isGeneratingTitle: false })
     }
-  }
+  },
 })

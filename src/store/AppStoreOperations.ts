@@ -8,7 +8,7 @@ import type { AppStoreOperationsDeps } from './AppStore'
 
 export function createAppStoreOperations(
   deps: AppStoreOperationsDeps,
-  apiService: SolidApiService
+  apiService: SolidApiService,
 ) {
   // Initialize operation modules
   const chatOps = createChatOperations(deps)
