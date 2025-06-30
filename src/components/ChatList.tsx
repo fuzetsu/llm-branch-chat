@@ -2,6 +2,7 @@ import { Component, For, Show, createEffect } from 'solid-js'
 import { useAppStore } from '../store/AppStore'
 import ChatItem from './ChatItem'
 import Icon from './Icon'
+import Button from './ui/Button'
 
 const ChatList: Component = () => {
   const store = useAppStore()
@@ -43,9 +44,10 @@ const ChatList: Component = () => {
 
       <Show when={archivedChats().length > 0}>
         <div class="mt-6">
-          <button
+          <Button
             onClick={toggleArchivedSection}
-            class="w-full flex items-center justify-between p-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
+            variant="ghost"
+            class="w-full flex items-center justify-between p-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
           >
             <span class="text-sm font-medium">Archived ({archivedChats().length})</span>
             <Icon
@@ -53,7 +55,7 @@ const ChatList: Component = () => {
               size="sm"
               class={`transform transition-transform ${isArchivedSectionCollapsed() ? '' : 'rotate-180'}`}
             />
-          </button>
+          </Button>
 
           <Show when={!isArchivedSectionCollapsed()}>
             <div ref={archivedSectionRef} class="mt-2">

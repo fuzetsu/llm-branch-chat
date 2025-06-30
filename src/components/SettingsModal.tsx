@@ -110,7 +110,7 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
           <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-dark-border flex-shrink-0">
             <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-white">Settings</h3>
             <button
-              class="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              class="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
               onClick={handleCancel}
             >
               <Icon name="close" class="text-gray-400" />

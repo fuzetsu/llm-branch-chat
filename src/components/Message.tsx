@@ -2,7 +2,7 @@ import { Component, createEffect, createSignal, onCleanup, Show } from 'solid-js
 import { MessageNode as MessageType, Chat } from '../types/index.js'
 import { useAppStore } from '../store/AppStore'
 import MessageBranching from './MessageBranching'
-import Icon from './Icon'
+import IconButton from './ui/IconButton'
 import { formatTimestamp, renderMarkdown, throttle } from '../utils/index.js'
 
 interface MessageProps {
@@ -62,21 +62,14 @@ const Message: Component<MessageProps> = (props) => {
 
     return (
       <div class="absolute top-1 right-1 flex items-center space-x-1 bg-white dark:bg-gray-800 rounded shadow-sm border border-gray-200 dark:border-gray-600 px-1">
-        <button
-          class="p-1 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
-          onClick={startEdit}
-          title="Edit message"
-        >
-          <Icon name="edit" size="sm" />
-        </button>
+        <IconButton icon="edit" variant="compact" onClick={startEdit} title="Edit message" />
         <Show when={isAssistant()}>
-          <button
-            class="p-1 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+          <IconButton
+            icon="regenerate"
+            variant="compact"
             onClick={handleRegenerate}
             title="Regenerate response"
-          >
-            <Icon name="regenerate" size="sm" />
-          </button>
+          />
         </Show>
       </div>
     )
@@ -131,13 +124,13 @@ const Message: Component<MessageProps> = (props) => {
               />
               <div class="flex justify-end space-x-2">
                 <button
-                  class="px-2 py-1 text-xs bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-500 rounded transition-colors"
+                  class="px-2 py-1 text-xs bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-500 rounded transition-colors cursor-pointer"
                   onClick={cancelEdit}
                 >
                   Cancel
                 </button>
                 <button
-                  class="px-2 py-1 text-xs bg-primary hover:bg-blue-600 dark:bg-primary-dark dark:hover:bg-primary-darker text-white rounded transition-colors"
+                  class="px-2 py-1 text-xs bg-primary hover:bg-blue-600 dark:bg-primary-dark dark:hover:bg-primary-darker text-white rounded transition-colors cursor-pointer"
                   onClick={saveEdit}
                 >
                   Save

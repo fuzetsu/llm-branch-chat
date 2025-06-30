@@ -39,7 +39,7 @@ const ConfirmModal: Component<ConfirmModalProps> = (props) => {
               {props.title}
             </h3>
             <button
-              class="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              class="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
               onClick={() => props.onCancel()}
             >
               <Icon name="close" class="text-gray-400" />

@@ -1,7 +1,7 @@
 import { Component, createSignal, Show } from 'solid-js'
 import { useAppStore } from '../store/AppStore'
 import type { Chat } from '../types/index.js'
-import Icon from './Icon'
+import IconButton from './ui/IconButton'
 import ConfirmModal from './ConfirmModal'
 
 interface ChatItemProps {
@@ -18,48 +18,42 @@ const ChatItem: Component<ChatItemProps> = (props) => {
   const [editTitle, setEditTitle] = createSignal('')
   const [showDeleteConfirm, setShowDeleteConfirm] = createSignal(false)
 
-  const handleEdit = (e: Event) => {
-    e.stopPropagation()
+  const handleEdit = () => {
     setEditTitle(props.chat.title)
     setIsEditing(true)
   }
 
-  const handleSaveEdit = (e: Event) => {
-    e.stopPropagation()
+  const handleSaveEdit = () => {
     if (editTitle().trim()) {
       store.updateChat(props.chat.id, { title: editTitle().trim() })
     }
     setIsEditing(false)
   }
 
-  const handleCancelEdit = (e: Event) => {
-    e.stopPropagation()
+  const handleCancelEdit = () => {
     setIsEditing(false)
     setEditTitle('')
   }
 
   const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Enter') {
-      handleSaveEdit(e)
+      handleSaveEdit()
     } else if (e.key === 'Escape') {
-      handleCancelEdit(e)
+      handleCancelEdit()
     }
   }
 
-  const handleArchive = (e: Event) => {
-    e.stopPropagation()
+  const handleArchive = () => {
     store.updateChat(props.chat.id, { isArchived: true })
     setShowActions(false)
   }
 
-  const handleUnarchive = (e: Event) => {
-    e.stopPropagation()
+  const handleUnarchive = () => {
     store.updateChat(props.chat.id, { isArchived: false })
     setShowActions(false)
   }
 
-  const handleDelete = (e: Event) => {
-    e.stopPropagation()
+  const handleDelete = () => {
     setShowDeleteConfirm(true)
     setShowActions(false)
   }
@@ -111,20 +105,20 @@ const ChatItem: Component<ChatItemProps> = (props) => {
                 class="flex-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-2 py-1 text-sm rounded border focus:outline-none focus:ring-2 focus:ring-primary"
                 autofocus
               />
-              <button
+              <IconButton
+                icon="plus"
+                variant="success"
                 onClick={handleSaveEdit}
-                class="p-1 text-green-600 hover:text-green-700 transition-colors"
+                stopPropagation
                 title="Save"
-              >
-                <Icon name="plus" size="sm" />
-              </button>
-              <button
+              />
+              <IconButton
+                icon="close"
+                variant="cancel"
                 onClick={handleCancelEdit}
-                class="p-1 text-red-600 hover:text-red-700 transition-colors"
+                stopPropagation
                 title="Cancel"
-              >
-                <Icon name="close" size="sm" />
-              </button>
+              />
             </div>
           }
         >
@@ -135,44 +129,41 @@ const ChatItem: Component<ChatItemProps> = (props) => {
             </div>
             <Show when={showActions()}>
               <div class="flex items-center space-x-1 ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button
+                <IconButton
+                  icon="edit"
+                  variant="ghost"
                   onClick={handleEdit}
-                  class="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                  stopPropagation
                   title="Edit title"
-                >
-                  <Icon name="edit" size="sm" class="text-gray-500 dark:text-gray-400" />
-                </button>
+                />
                 <Show
                   when={!props.isArchived}
                   fallback={
-                    <button
+                    <IconButton
+                      icon="archive"
+                      variant="ghost"
                       onClick={handleUnarchive}
-                      class="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                      stopPropagation
                       title="Unarchive chat"
-                    >
-                      <Icon
-                        name="archive"
-                        size="sm"
-                        class="text-gray-500 dark:text-gray-400 transform rotate-180"
-                      />
-                    </button>
+                      class="transform rotate-180"
+                    />
                   }
                 >
-                  <button
+                  <IconButton
+                    icon="archive"
+                    variant="ghost"
                     onClick={handleArchive}
-                    class="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                    stopPropagation
                     title="Archive chat"
-                  >
-                    <Icon name="archive" size="sm" class="text-gray-500 dark:text-gray-400" />
-                  </button>
+                  />
                 </Show>
-                <button
+                <IconButton
+                  icon="delete"
+                  variant="danger"
                   onClick={handleDelete}
-                  class="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900 transition-colors"
+                  stopPropagation
                   title="Delete chat"
-                >
-                  <Icon name="delete" size="sm" class="text-red-500 dark:text-red-400" />
-                </button>
+                />
               </div>
             </Show>
           </div>

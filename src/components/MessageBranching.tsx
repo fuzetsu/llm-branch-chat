@@ -31,7 +31,7 @@ const MessageBranching: Component<MessageBranchingProps> = (props) => {
                 <Index each={Array.from({ length: info().total }, (_, i) => i)}>
                   {(index) => (
                     <button
-                      class={`px-2 py-1 rounded text-xs transition-colors ${
+                      class={`px-2 py-1 rounded text-xs transition-colors cursor-pointer ${
                         index() === info().current - 1
                           ? 'bg-primary text-white dark:bg-primary-dark'
                           : 'hover:bg-gray-200 dark:hover:bg-gray-700'

@@ -19,7 +19,7 @@ const Sidebar: Component = () => {
       <div class="flex flex-col h-full pt-16">
         <div class="p-4 border-b border-gray-200 dark:border-dark-border">
           <button
-            class="w-full px-4 py-3 text-left bg-primary hover:bg-blue-600 dark:bg-primary-dark dark:hover:bg-primary-darker text-white rounded-lg transition-colors flex items-center space-x-2"
+            class="w-full px-4 py-3 text-left bg-primary hover:bg-blue-600 dark:bg-primary-dark dark:hover:bg-primary-darker text-white rounded-lg transition-colors flex items-center space-x-2 cursor-pointer"
             onClick={handleNewChat}
           >
             <Icon name="plus" />
