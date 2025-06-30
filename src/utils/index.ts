@@ -70,7 +70,8 @@ export function querySelectorAll<T extends HTMLElement>(selector: string): NodeL
 /**
  * Debounces a function call
  */
-export function debounce<T extends (...args: unknown[]) => void>(
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function debounce<T extends (...args: any[]) => void>(
   func: T,
   wait: number,
 ): (...args: Parameters<T>) => void {
@@ -84,6 +85,34 @@ export function debounce<T extends (...args: unknown[]) => void>(
 
     clearTimeout(timeoutId)
     timeoutId = setTimeout(later, wait)
+  }
+}
+
+/**
+ * Throttles a function call
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function throttle<T extends (...args: any[]) => void>(
+  func: T,
+  wait: number,
+): (...args: Parameters<T>) => void {
+  let timeoutId = -1
+  let lastCall = 0
+  return (...args: Parameters<T>) => {
+    const exec = () => {
+      lastCall = Date.now()
+      func(...args)
+    }
+    const now = Date.now()
+    const delta = now - lastCall
+    clearTimeout(timeoutId)
+
+    if (delta >= wait) {
+      exec()
+      return
+    }
+
+    timeoutId = setTimeout(exec, wait - delta)
   }
 }
 

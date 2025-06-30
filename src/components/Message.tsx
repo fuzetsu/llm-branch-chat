@@ -1,8 +1,9 @@
-import { Component, createSignal, Show } from 'solid-js'
+import { Component, createEffect, createSignal, onCleanup, Show } from 'solid-js'
 import { MessageNode as MessageType, Chat } from '../types/index.js'
 import { useAppStore } from '../store/AppStore'
 import MessageBranching from './MessageBranching'
 import Icon from './Icon'
+import { renderMarkdown, throttle } from '../utils/index.js'
 
 interface MessageProps {
   message: MessageType
@@ -92,6 +93,28 @@ const Message: Component<MessageProps> = (props) => {
     )
   }
 
+  const getRawContent = () => props.streamingContent || props.message.content
+
+  const [html, setHtml] = createSignal('')
+  const throttledRender = throttle(async (content: string, isMounted: () => boolean) => {
+    if (!isMounted()) return
+    const html = await renderMarkdown(content)
+    if (isMounted()) setHtml(html)
+  }, 300)
+  createEffect(() => {
+    let mounted = true
+    throttledRender(getRawContent(), () => mounted)
+    onCleanup(() => (mounted = false))
+  })
+
+  const renderMessageContent = () => {
+    if (html()) {
+      // eslint-disable-next-line solid/no-innerhtml
+      return <div class="whitespace-normal" innerHTML={html()} />
+    }
+    return getRawContent()
+  }
+
   return (
     <div class={`flex ${isUser() ? 'justify-end' : 'justify-start'} mb-4`}>
       <div
@@ -135,7 +158,7 @@ const Message: Component<MessageProps> = (props) => {
           }
         >
           <div class="message-content whitespace-pre-wrap">
-            {props.streamingContent || props.message.content}
+            {renderMessageContent()}
             <Show when={props.isStreaming}>
               <span class="animate-pulse">▋</span>
             </Show>
