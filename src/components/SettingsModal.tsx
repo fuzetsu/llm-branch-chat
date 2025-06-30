@@ -76,6 +76,7 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
       ui: {
         theme: formData().theme,
         sidebarCollapsed: store.state.settings.ui.sidebarCollapsed,
+        archivedSectionCollapsed: store.state.settings.ui.archivedSectionCollapsed,
         isGenerating: store.state.settings.ui.isGenerating,
         editTextareaSize: store.state.settings.ui.editTextareaSize,
       },

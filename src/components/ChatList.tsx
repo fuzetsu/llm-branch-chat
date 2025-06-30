@@ -1,11 +1,28 @@
-import { Component, For, Show } from 'solid-js'
+import { Component, For, Show, createEffect } from 'solid-js'
 import { useAppStore } from '../store/AppStore'
 import ChatItem from './ChatItem'
+import Icon from './Icon'
 
 const ChatList: Component = () => {
   const store = useAppStore()
+  let archivedSectionRef: HTMLDivElement | undefined
 
   const activeChats = () => store.getActiveChats()
+  const archivedChats = () => store.getArchivedChats()
+  const isArchivedSectionCollapsed = () => store.state.ui.archivedSectionCollapsed
+
+  const toggleArchivedSection = () => {
+    store.setUI({ archivedSectionCollapsed: !isArchivedSectionCollapsed() })
+  }
+
+  createEffect(() => {
+    requestAnimationFrame(() => {
+      const selectedElement = archivedSectionRef?.querySelector('[data-selected="true"]')
+      if (selectedElement) {
+        selectedElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+      }
+    })
+  })
 
   return (
     <div class="flex-1 overflow-y-auto p-4">
@@ -18,9 +35,42 @@ const ChatList: Component = () => {
           />
         )}
       </For>
-      <Show when={activeChats().length === 0}>
+      <Show when={activeChats().length === 0 && archivedChats().length === 0}>
         <div class="text-gray-500 dark:text-gray-400 text-center py-8">
           No chats yet. Start a new conversation!
+        </div>
+      </Show>
+
+      <Show when={archivedChats().length > 0}>
+        <div class="mt-6">
+          <button
+            onClick={toggleArchivedSection}
+            class="w-full flex items-center justify-between p-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
+          >
+            <span class="text-sm font-medium">Archived ({archivedChats().length})</span>
+            <Icon
+              name="chevron"
+              size="sm"
+              class={`transform transition-transform ${isArchivedSectionCollapsed() ? '' : 'rotate-180'}`}
+            />
+          </button>
+
+          <Show when={!isArchivedSectionCollapsed()}>
+            <div ref={archivedSectionRef} class="mt-2">
+              <For each={archivedChats()}>
+                {(chat) => (
+                  <div data-selected={store.state.currentChatId === chat.id}>
+                    <ChatItem
+                      chat={chat}
+                      isSelected={store.state.currentChatId === chat.id}
+                      onSelect={() => store.setCurrentChatId(chat.id)}
+                      isArchived={true}
+                    />
+                  </div>
+                )}
+              </For>
+            </div>
+          </Show>
         </div>
       </Show>
     </div>

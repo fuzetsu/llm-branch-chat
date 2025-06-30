@@ -80,6 +80,7 @@ function createDefaultSettings(): AppSettings {
     },
     ui: {
       sidebarCollapsed: false,
+      archivedSectionCollapsed: true,
       theme: 'dark' as const,
       isGenerating: false,
       editTextareaSize: {
@@ -93,6 +94,7 @@ function createDefaultSettings(): AppSettings {
 function createDefaultUISettings(): UISettings {
   return {
     sidebarCollapsed: false,
+    archivedSectionCollapsed: true,
     theme: 'dark' as const,
     isGenerating: false,
     editTextareaSize: {

@@ -8,6 +8,7 @@ interface ChatItemProps {
   chat: Chat
   isSelected: boolean
   onSelect: () => void
+  isArchived?: boolean
 }
 
 const ChatItem: Component<ChatItemProps> = (props) => {
@@ -48,6 +49,12 @@ const ChatItem: Component<ChatItemProps> = (props) => {
   const handleArchive = (e: Event) => {
     e.stopPropagation()
     store.updateChat(props.chat.id, { isArchived: true })
+    setShowActions(false)
+  }
+
+  const handleUnarchive = (e: Event) => {
+    e.stopPropagation()
+    store.updateChat(props.chat.id, { isArchived: false })
     setShowActions(false)
   }
 
@@ -135,13 +142,30 @@ const ChatItem: Component<ChatItemProps> = (props) => {
                 >
                   <Icon name="edit" size="sm" class="text-gray-500 dark:text-gray-400" />
                 </button>
-                <button
-                  onClick={handleArchive}
-                  class="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                  title="Archive chat"
+                <Show
+                  when={!props.isArchived}
+                  fallback={
+                    <button
+                      onClick={handleUnarchive}
+                      class="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                      title="Unarchive chat"
+                    >
+                      <Icon
+                        name="archive"
+                        size="sm"
+                        class="text-gray-500 dark:text-gray-400 transform rotate-180"
+                      />
+                    </button>
+                  }
                 >
-                  <Icon name="archive" size="sm" class="text-gray-500 dark:text-gray-400" />
-                </button>
+                  <button
+                    onClick={handleArchive}
+                    class="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                    title="Archive chat"
+                  >
+                    <Icon name="archive" size="sm" class="text-gray-500 dark:text-gray-400" />
+                  </button>
+                </Show>
                 <button
                   onClick={handleDelete}
                   class="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900 transition-colors"

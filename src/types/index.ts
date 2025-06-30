@@ -43,6 +43,7 @@ export interface ChatSettings {
 
 export interface UISettings {
   sidebarCollapsed: boolean
+  archivedSectionCollapsed: boolean
   theme: 'light' | 'dark' | 'auto'
   isGenerating: boolean
   editTextareaSize: {
