@@ -1,9 +1,9 @@
-import { SolidApiService } from './ApiService'
+type ApiService = ReturnType<typeof import('./ApiService').createApiService>
 import { createMessageNode, findNodeById } from '../utils/messageTree.js'
 import type { AppSettings, Chat, MessageNode, ApiMessage } from '../types/index.js'
 
 export interface MessageServiceDeps {
-  apiService: SolidApiService
+  apiService: ApiService
   addMessage: (chatId: string, message: MessageNode, parentId?: string) => void
   updateMessage: (chatId: string, messageId: string, updates: Partial<MessageNode>) => void
   startStreaming: (messageId: string) => void
@@ -53,7 +53,7 @@ export const createMessageService = ({
       }))
 
       // Stream response
-      await apiService.streamToSignals(
+      await apiService.streamResponse(
         apiMessages,
         assistantMessage.model || settings.chat.model,
         {
@@ -135,7 +135,7 @@ export const createMessageService = ({
       }))
 
       // Stream the regenerated response with entropy to prevent caching
-      await apiService.streamToSignals(
+      await apiService.streamResponse(
         apiMessages,
         newBranchMessage.model || settings.chat.model,
         {

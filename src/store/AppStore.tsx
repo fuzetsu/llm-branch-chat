@@ -7,7 +7,6 @@ import type {
   SerializableAppState,
   SerializableChat,
 } from '../types/index.js'
-import { SolidApiService } from '../services/ApiService'
 import { createAppStoreOperations, type AppStoreOperations } from './AppStoreOperations'
 
 interface AppStateStore {
@@ -190,12 +189,6 @@ export const AppStoreProvider: ParentComponent = (props) => {
   const initialState = loadStateFromStorage()
   const [state, setState] = createStore<AppStateStore>(initialState)
 
-  // Initialize API service
-  const apiService = new SolidApiService(
-    initialState.settings.api.baseUrl,
-    initialState.settings.api.key,
-  )
-
   // Save to localStorage whenever state changes
   createEffect(() => {
     saveStateToStorage(state)
@@ -228,7 +221,13 @@ export const AppStoreProvider: ParentComponent = (props) => {
   }
 
   // Initialize composed operations
-  const operations = createAppStoreOperations({ setState, getState: () => state }, apiService)
+  const operations = createAppStoreOperations(
+    { setState, getState: () => state },
+    {
+      baseUrl: initialState.settings.api.baseUrl,
+      apiKey: initialState.settings.api.key,
+    },
+  )
 
   // High-level operations with business logic
   const sendMessage = async (content: string) => {

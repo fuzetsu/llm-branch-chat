@@ -86,6 +86,7 @@ export interface SerializableChat {
 
 // API types
 export interface StreamCallbacks {
+  onStart?: () => void
   onToken: (token: string) => void
   onComplete: () => void
   onError: (error: Error) => void

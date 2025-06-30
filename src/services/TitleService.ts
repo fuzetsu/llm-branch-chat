@@ -1,8 +1,8 @@
-import { SolidApiService } from './ApiService'
+type ApiService = ReturnType<typeof import('./ApiService').createApiService>
 import type { MessageNode } from '../types/index.js'
 
 export interface TitleServiceDeps {
-  apiService: SolidApiService
+  apiService: ApiService
   updateChat: (chatId: string, updates: { title?: string; isGeneratingTitle?: boolean }) => void
   getVisibleMessages: (chatId: string) => MessageNode[]
 }
