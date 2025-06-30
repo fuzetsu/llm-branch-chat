@@ -28,7 +28,7 @@ const ConfirmModal: Component<ConfirmModalProps> = (props) => {
         onClick={handleBackdropClick}
       >
         {/* Backdrop */}
-        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+        <div class="fixed inset-0 bg-gray-500/75 transition-opacity" />
 
         {/* Modal */}
         <div class="relative w-full max-w-md max-h-[90vh] overflow-hidden text-left align-middle transition-all transform bg-white dark:bg-dark-surface shadow-xl rounded-2xl border dark:border-dark-border flex flex-col">

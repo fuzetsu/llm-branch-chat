@@ -1,0 +1,166 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #3b82f6;
+  --color-primary-dark: #6b8e7f;
+  --color-primary-darker: #5a7c6f;
+  --color-user-dark: #6b8e7f;
+  --color-assistant-dark: #2a2f2a;
+  --color-secondary: #6b7280;
+  --color-accent: #c9a96e;
+  --color-danger: #e07c7c;
+  --color-dark-bg: #1a1d1a;
+  --color-dark-surface: #242724;
+  --color-dark-border: #3a3d3a;
+}
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Custom prose styles for markdown content */
+.message-content h1,
+.message-content h2,
+.message-content h3,
+.message-content h4,
+.message-content h5,
+.message-content h6 {
+  font-weight: 600;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  line-height: 1.2;
+}
+
+.message-content h1 {
+  font-size: 1.5em;
+}
+.message-content h2 {
+  font-size: 1.3em;
+}
+.message-content h3 {
+  font-size: 1.1em;
+}
+.message-content h4,
+.message-content h5,
+.message-content h6 {
+  font-size: 1em;
+}
+
+.message-content p {
+  margin-bottom: 1em;
+  line-height: 1.6;
+}
+
+.message-content ul,
+.message-content ol {
+  margin: 1em 0;
+  padding-left: 1.5em;
+}
+
+.message-content ul {
+  list-style-type: disc;
+}
+
+.message-content ol {
+  list-style-type: decimal;
+}
+
+.message-content li {
+  margin-bottom: 0.5em;
+  display: list-item;
+}
+
+.message-content code {
+  background-color: #f3f4f6;
+  color: #1f2937;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-size: 0.875em;
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', monospace;
+}
+
+.dark .message-content code {
+  background-color: #374151;
+  color: #f9fafb;
+}
+
+.message-content pre {
+  background-color: #1f2937;
+  color: #f9fafb;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  margin: 1em 0;
+}
+
+.message-content pre code {
+  background-color: transparent;
+  color: inherit;
+  padding: 0;
+}
+
+.message-content blockquote {
+  border-left: 4px solid #3b82f6;
+  padding-left: 1rem;
+  margin: 1em 0;
+  font-style: italic;
+  color: #6b7280;
+}
+
+.dark .message-content blockquote {
+  color: #9ca3af;
+}
+
+.message-content a {
+  color: #3b82f6;
+  text-decoration: underline;
+}
+
+.message-content a:hover {
+  color: #2563eb;
+}
+
+.message-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1em 0;
+}
+
+.message-content th,
+.message-content td {
+  border: 1px solid #d1d5db;
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+}
+
+.dark .message-content th,
+.dark .message-content td {
+  border-color: #4b5563;
+}
+
+.message-content th {
+  background-color: #f9fafb;
+  font-weight: 600;
+}
+
+.dark .message-content th {
+  background-color: #374151;
+}
+
+.message-content strong,
+.message-content b {
+  font-weight: 600;
+}
+
+.message-content em,
+.message-content i {
+  font-style: italic;
+}
+
+.message-content hr {
+  margin: 2em 0;
+  border: none;
+  border-top: 1px solid #d1d5db;
+}
+
+.dark .message-content hr {
+  border-top-color: #4b5563;
+}

@@ -94,7 +94,7 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
       <div class="fixed inset-0 z-50 flex items-center justify-center p-4 transition-opacity duration-300">
         {/* Backdrop */}
         <div
-          class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+          class="fixed inset-0 bg-gray-500/75 transition-opacity"
           onClick={handleCancel}
         />
 

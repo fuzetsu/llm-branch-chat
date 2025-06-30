@@ -23,7 +23,7 @@ const Layout: Component = () => {
         {/* Mobile sidebar backdrop */}
         <Show when={!store.state.ui.sidebarCollapsed}>
           <div
-            class="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
+            class="fixed inset-0 bg-black/50 z-30 lg:hidden"
             onClick={handleBackdropClick}
           />
         </Show>
