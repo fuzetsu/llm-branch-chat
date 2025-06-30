@@ -1,4 +1,5 @@
 import { Component, JSX } from 'solid-js'
+import { classnames } from '../../utils'
 
 interface InputProps {
   type?: 'text' | 'password' | 'number' | 'email'
@@ -31,7 +32,7 @@ const Input: Component<InputProps> = (props) => {
   return (
     <input
       type={props.type || 'text'}
-      class={`${baseClasses} ${props.class || ''}`}
+      class={classnames(baseClasses, props.class)}
       placeholder={props.placeholder}
       value={props.value || ''}
       onInput={handleInput}

@@ -1,4 +1,5 @@
 import { Component, For, JSX } from 'solid-js'
+import { classnames } from '../../utils'
 
 interface SelectOption {
   value: string
@@ -29,7 +30,7 @@ const Select: Component<SelectProps> = (props) => {
 
   return (
     <select
-      class={`${baseClasses} ${props.class || ''}`}
+      class={classnames(baseClasses, props.class)}
       value={props.value || ''}
       onChange={handleChange}
       disabled={props.disabled}

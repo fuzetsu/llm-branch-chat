@@ -3,6 +3,7 @@ import { useAppStore } from '../store/AppStore'
 import type { Chat } from '../types/index.js'
 import IconButton from './ui/IconButton'
 import ConfirmModal from './ConfirmModal'
+import { classnames } from '../utils'
 
 interface ChatItemProps {
   chat: Chat
@@ -107,11 +108,12 @@ const ChatItem: Component<ChatItemProps> = (props) => {
   return (
     <>
       <div
-        class={`mb-2 rounded-lg cursor-pointer transition-all duration-200 group relative ${
+        class={classnames(
+          'mb-2 rounded-lg cursor-pointer transition-all duration-200 group relative',
           props.isSelected
             ? 'bg-primary dark:bg-primary-dark text-white shadow-md'
-            : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white hover:shadow-sm'
-        }`}
+            : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white hover:shadow-sm',
+        )}
         onClick={() => props.onSelect()}
         onMouseEnter={() => setShowActions(true)}
         onMouseLeave={() => setShowActions(false)}
@@ -121,11 +123,12 @@ const ChatItem: Component<ChatItemProps> = (props) => {
             <div class="flex-1 min-w-0">
               <div
                 ref={editableRef}
-                class={`font-medium truncate transition-all duration-200 cursor-text ${
+                class={classnames(
+                  'font-medium truncate transition-all duration-200 cursor-text',
                   isEditing()
                     ? 'bg-white/10 rounded px-2 py-1 -mx-2 -my-1 ring-1 ring-primary/30'
-                    : 'hover:bg-white/5 rounded px-2 py-1 -mx-2 -my-1'
-                }`}
+                    : 'hover:bg-white/5 rounded px-2 py-1 -mx-2 -my-1',
+                )}
                 onDblClick={handleContentEdit}
                 onKeyDown={handleContentKeyDown}
                 onBlur={handleContentBlur}

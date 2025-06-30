@@ -1,4 +1,5 @@
 import { Component, JSX } from 'solid-js'
+import { classnames } from '../../utils'
 
 interface CheckboxProps {
   checked?: boolean
@@ -16,7 +17,11 @@ const Checkbox: Component<CheckboxProps> = (props) => {
 
   return (
     <label
-      class={`flex items-center text-sm font-medium text-gray-700 dark:text-gray-300 ${props.disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${props.class || ''}`}
+      class={classnames(
+        'flex items-center text-sm font-medium text-gray-700 dark:text-gray-300',
+        props.disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer',
+        props.class,
+      )}
     >
       <input
         type="checkbox"

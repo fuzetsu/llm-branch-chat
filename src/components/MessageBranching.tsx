@@ -1,6 +1,7 @@
 import { Component, Show, Index } from 'solid-js'
 import { Chat } from '../types/index.js'
 import { useAppStore } from '../store/AppStore'
+import { classnames } from '../utils'
 
 interface MessageBranchingProps {
   messageId: string
@@ -31,11 +32,12 @@ const MessageBranching: Component<MessageBranchingProps> = (props) => {
                 <Index each={Array.from({ length: info().total }, (_, i) => i)}>
                   {(index) => (
                     <button
-                      class={`px-2 py-1 rounded text-xs transition-colors cursor-pointer ${
+                      class={classnames(
+                        'px-2 py-1 rounded text-xs transition-colors cursor-pointer',
                         index() === info().current - 1
                           ? 'bg-primary text-white dark:bg-primary-dark'
-                          : 'hover:bg-gray-200 dark:hover:bg-gray-700'
-                      }`}
+                          : 'hover:bg-gray-200 dark:hover:bg-gray-700',
+                      )}
                       onClick={() => handleBranchSwitch(index())}
                     >
                       {index() + 1}

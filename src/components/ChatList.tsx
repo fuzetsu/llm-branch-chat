@@ -3,6 +3,7 @@ import { useAppStore } from '../store/AppStore'
 import ChatItem from './ChatItem'
 import Icon from './Icon'
 import Button from './ui/Button'
+import { classnames } from '../utils'
 
 const ChatList: Component = () => {
   const store = useAppStore()
@@ -53,7 +54,10 @@ const ChatList: Component = () => {
             <Icon
               name="chevron"
               size="sm"
-              class={`transform transition-transform ${isArchivedSectionCollapsed() ? '' : 'rotate-180'}`}
+              class={classnames(
+                'transform transition-transform',
+                !isArchivedSectionCollapsed() && 'rotate-180',
+              )}
             />
           </Button>
 

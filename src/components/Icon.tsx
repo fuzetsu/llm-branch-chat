@@ -1,4 +1,5 @@
 import { Component } from 'solid-js'
+import { classnames } from '../utils'
 
 export type IconName =
   | 'menu'
@@ -28,7 +29,7 @@ const Icon: Component<IconProps> = (props) => {
   }
 
   const size = () => props.size || 'md'
-  const classes = () => `${sizeClasses[size()]} ${props.class || ''}`
+  const classes = () => classnames(sizeClasses[size()], props.class)
 
   const getIconPath = () => {
     switch (props.name) {

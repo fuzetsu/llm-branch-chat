@@ -2,6 +2,7 @@ import { Component } from 'solid-js'
 import { useAppStore } from '../store/AppStore'
 import ChatList from './ChatList'
 import Icon from './Icon'
+import { classnames } from '../utils'
 
 const Sidebar: Component = () => {
   const store = useAppStore()
@@ -12,9 +13,10 @@ const Sidebar: Component = () => {
 
   return (
     <aside
-      class={`fixed inset-y-0 left-0 z-40 w-80 bg-white dark:bg-dark-surface border-r border-gray-200 dark:border-dark-border transition-transform duration-300 ease-in-out ${
-        store.state.ui.sidebarCollapsed ? '-translate-x-full' : 'translate-x-0'
-      } lg:translate-x-0`}
+      class={classnames(
+        'fixed inset-y-0 left-0 z-40 w-80 bg-white dark:bg-dark-surface border-r border-gray-200 dark:border-dark-border transition-transform duration-300 ease-in-out lg:translate-x-0',
+        store.state.ui.sidebarCollapsed ? '-translate-x-full' : 'translate-x-0',
+      )}
     >
       <div class="flex flex-col h-full pt-16">
         <div class="p-4 border-b border-gray-200 dark:border-dark-border">

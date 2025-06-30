@@ -1,4 +1,5 @@
 import { Component, JSX } from 'solid-js'
+import { classnames } from '../../utils'
 
 type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost'
 type ButtonSize = 'sm' | 'md' | 'lg'
@@ -48,7 +49,7 @@ const Button: Component<ButtonProps> = (props) => {
   return (
     <button
       type={props.type || 'button'}
-      class={`${baseClasses} ${getVariantClasses()} ${getSizeClasses()} ${props.class || ''}`}
+      class={classnames(baseClasses, getVariantClasses(), getSizeClasses(), props.class)}
       onClick={() => props.onClick?.()}
       disabled={props.disabled}
     >

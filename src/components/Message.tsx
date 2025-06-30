@@ -3,7 +3,7 @@ import { MessageNode as MessageType, Chat } from '../types/index.js'
 import { useAppStore } from '../store/AppStore'
 import MessageBranching from './MessageBranching'
 import IconButton from './ui/IconButton'
-import { formatTimestamp, renderMarkdown, throttle } from '../utils/index.js'
+import { formatTimestamp, renderMarkdown, throttle, classnames } from '../utils/index.js'
 
 interface MessageProps {
   message: MessageType
@@ -98,13 +98,15 @@ const Message: Component<MessageProps> = (props) => {
   }
 
   return (
-    <div class={`flex ${isUser() ? 'justify-end' : 'justify-start'} mb-4`}>
+    <div class={classnames('flex mb-4', isUser() ? 'justify-end' : 'justify-start')}>
       <div
-        class={`relative max-w-3xl px-4 py-3 rounded-lg transition-all ${
+        class={classnames(
+          'relative max-w-3xl px-4 py-3 rounded-lg transition-all',
           isUser()
             ? 'bg-primary dark:bg-primary-dark text-white'
-            : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
-        } ${props.isStreaming ? 'animate-pulse' : ''}`}
+            : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white',
+          props.isStreaming && 'animate-pulse',
+        )}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
@@ -148,7 +150,10 @@ const Message: Component<MessageProps> = (props) => {
         </Show>
 
         <div
-          class={`text-xs mt-2 ${isUser() ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'}`}
+          class={classnames(
+            'text-xs mt-2',
+            isUser() ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400',
+          )}
         >
           {formatTimestamp(props.message.timestamp)}
           {props.message.model && <span class="ml-2">• {props.message.model}</span>}

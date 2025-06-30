@@ -1,4 +1,5 @@
 import { Component, JSX } from 'solid-js'
+import { classnames } from '../../utils'
 
 interface TextareaProps {
   placeholder?: string
@@ -21,7 +22,7 @@ const Textarea: Component<TextareaProps> = (props) => {
 
   return (
     <textarea
-      class={`${baseClasses} ${props.class || ''}`}
+      class={classnames(baseClasses, props.class)}
       placeholder={props.placeholder}
       value={props.value || ''}
       onInput={handleInput}

@@ -1,5 +1,6 @@
 import { Component } from 'solid-js'
 import Icon, { IconName } from '../Icon'
+import { classnames } from '../../utils'
 
 type IconButtonVariant = 'ghost' | 'danger' | 'success' | 'cancel' | 'compact'
 type IconButtonSize = 'sm' | 'md'
@@ -62,7 +63,7 @@ const IconButton: Component<IconButtonProps> = (props) => {
   return (
     <button
       type="button"
-      class={`${baseClasses} ${getVariantClasses()} ${getSizeClasses()} ${props.class || ''}`}
+      class={classnames(baseClasses, getVariantClasses(), getSizeClasses(), props.class)}
       onClick={handleClick}
       disabled={props.disabled}
       title={props.title}
