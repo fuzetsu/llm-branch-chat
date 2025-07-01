@@ -1,5 +1,6 @@
 import type { Chat } from '../types/index.js'
 import { generateChatId } from '../utils/index.js'
+import { createEmptyRootNode } from '../utils/messageTree.js'
 import type { AppStoreOperationsDeps } from './AppStore'
 
 export type ChatOperationsDeps = AppStoreOperationsDeps
@@ -37,7 +38,7 @@ export const createChatOperations = ({ setState, getState }: ChatOperationsDeps)
     const newChat: Chat = {
       id: generateChatId(),
       title: 'New Chat',
-      messageTree: null,
+      messageTree: createEmptyRootNode(),
       isArchived: false,
       createdAt: Date.now(),
       updatedAt: Date.now(),

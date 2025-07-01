@@ -4,7 +4,7 @@ import type { AppSettings, Chat, MessageNode, ApiMessage } from '../types/index.
 
 export interface MessageServiceDeps {
   apiService: ApiService
-  addMessage: (chatId: string, message: MessageNode, parentId?: string) => void
+  addMessage: (chatId: string, message: MessageNode, parentId: string) => void
   updateMessage: (chatId: string, messageId: string, updates: Partial<MessageNode>) => void
   startStreaming: (messageId: string) => void
   stopStreaming: () => void
@@ -26,12 +26,12 @@ export const createMessageService = ({
   async sendMessage(content: string, currentChat: Chat, settings: AppSettings): Promise<void> {
     // Find the last message in the conversation to use as parent
     const visibleMessages = getVisibleMessages(currentChat.id)
-    const lastMessage = visibleMessages[visibleMessages.length - 1]
-    const parentId = lastMessage?.id || null
+    const lastMessage = visibleMessages.at(-1) ?? currentChat.messageTree
+    const parentId = lastMessage.id
 
     // Add user message
     const userMessage = createMessageNode('user', content.trim(), 'user', parentId)
-    addMessage(currentChat.id, userMessage, parentId || undefined)
+    addMessage(currentChat.id, userMessage, parentId)
 
     // Create assistant message placeholder
     const assistantMessage = createMessageNode(

@@ -33,11 +33,14 @@ const Message: Component<MessageProps> = (props) => {
 
   const saveEdit = () => {
     const newContent = editContent().trim()
-    if (newContent && newContent !== props.message.content) {
-      store.updateMessage(props.chat.id, props.message.id, {
-        content: newContent,
-        timestamp: Date.now(),
-      })
+    if (newContent !== props.message.content && props.message.parentId) {
+      store.createMessageBranch(
+        props.chat.id,
+        props.message.parentId,
+        newContent,
+        props.message.role,
+        props.message.model || props.chat.model || store.state.settings.chat.model,
+      )
     }
     setIsEditing(false)
     setEditContent('')
@@ -162,8 +165,12 @@ const Message: Component<MessageProps> = (props) => {
           </Show>
         </div>
 
-        <Show when={isAssistant() && !isEditing() && !props.isStreaming}>
-          <MessageBranching messageId={props.message.id} chat={props.chat} />
+        <Show when={!isEditing() && !props.isStreaming}>
+          <MessageBranching
+            messageId={props.message.id}
+            chat={props.chat}
+            isUserMessage={isUser()}
+          />
         </Show>
       </div>
     </div>

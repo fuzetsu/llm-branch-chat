@@ -1,4 +1,4 @@
-import type { Chat, MessageNode } from '../types/index.js'
+import type { Chat, MessageNode, TreeNode } from '../types/index.js'
 import {
   createMessageNode,
   addChildToNode,
@@ -12,11 +12,11 @@ import type { AppStoreOperationsDeps } from './AppStore'
 export type MessageOperationsDeps = AppStoreOperationsDeps
 
 export const createMessageOperations = ({ setState, getState }: MessageOperationsDeps) => {
-  const updateNodeInTree = (
-    tree: MessageNode | null,
+  const updateNodeInTree = <T extends TreeNode | MessageNode>(
+    tree: T | null,
     nodeId: string,
     updates: Partial<MessageNode>,
-  ): MessageNode | null => {
+  ): T | null => {
     if (!tree) return null
 
     if (tree.id === nodeId) {
@@ -30,19 +30,13 @@ export const createMessageOperations = ({ setState, getState }: MessageOperation
   }
 
   return {
-    addMessage: (chatId: string, message: MessageNode, parentId?: string) => {
+    addMessage: (chatId: string, message: MessageNode, parentId: string) => {
       setState('chats', (chats: Map<string, Chat>) => {
         const newChats = new Map(chats)
         const chat = newChats.get(chatId)
         if (chat) {
-          let newTree = chat.messageTree
-          if (!newTree && !parentId) {
-            // First message in conversation
-            newTree = message
-          } else if (parentId) {
-            // Add as child to existing node
-            newTree = addChildToNode(newTree, parentId, message)
-          }
+          // Add as child to existing node
+          const newTree = addChildToNode(chat.messageTree, parentId, message)
 
           newChats.set(chatId, {
             ...chat,
@@ -62,14 +56,17 @@ export const createMessageOperations = ({ setState, getState }: MessageOperation
           const node = findNodeById(chat.messageTree, messageId)
           if (node) {
             const updatedTree = updateNodeInTree(chat.messageTree, messageId, updates)
-            newChats.set(chatId, {
-              ...chat,
-              messageTree: updatedTree,
-              updatedAt: Date.now(),
-            })
+            if (updatedTree) {
+              newChats.set(chatId, {
+                ...chat,
+                messageTree: updatedTree,
+                updatedAt: Date.now(),
+              })
+              return newChats
+            }
           }
         }
-        return newChats
+        return chats
       })
     },
 
@@ -81,8 +78,21 @@ export const createMessageOperations = ({ setState, getState }: MessageOperation
       model: string,
     ): string => {
       const newMessage = createMessageNode(role, content, model, parentId)
-      const operations = createMessageOperations({ setState, getState })
-      operations.addMessage(chatId, newMessage, parentId)
+
+      setState('chats', (chats: Map<string, Chat>) => {
+        const newChats = new Map(chats)
+        const chat = newChats.get(chatId)
+        if (chat && chat.messageTree) {
+          const newTree = addChildToNode(chat.messageTree, parentId, newMessage)
+          newChats.set(chatId, {
+            ...chat,
+            messageTree: newTree,
+            updatedAt: Date.now(),
+          })
+        }
+        return newChats
+      })
+
       return newMessage.id
     },
 
@@ -92,12 +102,15 @@ export const createMessageOperations = ({ setState, getState }: MessageOperation
         const chat = newChats.get(chatId)
         if (chat && chat.messageTree) {
           const newTree = switchToBranch(chat.messageTree, messageId, branchIndex)
-          newChats.set(chatId, {
-            ...chat,
-            messageTree: newTree,
-          })
+          if (newTree) {
+            newChats.set(chatId, {
+              ...chat,
+              messageTree: newTree,
+            })
+            return newChats
+          }
         }
-        return newChats
+        return chats
       })
     },
 

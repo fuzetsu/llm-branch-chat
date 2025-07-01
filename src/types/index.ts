@@ -6,9 +6,17 @@ export interface MessageNode {
   timestamp: number
   isStreaming: boolean
   isEditing: boolean
-  parentId: string | null
+  parentId: string
   children: MessageNode[]
   model: string
+  // UI state: which child branch is currently active (0-indexed)
+  activeChildIndex: number
+}
+
+export interface TreeNode {
+  id: string
+  role: 'root'
+  children: MessageNode[]
   // UI state: which child branch is currently active (0-indexed)
   activeChildIndex: number
 }
@@ -16,7 +24,7 @@ export interface MessageNode {
 export interface Chat {
   id: string
   title: string
-  messageTree: MessageNode | null
+  messageTree: TreeNode
   createdAt: number
   updatedAt: number
   isGeneratingTitle: boolean
@@ -76,7 +84,7 @@ export interface SerializableAppState {
 export interface SerializableChat {
   id: string
   title: string
-  messageTree: MessageNode | null
+  messageTree: TreeNode
   createdAt: number
   updatedAt: number
   isGeneratingTitle: boolean
@@ -134,4 +142,4 @@ export interface ConfirmModalOptions {
 
 // Utility types
 export type Theme = 'light' | 'dark' | 'auto'
-export type MessageRole = 'user' | 'assistant' | 'system'
+export type MessageRole = 'user' | 'assistant' | 'system' | 'root'

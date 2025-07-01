@@ -1,15 +1,13 @@
-import type { MessageNode } from '../types/index.js'
+import type { MessageNode, MessageRole, TreeNode } from '../types/index.js'
 import { generateMessageId } from './index.js'
 
-export function createMessageNode(
-  role: 'user' | 'assistant' | 'system',
-  content: string,
-  model: string,
-  parentId: string | null = null,
-): MessageNode {
+export function createMessageNode<
+  T extends MessageRole,
+  Ret = T extends 'root' ? TreeNode : MessageNode,
+>(role: T, content: string, model: string, parentId: string | null = null): Ret {
   return {
     id: generateMessageId(),
-    role,
+    role: role,
     content,
     timestamp: Date.now(),
     isStreaming: false,
@@ -18,28 +16,38 @@ export function createMessageNode(
     children: [],
     model,
     activeChildIndex: 0,
+  } as Ret
+}
+
+export function createEmptyRootNode(): TreeNode {
+  return {
+    id: generateMessageId(),
+    role: 'root',
+    activeChildIndex: 0,
+    children: [],
   }
 }
 
-export function findNodeById(tree: MessageNode | null, nodeId: string): MessageNode | null {
+export function findNodeById<
+  T extends TreeNode | MessageNode,
+  Ret = T extends TreeNode ? TreeNode | MessageNode : MessageNode,
+>(tree: T | null, nodeId: string): Ret | null {
   if (!tree) return null
-  if (tree.id === nodeId) return tree
+  if (tree.id === nodeId) return tree as unknown as Ret
 
   for (const child of tree.children) {
     const found = findNodeById(child, nodeId)
-    if (found) return found
+    if (found) return found as Ret
   }
 
   return null
 }
 
-export function addChildToNode(
-  tree: MessageNode | null,
+export function addChildToNode<T extends TreeNode | MessageNode>(
+  tree: T,
   parentId: string,
   child: MessageNode,
-): MessageNode | null {
-  if (!tree) return child.parentId === null ? child : null
-
+): T {
   if (tree.id === parentId) {
     const newTree = { ...tree }
     newTree.children = [...tree.children, child]
@@ -55,13 +63,7 @@ export function addChildToNode(
   return { ...tree, children: newChildren }
 }
 
-export function updateNodeContent(
-  tree: MessageNode | null,
-  nodeId: string,
-  content: string,
-): MessageNode | null {
-  if (!tree) return null
-
+export function updateNodeContent(tree: MessageNode, nodeId: string, content: string): MessageNode {
   if (tree.id === nodeId) {
     return { ...tree, content, timestamp: Date.now() }
   }
@@ -72,13 +74,11 @@ export function updateNodeContent(
   return { ...tree, children: newChildren }
 }
 
-export function setActiveChild(
-  tree: MessageNode | null,
+export function setActiveChild<T extends TreeNode | MessageNode>(
+  tree: T,
   nodeId: string,
   childIndex: number,
-): MessageNode | null {
-  if (!tree) return null
-
+): T {
   if (tree.id === nodeId) {
     return {
       ...tree,
@@ -93,9 +93,9 @@ export function setActiveChild(
 }
 
 export function getConversationPath(
-  tree: MessageNode | null,
+  tree: TreeNode | MessageNode,
   includeInactive = false,
-): MessageNode[] {
+): (MessageNode | TreeNode)[] {
   if (!tree) return []
 
   const path = [tree]
@@ -116,16 +116,18 @@ export function getConversationPath(
   return path
 }
 
-export function getVisibleMessages(tree: MessageNode | null): MessageNode[] {
-  return getConversationPath(tree, false)
+export function getVisibleMessages(tree: TreeNode | MessageNode): MessageNode[] {
+  const path = getConversationPath(tree, false)
+  // Filter out root nodes from visible messages
+  return path.filter(isNonRootMessage)
 }
 
 export function getBranchInfo(
-  tree: MessageNode | null,
+  tree: TreeNode,
   nodeId: string,
 ): { total: number; current: number; hasPrevious: boolean; hasNext: boolean } | null {
   const node = findNodeById(tree, nodeId)
-  if (!node || !node.parentId) return null
+  if (!node || node.role === 'root') return null
 
   const parent = findNodeById(tree, node.parentId)
   if (!parent) return null
@@ -141,13 +143,9 @@ export function getBranchInfo(
   }
 }
 
-export function switchToBranch(
-  tree: MessageNode | null,
-  nodeId: string,
-  branchIndex: number,
-): MessageNode | null {
+export function switchToBranch(tree: TreeNode, nodeId: string, branchIndex: number): TreeNode {
   const node = findNodeById(tree, nodeId)
-  if (!node || !node.parentId) return tree
+  if (!node || node.role === 'root') return tree
 
   const parent = findNodeById(tree, node.parentId)
   if (!parent) return tree
@@ -158,4 +156,8 @@ export function switchToBranch(
 export function getNodeChildren(tree: MessageNode | null, nodeId: string): MessageNode[] {
   const node = findNodeById(tree, nodeId)
   return node ? node.children : []
+}
+
+export function isNonRootMessage(message: TreeNode | MessageNode | null): message is MessageNode {
+  return Boolean(message && message.role !== 'root')
 }

@@ -170,7 +170,7 @@ export const createApiService = ({ baseUrl, apiKey }: ApiServiceDeps) => {
     ): Promise<void> {
       try {
         callbacks.onStart?.()
-        
+
         const cleanMessages = filterSystemMessages(messages)
         const url = buildUrl(entropy)
         const requestBody = buildRequestBody(cleanMessages, model, temperature, maxTokens)
@@ -223,4 +223,3 @@ export const createApiService = ({ baseUrl, apiKey }: ApiServiceDeps) => {
     },
   }
 }
-
