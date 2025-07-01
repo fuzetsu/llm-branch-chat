@@ -71,7 +71,7 @@ const Message: Component<MessageProps> = (props) => {
   createEffect(() => {
     if (store.state.flashingMessageId === props.message.id) {
       setIsFlashing(true)
-      messageRef?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      messageRef?.scrollIntoView({ block: 'center' })
       setTimeout(() => setIsFlashing(false), 1000)
     }
   })

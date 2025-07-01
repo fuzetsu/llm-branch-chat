@@ -19,8 +19,9 @@ const MessageList: Component<MessageListProps> = (props) => {
   createEffect(() => {
     const messages = visibleMessages()
     const isStreaming = store.state.streaming.isStreaming
+    const hasFlashingMessage = store.state.flashingMessageId
 
-    if ((messages.length > 0 || isStreaming) && shouldAutoScroll()) {
+    if ((messages.length > 0 || isStreaming) && shouldAutoScroll() && !hasFlashingMessage) {
       messagesEndRef?.scrollIntoView()
     }
   })
