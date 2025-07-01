@@ -161,3 +161,16 @@ export function getNodeChildren(tree: MessageNode | null, nodeId: string): Messa
 export function isNonRootMessage(message: TreeNode | MessageNode | null): message is MessageNode {
   return Boolean(message && message.role !== 'root')
 }
+
+export function getSwitchedBranchMessage(
+  tree: TreeNode | MessageNode | null,
+  messageId: string,
+  branchIndex: number,
+): MessageNode | null {
+  const currentNode = findNodeById(tree, messageId)
+  if (!currentNode || currentNode.role === 'root') return null
+
+  // Only MessageNode has parentId, TreeNode (root) doesn't
+  const parent = findNodeById(tree, currentNode.parentId)
+  return parent?.children?.[branchIndex] || null
+}

@@ -17,6 +17,8 @@ const Message: Component<MessageProps> = (props) => {
   const [isEditing, setIsEditing] = createSignal(false)
   const [editContent, setEditContent] = createSignal('')
   const [isHovered, setIsHovered] = createSignal(false)
+  const [isFlashing, setIsFlashing] = createSignal(false)
+  let messageRef: HTMLDivElement | undefined
 
   const isUser = () => props.message.role === 'user'
   const isAssistant = () => props.message.role === 'assistant'
@@ -59,6 +61,19 @@ const Message: Component<MessageProps> = (props) => {
     if (!isAssistant() || props.isStreaming) return
     store.regenerateMessage(props.chat.id, props.message.id)
   }
+
+  const triggerFlash = () => {
+    setIsFlashing(true)
+    messageRef?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    setTimeout(() => setIsFlashing(false), 1000)
+  }
+
+  // Flash when this message is marked for flashing
+  createEffect(() => {
+    if (store.state.flashingMessageId === props.message.id) {
+      triggerFlash()
+    }
+  })
 
   const renderMessageActions = () => {
     if (!isHovered() || isEditing() || props.isStreaming) return null
@@ -103,12 +118,14 @@ const Message: Component<MessageProps> = (props) => {
   return (
     <div class={classnames('flex mb-4', isUser() ? 'justify-end' : 'justify-start')}>
       <div
+        ref={messageRef}
         class={classnames(
-          'relative max-w-3xl px-4 py-3 rounded-lg transition-all',
+          'relative max-w-3xl px-4 py-3 rounded-lg transition-all duration-300',
           isUser()
             ? 'bg-primary dark:bg-primary-dark text-white'
             : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white',
           props.isStreaming && 'animate-pulse',
+          isFlashing() && 'ring-4 ring-yellow-400 dark:ring-yellow-500 ring-opacity-100 bg-yellow-100 dark:bg-yellow-900/40'
         )}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}

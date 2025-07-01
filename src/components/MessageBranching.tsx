@@ -18,7 +18,7 @@ const MessageBranching: Component<MessageBranchingProps> = (props) => {
   }
 
   const handleBranchSwitch = (branchIndex: number) => {
-    store.switchMessageBranch(props.chat.id, props.messageId, branchIndex)
+    store.switchMessageBranchWithFlash(props.chat.id, props.messageId, branchIndex)
   }
 
   return (

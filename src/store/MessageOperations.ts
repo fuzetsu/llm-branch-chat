@@ -6,6 +6,7 @@ import {
   findNodeById,
   switchToBranch,
   getBranchInfo,
+  getSwitchedBranchMessage,
 } from '../utils/messageTree.js'
 import type { AppStoreOperationsDeps } from './AppStore'
 
@@ -128,6 +129,47 @@ export const createMessageOperations = ({ setState, getState }: MessageOperation
       if (!chat) return null
 
       return getBranchInfo(chat.messageTree, messageId)
+    },
+
+    switchMessageBranchWithFlash: (
+      chatId: string, 
+      messageId: string, 
+      branchIndex: number,
+      setFlashingMessage: (id: string | null) => void
+    ): string | null => {
+      const state = getState()
+      const chat = state.chats.get(chatId)
+      
+      // Get the message that will be switched to before changing the tree
+      const messageToFlash = chat?.messageTree 
+        ? getSwitchedBranchMessage(chat.messageTree, messageId, branchIndex)
+        : null
+
+      // Perform the branch switch
+      setState('chats', (chats: Map<string, Chat>) => {
+        const newChats = new Map(chats)
+        const chat = newChats.get(chatId)
+        if (chat && chat.messageTree) {
+          const newTree = switchToBranch(chat.messageTree, messageId, branchIndex)
+          if (newTree) {
+            newChats.set(chatId, {
+              ...chat,
+              messageTree: newTree,
+            })
+            return newChats
+          }
+        }
+        return chats
+      })
+
+      // Flash the switched message if found
+      if (messageToFlash) {
+        setFlashingMessage(messageToFlash.id)
+        setTimeout(() => setFlashingMessage(null), 1000)
+        return messageToFlash.id
+      }
+
+      return null
     },
   }
 }

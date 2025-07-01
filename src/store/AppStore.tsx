@@ -19,6 +19,7 @@ interface AppStateStore {
     currentMessageId: string | null
     currentContent: string
   }
+  flashingMessageId: string | null
 }
 
 // Pick specific operations from the composed module
@@ -50,6 +51,9 @@ interface AppStoreContextType extends BaseOperations {
   getCurrentChat: () => Chat | null
   getActiveChats: () => Chat[]
   getArchivedChats: () => Chat[]
+  // Message flash operations
+  setFlashingMessage: (messageId: string | null) => void
+  switchMessageBranchWithFlash: (chatId: string, messageId: string, branchIndex: number) => string | null
   // Simplified high-level operations
   sendMessage: (content: string) => Promise<void>
   regenerateMessage: (chatId: string, messageId: string) => Promise<void>
@@ -133,6 +137,7 @@ function loadStateFromStorage(): AppStateStore {
         settings: createDefaultSettings(),
         ui: createDefaultUISettings(),
         streaming: createDefaultStreamingState(),
+        flashingMessageId: null,
       }
     }
 
@@ -147,6 +152,7 @@ function loadStateFromStorage(): AppStateStore {
       settings,
       ui: { ...createDefaultUISettings(), ...state.ui },
       streaming: createDefaultStreamingState(),
+      flashingMessageId: null,
     }
   } catch (error) {
     console.error('Failed to load state:', error)
@@ -156,6 +162,7 @@ function loadStateFromStorage(): AppStateStore {
       settings: createDefaultSettings(),
       ui: createDefaultUISettings(),
       streaming: createDefaultStreamingState(),
+      flashingMessageId: null,
     }
   }
 }
@@ -267,6 +274,16 @@ export const AppStoreProvider: ParentComponent = (props) => {
   const getActiveChats = (): Chat[] => operations.getActiveChats(state.chats)
   const getArchivedChats = (): Chat[] => operations.getArchivedChats(state.chats)
 
+  // Message flash operations
+  const setFlashingMessage = (messageId: string | null) => {
+    setState('flashingMessageId', messageId)
+  }
+
+  // Wrapper for branch switching with flash
+  const switchMessageBranchWithFlash = (chatId: string, messageId: string, branchIndex: number) => {
+    return operations.switchMessageBranchWithFlash(chatId, messageId, branchIndex, setFlashingMessage)
+  }
+
   const storeValue: AppStoreContextType = {
     state,
     setCurrentChatId,
@@ -280,11 +297,14 @@ export const AppStoreProvider: ParentComponent = (props) => {
     getCurrentChat,
     getActiveChats,
     getArchivedChats,
+    // Message flash operations
+    setFlashingMessage,
     // Message operations
     addMessage: operations.addMessage,
     updateMessage: operations.updateMessage,
     createMessageBranch: operations.createMessageBranch,
     switchMessageBranch: operations.switchMessageBranch,
+    switchMessageBranchWithFlash,
     getVisibleMessages: operations.getVisibleMessages,
     getBranchInfo: operations.getBranchInfo,
     // Streaming operations

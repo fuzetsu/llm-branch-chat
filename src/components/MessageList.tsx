@@ -35,23 +35,20 @@ const MessageList: Component<MessageListProps> = (props) => {
 
   return (
     <div class="flex-1 overflow-y-auto px-4 py-6 space-y-4" onScroll={handleScroll}>
-      <For each={visibleMessages()}>
-        {(message) => {
-          // Make this reactive by accessing store.state.streaming directly in the JSX
-          return (
-            <Message
-              message={message}
-              chat={props.chat}
-              isStreaming={store.state.streaming.currentMessageId === message.id}
-              streamingContent={
-                store.state.streaming.isStreaming &&
-                store.state.streaming.currentMessageId === message.id
-                  ? store.state.streaming.currentContent
-                  : null
-              }
-            />
-          )
-        }}
+      <For each={visibleMessages()} fallback={<></>}>
+        {(message) => (
+          <Message
+            message={message}
+            chat={props.chat}
+            isStreaming={store.state.streaming.currentMessageId === message.id}
+            streamingContent={
+              store.state.streaming.isStreaming &&
+              store.state.streaming.currentMessageId === message.id
+                ? store.state.streaming.currentContent
+                : null
+            }
+          />
+        )}
       </For>
 
       {/* Empty state */}

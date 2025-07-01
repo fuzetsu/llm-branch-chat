@@ -211,3 +211,16 @@ src/
 - **Legacy Support**: Old chat data and settings are preserved during migration
 - **API Compatibility**: Maintains compatibility with existing API endpoints
 - **Feature Parity**: All original functionality preserved with modern enhancements
+
+## Development Tools
+
+### Ripgrep (rg) File Types
+
+When using `rg` for searching, use these file type flags:
+
+- `--type ts` or `--type typescript` for TypeScript/TSX files (includes `*.ts`, `*.tsx`, `*.cts`, `*.mts`)
+- `--type js` for JavaScript/JSX files (includes `*.js`, `*.jsx`, `*.cjs`, `*.mjs`, `*.vue`)
+- `--type json` for JSON files
+- `--type html` for HTML files (includes `*.html`, `*.htm`, `*.ejs`)
+
+Example: `rg "pink-|rose-" --type ts` to search for pink/rose colors in TypeScript files.
