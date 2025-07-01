@@ -33,7 +33,7 @@ const Message: Component<MessageProps> = (props) => {
     setEditContent('')
   }
 
-  const saveEdit = () => {
+  const saveEdit = async () => {
     const newContent = editContent().trim()
     if (newContent !== props.message.content && props.message.parentId) {
       store.createMessageBranch(
@@ -43,6 +43,11 @@ const Message: Component<MessageProps> = (props) => {
         props.message.role,
         props.message.model || props.chat.model || store.state.settings.chat.model,
       )
+
+      // If this is a user message, automatically generate assistant response
+      if (isUser()) {
+        await store.generateAssistantResponse()
+      }
     }
     setIsEditing(false)
     setEditContent('')
@@ -152,7 +157,7 @@ const Message: Component<MessageProps> = (props) => {
                   class="px-2 py-1 text-xs bg-primary hover:bg-blue-600 dark:bg-primary-dark dark:hover:bg-primary-darker text-white rounded transition-colors cursor-pointer"
                   onClick={saveEdit}
                 >
-                  Save
+                  {isUser() ? 'Save & Send' : 'Save'}
                 </button>
               </div>
             </div>

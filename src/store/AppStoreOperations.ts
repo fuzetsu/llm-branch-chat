@@ -44,6 +44,7 @@ export function createAppStoreOperations(
     ...streamingOps,
     // High-level services
     sendMessage: messageService.sendMessage,
+    generateAssistantResponse: messageService.generateAssistantResponse,
     regenerateMessage: messageService.regenerateMessage,
     generateChatTitle: titleService.generateChatTitle,
   }

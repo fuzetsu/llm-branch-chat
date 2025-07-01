@@ -56,6 +56,7 @@ interface AppStoreContextType extends BaseOperations {
   switchMessageBranchWithFlash: (chatId: string, messageId: string, branchIndex: number) => void
   // Simplified high-level operations
   sendMessage: (content: string) => Promise<void>
+  generateAssistantResponse: () => Promise<void>
   regenerateMessage: (chatId: string, messageId: string) => Promise<void>
   generateChatTitle: (chatId: string) => Promise<void>
 }
@@ -264,6 +265,13 @@ export const AppStoreProvider: ParentComponent = (props) => {
     await operations.regenerateMessage(chatId, messageId, chat, state.settings)
   }
 
+  const generateAssistantResponse = async () => {
+    const currentChat = operations.getCurrentChat(state.currentChatId, state.chats)
+    if (!currentChat) return
+
+    await operations.generateAssistantResponse(currentChat, state.settings)
+  }
+
   const generateChatTitle = async (chatId: string) => {
     const chat = state.chats.get(chatId)
     if (!chat) return
@@ -303,7 +311,7 @@ export const AppStoreProvider: ParentComponent = (props) => {
     updateMessage: operations.updateMessage,
     createMessageBranch: operations.createMessageBranch,
     switchMessageBranch: operations.switchMessageBranch,
-    switchMessageBranchWithFlash: (chatId: string, messageId: string, branchIndex: number) => 
+    switchMessageBranchWithFlash: (chatId: string, messageId: string, branchIndex: number) =>
       operations.switchMessageBranchWithFlash(chatId, messageId, branchIndex, setFlashingMessage),
     getVisibleMessages: operations.getVisibleMessages,
     getBranchInfo: operations.getBranchInfo,
@@ -315,6 +323,7 @@ export const AppStoreProvider: ParentComponent = (props) => {
     getStreamingContent: operations.getStreamingContent,
     // High-level operations with business logic
     sendMessage,
+    generateAssistantResponse,
     regenerateMessage,
     generateChatTitle,
   }

@@ -25,7 +25,6 @@ export interface Chat {
   model: string
 }
 
-
 // Settings types
 export interface ApiSettings {
   baseUrl: string
