@@ -4,7 +4,7 @@ import type { AppSettings, Chat, MessageNode, ApiMessage } from '../types/index.
 
 export interface MessageServiceDeps {
   apiService: ApiService
-  addMessage: (chatId: string, message: MessageNode, parentId: string) => void
+  addMessage: (chatId: string, message: MessageNode, parentId: string | null) => void
   updateMessage: (chatId: string, messageId: string, updates: Partial<MessageNode>) => void
   startStreaming: (messageId: string) => void
   stopStreaming: () => void
@@ -26,8 +26,8 @@ export const createMessageService = ({
   async sendMessage(content: string, currentChat: Chat, settings: AppSettings): Promise<void> {
     // Find the last message in the conversation to use as parent
     const visibleMessages = getVisibleMessages(currentChat.id)
-    const lastMessage = visibleMessages.at(-1) ?? currentChat.messageTree
-    const parentId = lastMessage.id
+    const lastMessage = visibleMessages.at(-1)
+    const parentId = lastMessage?.id || null
 
     // Add user message
     const userMessage = createMessageNode('user', content.trim(), 'user', parentId)
@@ -99,9 +99,7 @@ export const createMessageService = ({
     chat: Chat,
     settings: AppSettings,
   ): Promise<void> {
-    if (!chat.messageTree) return
-
-    const message = findNodeById(chat.messageTree, messageId)
+    const message = findNodeById(chat.nodes, messageId)
     if (!message || message.role !== 'assistant') return
 
     // Get conversation history up to this message

@@ -1,6 +1,6 @@
 import type { Chat } from '../types/index.js'
 import { generateChatId } from '../utils/index.js'
-import { createEmptyRootNode } from '../utils/messageTree.js'
+import { createEmptyChat } from '../utils/messageTree.js'
 import type { AppStoreOperationsDeps } from './AppStore'
 
 export type ChatOperationsDeps = AppStoreOperationsDeps
@@ -35,16 +35,8 @@ export const createChatOperations = ({ setState, getState }: ChatOperationsDeps)
 
   createNewChat: (setCurrentChatId: (id: string) => void): string => {
     const state = getState()
-    const newChat: Chat = {
-      id: generateChatId(),
-      title: 'New Chat',
-      messageTree: createEmptyRootNode(),
-      isArchived: false,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-      isGeneratingTitle: false,
-      model: state.settings.chat.model,
-    }
+    const chatId = generateChatId()
+    const newChat = createEmptyChat(chatId, 'New Chat', state.settings.chat.model)
 
     const addChat = createChatOperations({ setState, getState }).addChat
     addChat(newChat)

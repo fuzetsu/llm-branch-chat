@@ -62,16 +62,12 @@ const Message: Component<MessageProps> = (props) => {
     store.regenerateMessage(props.chat.id, props.message.id)
   }
 
-  const triggerFlash = () => {
-    setIsFlashing(true)
-    messageRef?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-    setTimeout(() => setIsFlashing(false), 1000)
-  }
-
   // Flash when this message is marked for flashing
   createEffect(() => {
     if (store.state.flashingMessageId === props.message.id) {
-      triggerFlash()
+      setIsFlashing(true)
+      messageRef?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      setTimeout(() => setIsFlashing(false), 1000)
     }
   })
 
@@ -125,7 +121,8 @@ const Message: Component<MessageProps> = (props) => {
             ? 'bg-primary dark:bg-primary-dark text-white'
             : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white',
           props.isStreaming && 'animate-pulse',
-          isFlashing() && 'ring-4 ring-yellow-400 dark:ring-yellow-500 ring-opacity-100 bg-yellow-100 dark:bg-yellow-900/40'
+          isFlashing() &&
+            'ring-4 ring-yellow-400 dark:ring-yellow-500 ring-opacity-100 bg-yellow-100 dark:bg-yellow-900/40',
         )}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}

@@ -1,4 +1,4 @@
-// Core message and chat types - Tree-based structure
+// Core message and chat types - Node pool structure
 export interface MessageNode {
   id: string
   role: 'user' | 'assistant' | 'system'
@@ -6,31 +6,25 @@ export interface MessageNode {
   timestamp: number
   isStreaming: boolean
   isEditing: boolean
-  parentId: string
-  children: MessageNode[]
+  parentId: string | null // null for root children
+  childIds: string[] // Changed from children array
   model: string
-  // UI state: which child branch is currently active (0-indexed)
-  activeChildIndex: number
-}
-
-export interface TreeNode {
-  id: string
-  role: 'root'
-  children: MessageNode[]
-  // UI state: which child branch is currently active (0-indexed)
-  activeChildIndex: number
+  branchIndex: number // Which branch this node represents among siblings
 }
 
 export interface Chat {
   id: string
   title: string
-  messageTree: TreeNode
+  nodes: Map<string, MessageNode> // Stable node pool
+  rootNodeId: string // ID of the root node
+  activeBranches: Map<string, number> // parentId -> active child index
   createdAt: number
   updatedAt: number
   isGeneratingTitle: boolean
   isArchived: boolean
   model: string
 }
+
 
 // Settings types
 export interface ApiSettings {
@@ -84,7 +78,9 @@ export interface SerializableAppState {
 export interface SerializableChat {
   id: string
   title: string
-  messageTree: TreeNode
+  nodes: Array<[string, MessageNode]> // Serialized node pool
+  rootNodeId: string
+  activeBranches: Array<[string, number]> // Serialized active branches
   createdAt: number
   updatedAt: number
   isGeneratingTitle: boolean

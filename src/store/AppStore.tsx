@@ -53,7 +53,7 @@ interface AppStoreContextType extends BaseOperations {
   getArchivedChats: () => Chat[]
   // Message flash operations
   setFlashingMessage: (messageId: string | null) => void
-  switchMessageBranchWithFlash: (chatId: string, messageId: string, branchIndex: number) => string | null
+  switchMessageBranchWithFlash: (chatId: string, messageId: string, branchIndex: number) => void
   // Simplified high-level operations
   sendMessage: (content: string) => Promise<void>
   regenerateMessage: (chatId: string, messageId: string) => Promise<void>
@@ -117,12 +117,16 @@ function createDefaultStreamingState() {
 function serializeChat(chat: Chat): SerializableChat {
   return {
     ...chat,
+    nodes: Array.from(chat.nodes.entries()),
+    activeBranches: Array.from(chat.activeBranches.entries()),
   }
 }
 
 function deserializeChat(chat: SerializableChat, settings: AppSettings): Chat {
   return {
     ...chat,
+    nodes: new Map(chat.nodes || []),
+    activeBranches: new Map(chat.activeBranches || []),
     model: chat.model || settings.chat.model,
   }
 }
@@ -279,11 +283,6 @@ export const AppStoreProvider: ParentComponent = (props) => {
     setState('flashingMessageId', messageId)
   }
 
-  // Wrapper for branch switching with flash
-  const switchMessageBranchWithFlash = (chatId: string, messageId: string, branchIndex: number) => {
-    return operations.switchMessageBranchWithFlash(chatId, messageId, branchIndex, setFlashingMessage)
-  }
-
   const storeValue: AppStoreContextType = {
     state,
     setCurrentChatId,
@@ -304,7 +303,8 @@ export const AppStoreProvider: ParentComponent = (props) => {
     updateMessage: operations.updateMessage,
     createMessageBranch: operations.createMessageBranch,
     switchMessageBranch: operations.switchMessageBranch,
-    switchMessageBranchWithFlash,
+    switchMessageBranchWithFlash: (chatId: string, messageId: string, branchIndex: number) => 
+      operations.switchMessageBranchWithFlash(chatId, messageId, branchIndex, setFlashingMessage),
     getVisibleMessages: operations.getVisibleMessages,
     getBranchInfo: operations.getBranchInfo,
     // Streaming operations
