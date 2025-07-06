@@ -8,7 +8,7 @@ import type {
 
 export interface ApiServiceDeps {
   baseUrl: string
-  apiKey: string
+  apiKey: string | undefined
 }
 
 export const createApiService = ({ baseUrl, apiKey }: ApiServiceDeps) => {
@@ -44,7 +44,7 @@ export const createApiService = ({ baseUrl, apiKey }: ApiServiceDeps) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
+        ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : null),
       },
       body: JSON.stringify(body),
     })

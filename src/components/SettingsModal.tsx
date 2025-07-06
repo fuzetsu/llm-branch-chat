@@ -21,7 +21,7 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
   // Local form state
   const [formData, setFormData] = createStore({
     apiBaseUrl: '',
-    apiKey: '',
+    apiKey: '' as string | undefined,
     availableModels: '',
     defaultModel: '',
     temperature: 0.7,
@@ -133,8 +133,8 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
                 <Input
                   type="password"
                   placeholder="Your API key"
-                  value={formData.apiKey}
-                  onInput={(value) => setFormData('apiKey', value)}
+                  value={formData.apiKey ?? ''}
+                  onInput={(value) => setFormData('apiKey', value || undefined)}
                 />
               </FormField>
 
