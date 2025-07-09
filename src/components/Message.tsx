@@ -139,7 +139,7 @@ const Message: Component<MessageProps> = (props) => {
           fallback={
             <div class="space-y-2">
               <textarea
-                class="w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary"
+                class="w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize max-w-full min-w-[30vw] min-h-40"
                 value={editContent()}
                 onInput={(e) => setEditContent((e.target as HTMLTextAreaElement).value)}
                 onKeyDown={handleKeyDown}
