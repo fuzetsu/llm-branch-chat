@@ -1,4 +1,4 @@
-import { Component, createSignal, Show } from 'solid-js'
+import { Component, createEffect, createSignal, Show } from 'solid-js'
 import { useAppStore } from '../store/AppStore'
 import Icon from './ui/Icon'
 
@@ -45,6 +45,14 @@ const MessageInput: Component = () => {
     target.style.height = target.scrollHeight + 'px'
   }
 
+  const [getInput, setInput] = createSignal<HTMLTextAreaElement | null>(null)
+
+  createEffect(() => {
+    if (!store.state.streaming.isStreaming) {
+      getInput()?.focus()
+    }
+  })
+
   return (
     <div class="bg-white dark:bg-dark-surface">
       <Show
@@ -52,6 +60,7 @@ const MessageInput: Component = () => {
         fallback={
           <div class="flex space-x-3">
             <textarea
+              ref={setInput}
               class="flex-1 resize-none border border-gray-300 dark:border-dark-border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-dark-surface text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 disabled:opacity-50"
               placeholder={isStreaming() ? 'Waiting for response...' : 'Type your message...'}
               rows="1"
