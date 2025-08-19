@@ -1,4 +1,11 @@
-import { createContext, createEffect, useContext, ParentComponent } from 'solid-js'
+import {
+  createContext,
+  createEffect,
+  useContext,
+  ParentComponent,
+  createSignal,
+  untrack,
+} from 'solid-js'
 import { createStore, SetStoreFunction } from 'solid-js/store'
 import type {
   AppSettings,
@@ -8,6 +15,7 @@ import type {
   SerializableChat,
 } from '../types/index.js'
 import { createAppStoreOperations, type AppStoreOperations } from './AppStoreOperations'
+import { STREAM_END } from '../services/MessageService.js'
 
 interface AppStateStore {
   chats: Map<string, Chat>
@@ -39,6 +47,7 @@ type BaseOperations = Pick<
   | 'appendStreamingContent'
   | 'stopStreaming'
   | 'getStreamingContent'
+  | 'cancelStreaming'
 >
 
 interface AppStoreContextType extends BaseOperations {
@@ -241,12 +250,21 @@ export const AppStoreProvider: ParentComponent = (props) => {
     },
   )
 
+  const newAbort = () => new AbortController()
+  const [abortController, setAbortController] = createSignal(newAbort())
+  createEffect(() => {
+    if (!state.streaming.isStreaming) {
+      untrack(abortController).abort(STREAM_END)
+      setAbortController(newAbort())
+    }
+  })
+
   // High-level operations with business logic
   const sendMessage = async (content: string) => {
     const currentChat = operations.getCurrentChat(state.currentChatId, state.chats)
     if (!currentChat) return
 
-    await operations.sendMessage(content, currentChat, state.settings)
+    await operations.sendMessage(content, currentChat, state.settings, abortController().signal)
 
     // Auto-generate title if this is the first exchange
     const messageCount = operations.getVisibleMessages(currentChat.id).length
@@ -262,14 +280,24 @@ export const AppStoreProvider: ParentComponent = (props) => {
     const chat = state.chats.get(chatId)
     if (!chat) return
 
-    await operations.regenerateMessage(chatId, messageId, chat, state.settings)
+    await operations.regenerateMessage(
+      chatId,
+      messageId,
+      chat,
+      state.settings,
+      abortController().signal,
+    )
   }
 
   const generateAssistantResponse = async () => {
     const currentChat = operations.getCurrentChat(state.currentChatId, state.chats)
     if (!currentChat) return
 
-    await operations.generateAssistantResponse(currentChat, state.settings)
+    await operations.generateAssistantResponse(
+      currentChat,
+      state.settings,
+      abortController().signal,
+    )
   }
 
   const generateChatTitle = async (chatId: string) => {
@@ -320,6 +348,7 @@ export const AppStoreProvider: ParentComponent = (props) => {
     updateStreamingContent: operations.updateStreamingContent,
     appendStreamingContent: operations.appendStreamingContent,
     stopStreaming: operations.stopStreaming,
+    cancelStreaming: operations.cancelStreaming,
     getStreamingContent: operations.getStreamingContent,
     // High-level operations with business logic
     sendMessage,

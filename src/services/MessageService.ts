@@ -13,6 +13,8 @@ export interface MessageServiceDeps {
   getVisibleMessages: (chatId: string) => MessageNode[]
 }
 
+export const STREAM_END = 'stream-end'
+
 export const createMessageService = ({
   apiService,
   addMessage,
@@ -27,20 +29,24 @@ export const createMessageService = ({
   const convertToApiMessages = (messages: MessageNode[]): ApiMessage[] =>
     messages.map((msg) => ({ role: msg.role, content: msg.content }))
 
+  const endStream = (chatId: string, messageId: string) => {
+    const finalContent = getStreamingContent()
+    stopStreaming()
+    updateMessage(chatId, messageId, {
+      content: finalContent,
+      timestamp: Date.now(),
+    })
+  }
+
   // Helper: Common streaming response handler
   const createStreamingHandler = (chatId: string, messageId: string) => ({
-    onToken: (token: string) => {
-      appendStreamingContent(token)
-    },
-    onComplete: () => {
-      const finalContent = getStreamingContent()
-      stopStreaming()
-      updateMessage(chatId, messageId, {
-        content: finalContent,
-        timestamp: Date.now(),
-      })
-    },
+    onToken: (token: string) => appendStreamingContent(token),
+    onComplete: () => endStream(chatId, messageId),
     onError: (error: Error) => {
+      if (error.message === STREAM_END) {
+        endStream(chatId, messageId)
+        return
+      }
       console.error('Streaming error:', error)
       updateMessage(chatId, messageId, {
         content: `Error: ${error.message}`,
@@ -66,7 +72,12 @@ export const createMessageService = ({
   }
 
   return {
-    async sendMessage(content: string, currentChat: Chat, settings: AppSettings): Promise<void> {
+    async sendMessage(
+      content: string,
+      currentChat: Chat,
+      settings: AppSettings,
+      abortSignal: AbortSignal,
+    ): Promise<void> {
       // Find the last message in the conversation to use as parent
       const visibleMessages = getVisibleMessages(currentChat.id)
       const lastMessage = visibleMessages.at(-1)
@@ -97,13 +108,18 @@ export const createMessageService = ({
           createStreamingHandler(currentChat.id, assistantMessage.id),
           settings.chat.temperature,
           settings.chat.maxTokens,
+          abortSignal,
         )
       } catch (error) {
         handleStreamingError(currentChat.id, assistantMessage.id, error, 'send message')
       }
     },
 
-    async generateAssistantResponse(currentChat: Chat, settings: AppSettings): Promise<void> {
+    async generateAssistantResponse(
+      currentChat: Chat,
+      settings: AppSettings,
+      abortSignal: AbortSignal,
+    ): Promise<void> {
       // Find the last message in the conversation to use as parent
       const visibleMessages = getVisibleMessages(currentChat.id)
       const lastMessage = visibleMessages.at(-1)
@@ -131,6 +147,7 @@ export const createMessageService = ({
           createStreamingHandler(currentChat.id, assistantMessage.id),
           settings.chat.temperature,
           settings.chat.maxTokens,
+          abortSignal,
         )
       } catch (error) {
         handleStreamingError(
@@ -147,6 +164,7 @@ export const createMessageService = ({
       messageId: string,
       chat: Chat,
       settings: AppSettings,
+      abortSignal: AbortSignal,
     ): Promise<void> {
       const message = findNodeById(chat.nodes, messageId)
       if (!message || message.role !== 'assistant') return
@@ -183,6 +201,7 @@ export const createMessageService = ({
           createStreamingHandler(chatId, newBranchMessage.id),
           settings.chat.temperature,
           settings.chat.maxTokens,
+          abortSignal,
           true, // Enable entropy to prevent API caching
         )
       } catch (error) {

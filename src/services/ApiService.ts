@@ -39,7 +39,11 @@ export const createApiService = ({ baseUrl, apiKey }: ApiServiceDeps) => {
     }
   }
 
-  const makeRequest = async (url: string, body: ApiRequestBody): Promise<Response> => {
+  const makeRequest = async (
+    url: string,
+    body: ApiRequestBody,
+    signal: AbortSignal | null = null,
+  ): Promise<Response> => {
     return fetch(url, {
       method: 'POST',
       headers: {
@@ -47,6 +51,7 @@ export const createApiService = ({ baseUrl, apiKey }: ApiServiceDeps) => {
         ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : null),
       },
       body: JSON.stringify(body),
+      signal,
     })
   }
 
@@ -131,7 +136,13 @@ export const createApiService = ({ baseUrl, apiKey }: ApiServiceDeps) => {
 
       callbacks.onComplete()
     } catch (error) {
-      callbacks.onError(error instanceof Error ? error : new Error('Stream processing error'))
+      callbacks.onError(
+        error instanceof Error
+          ? error
+          : typeof error === 'string'
+            ? new Error(error)
+            : new Error('Stream processing error'),
+      )
     }
   }
 
@@ -166,6 +177,7 @@ export const createApiService = ({ baseUrl, apiKey }: ApiServiceDeps) => {
       callbacks: StreamCallbacks,
       temperature: number,
       maxTokens: number,
+      signal: AbortSignal,
       entropy = false,
     ): Promise<void> {
       try {
@@ -175,7 +187,7 @@ export const createApiService = ({ baseUrl, apiKey }: ApiServiceDeps) => {
         const url = buildUrl(entropy)
         const requestBody = buildRequestBody(cleanMessages, model, temperature, maxTokens)
 
-        const response = await makeRequest(url, requestBody)
+        const response = await makeRequest(url, requestBody, signal)
 
         if (!response.ok) {
           throw new Error(`API Error: ${response.status} ${response.statusText}`)

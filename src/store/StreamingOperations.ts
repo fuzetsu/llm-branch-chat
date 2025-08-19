@@ -19,6 +19,8 @@ export const createStreamingOperations = ({ setState, getState }: StreamingOpera
     setState('streaming', 'currentContent', (prev: string) => prev + content)
   },
 
+  cancelStreaming: () => setState('streaming', { isStreaming: false }),
+
   stopStreaming: () => {
     setState('streaming', {
       isStreaming: false,
