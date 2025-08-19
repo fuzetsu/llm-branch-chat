@@ -1,4 +1,4 @@
-import { Component, createEffect, createSignal, onCleanup, Show } from 'solid-js'
+import { Component, createEffect, createMemo, createSignal, onCleanup, Show } from 'solid-js'
 import { MessageNode as MessageType, Chat } from '../types/index.js'
 import { useAppStore } from '../store/AppStore'
 import MessageBranching from './MessageBranching'
@@ -116,6 +116,10 @@ const Message: Component<MessageProps> = (props) => {
     return getRawContent()
   }
 
+  const streamingClassName = createMemo(() =>
+    props.isStreaming && store.getStreamingContent().length <= 30 ? 'animate-pulse' : null,
+  )
+
   return (
     <div class={classnames('flex mb-4', isUser() ? 'justify-end' : 'justify-start')}>
       <div
@@ -125,7 +129,7 @@ const Message: Component<MessageProps> = (props) => {
           isUser()
             ? 'bg-primary dark:bg-primary-dark text-white'
             : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white',
-          props.isStreaming && 'animate-pulse',
+          streamingClassName(),
           isFlashing() &&
             'ring-4 ring-yellow-400 dark:ring-yellow-500 ring-opacity-100 bg-yellow-100 dark:bg-yellow-900/40',
         )}
