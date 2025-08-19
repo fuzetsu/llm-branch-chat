@@ -1,4 +1,4 @@
-import { Component, For, createEffect, createSignal, Show } from 'solid-js'
+import { Component, For, createEffect, createSignal, Show, untrack } from 'solid-js'
 import { Chat } from '../types/index.js'
 import { useAppStore } from '../store/AppStore'
 import Message from './Message'
@@ -18,8 +18,8 @@ const MessageList: Component<MessageListProps> = (props) => {
   // Auto-scroll to bottom when new messages arrive or streaming updates
   createEffect(() => {
     const messages = visibleMessages()
-    const isStreaming = store.state.streaming.isStreaming
-    const hasFlashingMessage = store.state.flashingMessageId
+    const isStreaming = store.state.streaming.isStreaming && store.state.streaming.currentContent
+    const hasFlashingMessage = untrack(() => store.state.flashingMessageId)
 
     if ((messages.length > 0 || isStreaming) && shouldAutoScroll() && !hasFlashingMessage) {
       messagesEndRef?.scrollIntoView()
