@@ -35,7 +35,7 @@ const Message: Component<MessageProps> = (props) => {
 
   const saveEdit = async () => {
     const newContent = editContent().trim()
-    if (newContent !== props.message.content && props.message.parentId) {
+    if (newContent !== props.message.content) {
       store.createMessageBranch(
         props.chat.id,
         props.message.parentId,

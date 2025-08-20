@@ -45,6 +45,7 @@ export function findNodeById(nodes: Map<string, MessageNode>, nodeId: string): M
 export function addNodeToPool(
   nodes: Map<string, MessageNode>,
   activeBranches: Map<string, number>,
+  rootNodeId: string,
   newNode: MessageNode,
   parentId: string | null,
 ): { nodes: Map<string, MessageNode>; activeBranches: Map<string, number> } {
@@ -72,7 +73,7 @@ export function addNodeToPool(
     const rootChildren = Array.from(newNodes.values()).filter(
       (node) => node.parentId === null,
     ).length
-    newBranches.set(newNode.parentId || 'root', rootChildren - 1)
+    newBranches.set(rootNodeId, rootChildren - 1)
   }
 
   return { nodes: newNodes, activeBranches: newBranches }

@@ -22,6 +22,7 @@ export const createMessageOperations = ({ setState, getState }: MessageOperation
           const { nodes: newNodes, activeBranches: newBranches } = addNodeToPool(
             chat.nodes,
             chat.activeBranches,
+            chat.rootNodeId,
             message,
             parentId,
           )
@@ -91,6 +92,7 @@ export const createMessageOperations = ({ setState, getState }: MessageOperation
           const { nodes: newNodes, activeBranches: newBranches } = addNodeToPool(
             chat.nodes,
             chat.activeBranches,
+            chat.rootNodeId,
             newMessage,
             parentId,
           )
