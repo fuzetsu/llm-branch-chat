@@ -46,13 +46,16 @@ const MessageInput: Component = () => {
 
     // Auto-resize textarea
     target.style.height = 'auto'
-    target.style.height = target.scrollHeight + 'px'
+    target.style.height = Math.min(target.scrollHeight, window.innerHeight / 2) + 'px'
   }
 
   const [getInput, setInput] = createSignal<HTMLTextAreaElement | null>(null)
 
   createEffect(() => {
-    if (!store.state.streaming.isStreaming) {
+    if (store.state.streaming.isStreaming) {
+      const input = getInput()
+      if (input) input.style.height = ''
+    } else {
       getInput()?.focus()
     }
   })
