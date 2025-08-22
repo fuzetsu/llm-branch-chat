@@ -178,25 +178,30 @@ export async function renderMarkdown(content: string): Promise<string> {
   return await result
 }
 
+type FalsyOr<T> = T | number | boolean | null | undefined | false | FalsyOr<T>[]
+
 /**
  * Concatenates class names, filtering out falsy values
  * Supports both string arguments and objects where keys are class names
  * and values determine whether the class should be included
  */
-export function classnames(
-  ...args: (string | number | boolean | null | undefined | Record<string, unknown>)[]
-): string {
+export function classnames(...args: FalsyOr<string | Record<string, unknown>>[]): string {
   const classes: string[] = []
 
   for (const arg of args) {
     if (!arg) continue
 
-    if (typeof arg === 'string' || typeof arg === 'number') {
+    const type = typeof arg
+    if (type === 'string' || type === 'number') {
       classes.push(String(arg))
-    } else if (typeof arg === 'object' && arg !== null) {
-      for (const [key, value] of Object.entries(arg)) {
-        if (value) {
-          classes.push(key)
+    } else if (type === 'object' && arg !== null) {
+      if (Array.isArray(arg)) {
+        classes.push(classnames(...arg))
+      } else {
+        for (const [key, value] of Object.entries(arg)) {
+          if (value) {
+            classes.push(key)
+          }
         }
       }
     }

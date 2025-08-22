@@ -124,10 +124,11 @@ const ChatItem: Component<ChatItemProps> = (props) => {
               <div
                 ref={editableRef}
                 class={classnames(
-                  'font-medium truncate transition-all duration-200 cursor-text',
+                  'font-medium truncate transition-all duration-200',
+                  props.isSelected && 'cursor-text',
                   isEditing()
                     ? 'bg-white/10 rounded px-2 py-1 -mx-2 -my-1 ring-1 ring-primary/30'
-                    : 'hover:bg-white/5 rounded px-2 py-1 -mx-2 -my-1',
+                    : [props.isSelected && 'hover:bg-white/5', 'rounded px-2 py-1 -mx-2 -my-1'],
                 )}
                 onDblClick={handleContentEdit}
                 onKeyDown={handleContentKeyDown}
