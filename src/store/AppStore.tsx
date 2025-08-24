@@ -56,7 +56,7 @@ interface AppStoreContextType extends BaseOperations {
   updateSettings: (settings: Partial<AppSettings>) => void
   setUI: (ui: Partial<UISettings>) => void
   // Chat operations with wrapped signatures
-  createNewChat: () => string
+  createNewChat: () => void
   getCurrentChat: () => Chat | null
   getActiveChats: () => Chat[]
   getArchivedChats: () => Chat[]
@@ -311,7 +311,7 @@ export const AppStoreProvider: ParentComponent = (props) => {
   }
 
   // Simplified operation wrappers
-  const createNewChat = (): string => operations.createNewChat(setCurrentChatId)
+  const createNewChat = () => setCurrentChatId(null)
   const getCurrentChat = (): Chat | null =>
     operations.getCurrentChat(state.currentChatId, state.chats)
   const getActiveChats = (): Chat[] => operations.getActiveChats(state.chats)
