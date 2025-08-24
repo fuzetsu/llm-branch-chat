@@ -262,7 +262,10 @@ export const AppStoreProvider: ParentComponent = (props) => {
   // High-level operations with business logic
   const sendMessage = async (content: string) => {
     const currentChat = operations.getCurrentChat(state.currentChatId, state.chats)
-    if (!currentChat) return
+    if (!currentChat) {
+      operations.createNewChat(setCurrentChatId)
+      return sendMessage(content)
+    }
 
     await operations.sendMessage(content, currentChat, state.settings, abortController().signal)
 
