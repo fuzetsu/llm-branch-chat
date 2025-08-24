@@ -6,14 +6,10 @@ const MessageInput: Component = () => {
   const store = useAppStore()
   const [inputValue, setInputValue] = createSignal('')
 
-  const isDisabled = () => {
-    return store.state.streaming.isStreaming
-  }
-
   const isStreaming = () => store.state.streaming.isStreaming
 
   const handleSend = async () => {
-    if (isDisabled()) {
+    if (isStreaming()) {
       store.cancelStreaming()
       return
     }
@@ -71,7 +67,7 @@ const MessageInput: Component = () => {
           value={inputValue()}
           onInput={handleInput}
           onKeyPress={handleKeyPress}
-          disabled={isDisabled()}
+          disabled={isStreaming()}
         />
         <button
           class="px-6 py-3 bg-primary hover:bg-blue-600 dark:bg-primary-dark dark:hover:bg-primary-darker disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors flex items-center space-x-2 cursor-pointer"

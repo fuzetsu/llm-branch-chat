@@ -7,21 +7,11 @@ import Button from './ui/Button'
 const Header: Component = () => {
   const store = useAppStore()
 
-  const handleNewChat = () => {
-    store.createNewChat()
-  }
-
   const [showSettings, setShowSettings] = createSignal(false)
-
-  const handleSettings = () => {
-    setShowSettings(true)
-  }
-
-  const toggleSidebar = () => {
-    store.setUI({ sidebarCollapsed: !store.state.ui.sidebarCollapsed })
-  }
-
+  const handleSettings = () => setShowSettings(true)
+  const toggleSidebar = () => store.setUI({ sidebarCollapsed: !store.state.ui.sidebarCollapsed })
   const currentChat = () => store.getCurrentChat()
+  const handleNewChat = () => store.createNewChat()
 
   return (
     <header class="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-dark-surface border-b border-gray-200 dark:border-dark-border shadow-sm">

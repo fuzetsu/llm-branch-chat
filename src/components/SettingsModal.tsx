@@ -41,9 +41,8 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
   }
 
   // Convert model list to Select options
-  const getModelOptions = () => {
-    return availableModelsList().map((model) => ({ value: model, label: model }))
-  }
+  const getModelOptions = () =>
+    availableModelsList().map((model) => ({ value: model, label: model }))
 
   // Load current settings into form when modal opens
   createEffect(() => {
@@ -94,9 +93,7 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
     props.onClose()
   }
 
-  const handleCancel = () => {
-    props.onClose()
-  }
+  const handleCancel = () => props.onClose()
 
   return (
     <Show when={props.isOpen}>

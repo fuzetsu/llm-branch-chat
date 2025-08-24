@@ -17,9 +17,8 @@ const MessageBranching: Component<MessageBranchingProps> = (props) => {
     return info && info.total > 1 ? info : null
   }
 
-  const handleBranchSwitch = (branchIndex: number) => {
+  const handleBranchSwitch = (branchIndex: number) =>
     store.switchMessageBranchWithFlash(props.chat.id, props.messageId, branchIndex)
-  }
 
   return (
     <Show when={getBranches()}>

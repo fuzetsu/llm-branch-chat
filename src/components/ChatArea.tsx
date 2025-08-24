@@ -21,7 +21,7 @@ const ChatArea: Component = () => {
           </div>
         }
       >
-        <MessageList chat={currentChat()!} />
+        {(chat) => <MessageList chat={chat()} />}
       </Show>
 
       <div class="flex-shrink-0 border-t border-gray-200 dark:border-dark-border bg-white dark:bg-dark-surface p-4">

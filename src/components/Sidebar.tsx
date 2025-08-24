@@ -7,9 +7,7 @@ import { classnames } from '../utils'
 const Sidebar: Component = () => {
   const store = useAppStore()
 
-  const handleNewChat = () => {
-    store.createNewChat()
-  }
+  const handleNewChat = () => store.createNewChat()
 
   return (
     <aside
