@@ -1,7 +1,9 @@
-import { Component, For, createEffect, createSignal, Show, untrack } from 'solid-js'
+import { Component, For, createEffect, Show, onCleanup } from 'solid-js'
 import { Chat } from '../types/index.js'
 import { useAppStore } from '../store/AppStore'
 import Message from './Message'
+import { throttle } from '../utils/index.js'
+import { createKeyedSignal } from '../utils/keyedSignal.js'
 
 interface MessageListProps {
   chat: Chat
@@ -9,21 +11,21 @@ interface MessageListProps {
 
 const MessageList: Component<MessageListProps> = (props) => {
   const store = useAppStore()
-  let messagesEndRef: HTMLDivElement | undefined
-  const [shouldAutoScroll, setShouldAutoScroll] = createSignal(true)
+  let messagesEndRef!: HTMLDivElement
+  const [shouldAutoScroll, setShouldAutoScroll] = createKeyedSignal(true, () => props.chat.id)
 
   // Get visible messages using store method to handle branching
   const visibleMessages = () => store.getVisibleMessages(props.chat.id)
 
   // Auto-scroll to bottom when new messages arrive or streaming updates
+  let messagesContainer!: HTMLDivElement
+  const scrollToEnd = throttle(() => messagesEndRef.scrollIntoView(), 250)
   createEffect(() => {
-    const messages = visibleMessages()
-    const isStreaming = store.state.streaming.isStreaming && store.state.streaming.currentContent
-    const hasFlashingMessage = untrack(() => store.state.flashingMessageId)
-
-    if ((messages.length > 0 || isStreaming) && shouldAutoScroll() && !hasFlashingMessage) {
-      messagesEndRef?.scrollIntoView()
-    }
+    const observer = new ResizeObserver(() => {
+      if (shouldAutoScroll() && !store.state.flashingMessageId) scrollToEnd()
+    })
+    observer.observe(messagesContainer)
+    onCleanup(() => observer.disconnect())
   })
 
   // Handle scroll to detect if user has scrolled up
@@ -35,22 +37,24 @@ const MessageList: Component<MessageListProps> = (props) => {
   }
 
   return (
-    <div class="flex-1 overflow-y-auto px-4 py-6 space-y-4" onScroll={handleScroll}>
-      <For each={visibleMessages()} fallback={<></>}>
-        {(message) => (
-          <Message
-            message={message}
-            chat={props.chat}
-            isStreaming={store.state.streaming.currentMessageId === message.id}
-            streamingContent={
-              store.state.streaming.isStreaming &&
-              store.state.streaming.currentMessageId === message.id
-                ? store.state.streaming.currentContent
-                : null
-            }
-          />
-        )}
-      </For>
+    <div class="flex-1 overflow-y-auto px-4 py-6" onScroll={handleScroll}>
+      <div ref={messagesContainer} class="flex-1">
+        <For each={visibleMessages()}>
+          {(message) => (
+            <Message
+              message={message}
+              chat={props.chat}
+              isStreaming={store.state.streaming.currentMessageId === message.id}
+              streamingContent={
+                store.state.streaming.isStreaming &&
+                store.state.streaming.currentMessageId === message.id
+                  ? store.state.streaming.currentContent
+                  : null
+              }
+            />
+          )}
+        </For>
+      </div>
 
       {/* Empty state */}
       <Show when={visibleMessages().length === 0 && !store.state.streaming.isStreaming}>
