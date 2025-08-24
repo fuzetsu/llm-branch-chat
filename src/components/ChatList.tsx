@@ -20,9 +20,7 @@ const ChatList: Component = () => {
   createEffect(() => {
     requestAnimationFrame(() => {
       const selectedElement = archivedSectionRef?.querySelector('[data-selected="true"]')
-      if (selectedElement) {
-        selectedElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
-      }
+      selectedElement?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
     })
   })
 
