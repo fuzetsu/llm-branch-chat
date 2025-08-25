@@ -1,6 +1,7 @@
 import { Component, createEffect, createSignal, Show } from 'solid-js'
 import { useAppStore } from '../store/AppStore'
 import Icon from './ui/Icon'
+import { touch } from '../utils'
 
 const MessageInput: Component = () => {
   const store = useAppStore()
@@ -46,6 +47,11 @@ const MessageInput: Component = () => {
   }
 
   const [getInput, setInput] = createSignal<HTMLTextAreaElement | null>(null)
+
+  createEffect(() => {
+    touch(store.state.currentChatId)
+    getInput()?.focus()
+  })
 
   createEffect(() => {
     if (store.state.streaming.isStreaming) {

@@ -180,3 +180,6 @@ export function classnames(...args: FalsyOr<string | Record<string, unknown>>[])
 
   return classes.join(' ')
 }
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function touch(_x: unknown): void {}
