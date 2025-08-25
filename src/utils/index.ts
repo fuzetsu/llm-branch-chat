@@ -22,7 +22,7 @@ export function generateMessageId(): string {
 /**
  * Formats a timestamp into a human-readable relative time string
  */
-export function formatTimestamp(timestamp: number) {
+export function relativeTimestamp(timestamp: number) {
   const date = new Date(timestamp)
   const now = new Date()
   const diff = now.getTime() - date.getTime()

@@ -3,7 +3,7 @@ import { MessageNode as MessageType, Chat } from '../types/index.js'
 import { useAppStore } from '../store/AppStore'
 import MessageBranching from './MessageBranching'
 import IconButton from './ui/IconButton'
-import { formatTimestamp, renderMarkdown, throttle, classnames } from '../utils/index.js'
+import { relativeTimestamp, renderMarkdown, throttle, classnames } from '../utils/index.js'
 
 interface MessageProps {
   message: MessageType
@@ -120,6 +120,8 @@ const Message: Component<MessageProps> = (props) => {
     props.isStreaming && store.getStreamingContent().length <= 30 ? 'animate-pulse' : null,
   )
 
+  const fullMessageDate = () => new Date(props.message.timestamp).toLocaleString()
+
   return (
     <div class={classnames('flex mb-4', isUser() ? 'justify-end' : 'justify-start')}>
       <div
@@ -181,7 +183,7 @@ const Message: Component<MessageProps> = (props) => {
             isUser() ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400',
           )}
         >
-          {formatTimestamp(props.message.timestamp)}
+          <span title={fullMessageDate()}>{relativeTimestamp(props.message.timestamp)}</span>
           {props.message.model && <span class="ml-2">• {props.message.model}</span>}
           <Show when={props.isStreaming}>
             <span class="ml-2 animate-pulse">• generating...</span>
