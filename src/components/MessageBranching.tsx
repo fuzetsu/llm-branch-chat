@@ -1,7 +1,8 @@
-import { Component, Show, Index } from 'solid-js'
+import { Component, Show, Index, createSignal } from 'solid-js'
 import { Chat } from '../types/index.js'
 import { useAppStore } from '../store/AppStore'
-import { classnames } from '../utils'
+import { block, classnames, debounce } from '../utils'
+import { countDescendants, getRootChildren } from '../utils/messageTree.js'
 
 interface MessageBranchingProps {
   messageId: string
@@ -20,6 +21,23 @@ const MessageBranching: Component<MessageBranchingProps> = (props) => {
   const handleBranchSwitch = (branchIndex: number) =>
     store.switchMessageBranchWithFlash(props.chat.id, props.messageId, branchIndex)
 
+  const [hoverIndex, setHoverIndex] = createSignal(-1)
+  const changeHover = debounce(setHoverIndex, 500)
+  const getBranchCount = (index: number) => {
+    if (hoverIndex() !== index) return ''
+    const { nodes } = props.chat
+    const message = nodes.get(props.messageId)
+    const parentId = message?.parentId
+    const branchId = block(() => {
+      if (parentId) {
+        const parent = nodes.get(parentId)
+        return parent?.childIds[index]
+      }
+      return getRootChildren(nodes)[index]?.id
+    })
+    return branchId ? String(countDescendants(nodes, branchId)) : ''
+  }
+
   return (
     <Show when={getBranches()}>
       {(info) => {
@@ -37,6 +55,9 @@ const MessageBranching: Component<MessageBranchingProps> = (props) => {
                 {(index) => (
                   <button
                     disabled={isSelected(index())}
+                    title={getBranchCount(index())}
+                    onMouseEnter={() => changeHover(index())}
+                    onMouseLeave={() => setHoverIndex(-1)}
                     class={classnames(
                       'px-2 py-1 rounded text-xs transition-colors cursor-pointer',
                       isSelected(index())

@@ -117,11 +117,7 @@ export function getVisibleNodes(
 ): MessageNode[] {
   const visibleNodes: MessageNode[] = []
 
-  // Get root children (nodes with parentId === null)
-  const rootChildren = Array.from(nodes.values())
-    .filter((node) => node.parentId === null)
-    .sort((a, b) => a.branchIndex - b.branchIndex)
-
+  const rootChildren = getRootChildren(nodes)
   if (rootChildren.length === 0) return []
 
   // Start with the active root child
@@ -159,9 +155,26 @@ export function getVisibleMessages(
   return getVisibleNodes(nodes, rootNodeId, activeBranches)
 }
 
+export function getRootChildren(nodes: Map<string, MessageNode>): MessageNode[] {
+  return Array.from(nodes.values())
+    .filter((node) => node.parentId === null)
+    .sort((a, b) => a.branchIndex - b.branchIndex)
+}
+
+export function countDescendants(nodes: Map<string, MessageNode>, rootNodeId: string) {
+  const node = nodes.get(rootNodeId)
+  if (!node) return 0
+  let count = node.childIds.length
+  for (const id of node.childIds) {
+    const node = nodes.get(id)
+    if (node) count += countDescendants(nodes, node.id)
+  }
+  return count
+}
+
 export function getBranchInfo(
   nodes: Map<string, MessageNode>,
-  rootNodeId: string,
+  _rootNodeId: string,
   nodeId: string,
 ): { total: number; current: number; hasPrevious: boolean; hasNext: boolean } | null {
   const node = nodes.get(nodeId)
