@@ -26,7 +26,7 @@ const Layout: Component = () => {
         </Show>
 
         {/* Main Content */}
-        <main class="flex-1 lg:ml-80 pt-16 flex flex-col h-screen">
+        <main class="flex-1 lg:ml-80 pt-16 flex flex-col h-screen max-w-full">
           <ChatArea />
         </main>
       </div>

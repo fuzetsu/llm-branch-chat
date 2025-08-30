@@ -50,7 +50,7 @@ const MessageBranching: Component<MessageBranchingProps> = (props) => {
             )}
           >
             <span>Branch</span>
-            <div class="flex items-center space-x-1">
+            <div class="flex flex-wrap items-center space-x-1">
               <Index each={Array.from({ length: info().total }, (_, i) => i)}>
                 {(index) => (
                   <button
