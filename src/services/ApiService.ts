@@ -160,16 +160,6 @@ export const createApiService = ({ baseUrl, apiKey }: ApiServiceDeps) => {
     ]
   }
 
-  const truncateTitle = (title: string): string => {
-    const MAX_TITLE_LENGTH = 50
-
-    if (title.length <= MAX_TITLE_LENGTH) {
-      return title
-    }
-
-    return title.substring(0, MAX_TITLE_LENGTH).trim() + '...'
-  }
-
   return {
     async streamResponse(
       messages: ApiMessage[],
@@ -220,14 +210,13 @@ export const createApiService = ({ baseUrl, apiKey }: ApiServiceDeps) => {
 
         const contentType = response.headers.get('content-type')
         if (!contentType?.includes('application/json')) {
-          const responseText = await response.text()
-          return truncateTitle(responseText)
+          return await response.text()
         }
 
         const data: ApiResponse = await response.json()
         const title = data.choices[0]?.message?.content?.trim().replace(/['"*]\*?/g, '') || ''
 
-        return truncateTitle(title)
+        return title
       } catch (error) {
         console.error('Title generation failed:', error)
         return null
