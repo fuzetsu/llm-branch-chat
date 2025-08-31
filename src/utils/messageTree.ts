@@ -161,8 +161,10 @@ export function getRootChildren(nodes: Map<string, MessageNode>): MessageNode[] 
     .sort((a, b) => a.branchIndex - b.branchIndex)
 }
 
-export function countDescendants(nodes: Map<string, MessageNode>, rootNodeId: string) {
-  const node = nodes.get(rootNodeId)
+export function countDescendants(nodes: Map<string, MessageNode>, rootNodeId: string | null) {
+  const node = rootNodeId
+    ? nodes.get(rootNodeId)
+    : { childIds: getRootChildren(nodes).map((node) => node.id) }
   if (!node) return 0
   let count = node.childIds.length
   for (const id of node.childIds) {

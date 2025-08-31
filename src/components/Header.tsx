@@ -2,16 +2,25 @@ import { Component, createSignal, For } from 'solid-js'
 import { useAppStore } from '../store/AppStore'
 import Icon from './ui/Icon'
 import SettingsModal from './SettingsModal'
+import ChatStatsModal from './ChatStatsModal'
 import Button from './ui/Button'
+import { countDescendants } from '../utils/messageTree'
 
 const Header: Component = () => {
   const store = useAppStore()
 
   const [showSettings, setShowSettings] = createSignal(false)
+  const [showStats, setShowStats] = createSignal(false)
   const handleSettings = () => setShowSettings(true)
+  const handleStats = () => setShowStats(true)
   const toggleSidebar = () => store.setUI({ sidebarCollapsed: !store.state.ui.sidebarCollapsed })
   const currentChat = () => store.getCurrentChat()
   const handleNewChat = () => store.createNewChat()
+
+  const messageCount = () => {
+    const chat = store.getCurrentChat()
+    return chat ? countDescendants(chat.nodes, null) : 0
+  }
 
   return (
     <header class="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-dark-surface border-b border-gray-200 dark:border-dark-border shadow-sm">
@@ -47,6 +56,13 @@ const Header: Component = () => {
                 </For>
               </select>
             </div>
+            <button
+              class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-primary-dark transition-colors cursor-pointer"
+              onClick={handleStats}
+              title="View chat statistics"
+            >
+              {messageCount()} messages
+            </button>
           </div>
         </div>
         <div class="flex items-center space-x-2">
@@ -59,6 +75,7 @@ const Header: Component = () => {
         </div>
       </div>
       <SettingsModal isOpen={showSettings()} onClose={() => setShowSettings(false)} />
+      <ChatStatsModal isOpen={showStats()} onClose={() => setShowStats(false)} />
     </header>
   )
 }
