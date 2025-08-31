@@ -7,4 +7,3 @@ npm run verify-build
 ```
 
 This command ensures code quality, type safety, and build success in one step.
-
