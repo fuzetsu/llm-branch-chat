@@ -2,7 +2,12 @@ import { Component, createMemo, Show, For } from 'solid-js'
 import { useAppStore } from '../store/AppStore'
 import Icon from './ui/Icon'
 import Button from './ui/Button'
-import { getTokenStats, getTokenBreakdown, type TokenStats } from '../utils/tokenCounter'
+import {
+  getTokenStats,
+  getTokenBreakdown,
+  type TokenStats,
+  estimateNewMessageCost,
+} from '../utils/tokenCounter'
 import { classnames } from '../utils'
 
 const formatNumber = (num: number) => num.toLocaleString()
@@ -23,12 +28,20 @@ const ChatStatsModal: Component<ChatStatsModalProps> = (props) => {
     const chat = currentChat()
     if (!chat || !props.isOpen) return null
 
-    return getTokenStats(chat.nodes, chatModel())
+    return getTokenStats(chat.nodes)
   })
 
   const tokenBreakdown = createMemo(() => {
     const chat = currentChat()
     return chat && props.isOpen ? getTokenBreakdown(chat.nodes) : []
+  })
+
+  const estimatedNewMessageCost = createMemo(() => {
+    const chat = currentChat()
+    if (!chat || !props.isOpen) return 0
+
+    const visibleMessages = store.getVisibleMessages(chat.id)
+    return estimateNewMessageCost(visibleMessages, chatModel())
   })
 
   return (
@@ -115,6 +128,10 @@ const ChatStatsModal: Component<ChatStatsModalProps> = (props) => {
                       label="Estimated Cost"
                       value={formatCost(currentStats().estimatedCost)}
                     />
+                    <StatRow
+                      label="Next Message Cost"
+                      value={formatCost(estimatedNewMessageCost())}
+                    />
                     <StatRow label="Current Model" value={chatModel()} />
                   </div>
 
@@ -135,10 +152,36 @@ const ChatStatsModal: Component<ChatStatsModalProps> = (props) => {
                     </div>
                   </div>
 
+                  {/* Model Breakdown */}
+                  <Show when={currentStats().modelBreakdown.length > 0}>
+                    <div>
+                      <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-3">
+                        Model Breakdown
+                      </h4>
+                      <div class="space-y-3">
+                        <For each={currentStats().modelBreakdown}>
+                          {(modelStat) => (
+                            <ModelBreakdownItem
+                              model={modelStat.model}
+                              messageCount={modelStat.messageCount}
+                              inputTokens={modelStat.inputTokens}
+                              outputTokens={modelStat.outputTokens}
+                              totalTokens={modelStat.totalTokens}
+                              estimatedCost={modelStat.estimatedCost}
+                              percentage={
+                                (modelStat.totalTokens / currentStats().totalTokens) * 100
+                              }
+                            />
+                          )}
+                        </For>
+                      </div>
+                    </div>
+                  </Show>
+
                   {/* Scope and Cost Disclaimer */}
                   <div class="text-xs text-gray-500 dark:text-gray-400 bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded">
                     Statistics include all conversation branches. Cost estimates are approximate and
-                    vary by provider.
+                    vary by provider. Costs calculated using per-message model pricing.
                   </div>
                 </div>
               )}
@@ -210,6 +253,69 @@ const StatRow: Component<{
     <div class="flex justify-between">
       <span class="text-gray-600 dark:text-gray-400">{props.label}</span>
       <span class="text-gray-900 dark:text-white">{props.value}</span>
+    </div>
+  )
+}
+
+// Component for model breakdown items
+const ModelBreakdownItem: Component<{
+  model: string
+  messageCount: number
+  inputTokens: number
+  outputTokens: number
+  totalTokens: number
+  estimatedCost: number
+  percentage: number
+}> = (props) => {
+  return (
+    <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+      {/* Header with model name and usage percentage */}
+      <div class="flex justify-between items-center mb-3">
+        <span class="text-sm font-medium text-gray-900 dark:text-white">{props.model}</span>
+        <span class="text-xs text-gray-500 dark:text-gray-400 bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded-full">
+          {props.percentage.toFixed(1)}% of total
+        </span>
+      </div>
+
+      {/* Message count */}
+      <div class="flex justify-between items-center mb-3 text-sm">
+        <span class="text-gray-600 dark:text-gray-400">Messages</span>
+        <span class="text-gray-900 dark:text-white font-medium">
+          {formatNumber(props.messageCount)}
+        </span>
+      </div>
+
+      {/* Token breakdown */}
+      <div class="grid grid-cols-2 gap-3 mb-3">
+        <div class="text-center">
+          <div class="text-xs text-blue-600 dark:text-blue-400 mb-1">Input</div>
+          <div class="text-sm font-medium text-gray-900 dark:text-white">
+            {formatNumber(props.inputTokens)}
+          </div>
+        </div>
+        <div class="text-center">
+          <div class="text-xs text-green-600 dark:text-green-400 mb-1">Output</div>
+          <div class="text-sm font-medium text-gray-900 dark:text-white">
+            {formatNumber(props.outputTokens)}
+          </div>
+        </div>
+      </div>
+
+      {/* Total tokens and cost */}
+      <div class="flex justify-between items-center pt-3 border-t border-gray-200 dark:border-gray-700">
+        <div>
+          <div class="text-xs text-gray-600 dark:text-gray-400 mb-1">Total Tokens</div>
+          <div class="text-sm font-medium text-gray-900 dark:text-white">
+            {formatNumber(props.totalTokens)}
+          </div>
+        </div>
+        <div class="text-right">
+          <div class="text-xs text-purple-600 dark:text-purple-400 mb-1">Cost</div>
+          <div class="text-sm font-medium text-purple-700 dark:text-purple-300">
+            {formatCost(props.estimatedCost)}
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

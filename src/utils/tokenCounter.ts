@@ -22,20 +22,27 @@ export interface TokenStats {
   averageTokensPerMessage: number
   totalBranches: number
   maxBranchesPerNode: number
+  modelBreakdown: ModelTokenStats[]
+}
+
+export interface ModelTokenStats {
+  model: string
+  inputTokens: number
+  outputTokens: number
+  totalTokens: number
+  estimatedCost: number
+  messageCount: number
 }
 
 /**
  * Calculate comprehensive token statistics for ALL conversation paths in the chat
  * This includes all branches and alternative conversation paths
  */
-export function getTokenStats(
-  nodes: Map<string, MessageNode>,
-  model: string = 'gpt-4.1',
-): TokenStats {
-  return getAllPathsTokenStats(nodes, model)
+export function getTokenStats(nodes: Map<string, MessageNode>): TokenStats {
+  return getAllPathsTokenStats(nodes)
 }
 
-function getAllPathsTokenStats(nodes: Map<string, MessageNode>, model: string): TokenStats {
+function getAllPathsTokenStats(nodes: Map<string, MessageNode>): TokenStats {
   const rootMessages = Array.from(nodes.values()).filter((node) => node.parentId === null)
 
   let totalInputTokens = 0
@@ -44,9 +51,15 @@ function getAllPathsTokenStats(nodes: Map<string, MessageNode>, model: string): 
   let assistantMessageCount = 0
   let systemMessageCount = 0
 
-  // Calculate statistics for each root conversation path
+  // Track model-specific statistics
+  const modelStats = new Map<
+    string,
+    { inputTokens: number; outputTokens: number; messageCount: number }
+  >()
+
+  // Calculate statistics for each root conversation path with per-message model costs
   rootMessages.forEach((rootMessage) => {
-    const pathStats = calculatePathTokenStats(nodes, rootMessage.id)
+    const pathStats = calculatePathTokenStatsWithModelCosts(nodes, rootMessage.id, modelStats)
     totalInputTokens += pathStats.totalInputTokens
     totalOutputTokens += pathStats.totalOutputTokens
     userMessageCount += pathStats.userMessageCount
@@ -61,11 +74,32 @@ function getAllPathsTokenStats(nodes: Map<string, MessageNode>, model: string): 
   // Calculate branch statistics
   const branchStats = calculateBranchStatistics(nodes)
 
+  // Calculate model breakdown
+  const modelBreakdown: ModelTokenStats[] = []
+  let totalEstimatedCost = 0
+
+  for (const [modelName, stats] of modelStats.entries()) {
+    const modelCost = estimateCost(stats.inputTokens, stats.outputTokens, modelName)
+    totalEstimatedCost += modelCost
+
+    modelBreakdown.push({
+      model: modelName,
+      inputTokens: stats.inputTokens,
+      outputTokens: stats.outputTokens,
+      totalTokens: stats.inputTokens + stats.outputTokens,
+      estimatedCost: modelCost,
+      messageCount: stats.messageCount,
+    })
+  }
+
+  // Sort model breakdown by total tokens (descending)
+  modelBreakdown.sort((a, b) => b.totalTokens - a.totalTokens)
+
   return {
     totalInputTokens,
     totalOutputTokens,
     totalTokens,
-    estimatedCost: estimateCost(totalInputTokens, totalOutputTokens, model),
+    estimatedCost: totalEstimatedCost,
     messageCount,
     userMessageCount,
     assistantMessageCount,
@@ -73,12 +107,14 @@ function getAllPathsTokenStats(nodes: Map<string, MessageNode>, model: string): 
     averageTokensPerMessage,
     totalBranches: branchStats.totalBranches,
     maxBranchesPerNode: branchStats.maxBranchesPerNode,
+    modelBreakdown,
   }
 }
 
-function calculatePathTokenStats(
+function calculatePathTokenStatsWithModelCosts(
   nodes: Map<string, MessageNode>,
   startNodeId: string,
+  modelStats: Map<string, { inputTokens: number; outputTokens: number; messageCount: number }>,
 ): {
   totalInputTokens: number
   totalOutputTokens: number
@@ -112,20 +148,34 @@ function calculatePathTokenStats(
   let pathAssistantCount = 0
   let pathSystemCount = 0
 
-  // Calculate cumulative input tokens for this path
+  // Calculate cumulative input tokens for this path with per-message model costs
   messagesInPath.forEach((message, index) => {
     const messageTokens = estimateTokens(message.content)
 
     if (message.role === 'assistant') {
-      // Cumulative input tokens for this assistant response
+      // Cumulative input tokens for this assistant response - ALL previous messages
       const contextMessages = messagesInPath.slice(0, index + 1)
-      const cumulativeInputTokens = contextMessages
-        .filter((m) => m.role !== 'assistant')
-        .reduce((sum, m) => sum + estimateTokens(m.content), 0)
+      const cumulativeInputTokens = contextMessages.reduce(
+        (sum, m) => sum + estimateTokens(m.content),
+        0,
+      )
 
       pathInputTokens += cumulativeInputTokens
       pathOutputTokens += messageTokens
       pathAssistantCount++
+
+      // Update model-specific statistics
+      const model = message.model || 'unknown'
+      const currentStats = modelStats.get(model) || {
+        inputTokens: 0,
+        outputTokens: 0,
+        messageCount: 0,
+      }
+      modelStats.set(model, {
+        inputTokens: currentStats.inputTokens + cumulativeInputTokens,
+        outputTokens: currentStats.outputTokens + messageTokens,
+        messageCount: currentStats.messageCount + 1,
+      })
     } else {
       if (message.role === 'user') pathUserCount++
       if (message.role === 'system') pathSystemCount++
@@ -155,10 +205,35 @@ function estimateCost(inputTokens: number, outputTokens: number, model: string):
     'gpt-4.1-mini': 0.0032, // $3.20/1M output tokens
   }
 
-  const inputRate = inputCostPer1K[model] || 0.001
-  const outputRate = outputCostPer1K[model] || 0.004
+  const inputRate = inputCostPer1K[model] || 0
+  const outputRate = outputCostPer1K[model] || 0
 
   return (inputTokens / 1000) * inputRate + (outputTokens / 1000) * outputRate
+}
+
+/**
+ * Estimate cost for sending a new message with current context
+ * @param visibleMessages Currently visible messages in the active conversation path
+ * @param model Model to use for cost estimation
+ * @param newUserMessageTokens Tokens for the new user message (default: 500)
+ * @param expectedResponseTokens Tokens for expected response (default: 1000)
+ */
+export function estimateNewMessageCost(
+  visibleMessages: MessageNode[],
+  model: string,
+  newUserMessageTokens: number = 500,
+  expectedResponseTokens: number = 1000,
+): number {
+  // Calculate cumulative input tokens from ALL previous messages in visible path
+  const cumulativeInputTokens = visibleMessages.reduce(
+    (sum, m) => sum + estimateTokens(m.content),
+    0,
+  )
+
+  // Add the new user message tokens
+  const totalInputTokens = cumulativeInputTokens + newUserMessageTokens
+
+  return estimateCost(totalInputTokens, expectedResponseTokens, model)
 }
 
 /**
