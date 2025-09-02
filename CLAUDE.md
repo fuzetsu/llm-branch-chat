@@ -37,7 +37,7 @@ This is a modern SolidJS chat application with reactive state management and com
 - **Layout Components**: `Layout.tsx`, `Header.tsx`, `Sidebar.tsx` - Main application structure
 - **Chat Components**: `ChatList.tsx`, `ChatItem.tsx`, `ChatArea.tsx` - Chat management interface
 - **Message Components**: `MessageList.tsx`, `Message.tsx`, `MessageInput.tsx`, `MessageBranching.tsx` - Message display and interaction
-- **Modal Components**: `SettingsModal.tsx`, `ConfirmModal.tsx`, `Portal.tsx` - Modal system with portal rendering
+- **Modal Components**: `SettingsModal.tsx`, `ConfirmModal.tsx`, `ChatStatsModal.tsx`, `Portal.tsx` - Modal system with portal rendering
 - **UI Components**: `Icon.tsx` - Centralized icon system with type-safe interface
 
 ### Key Architecture Patterns
@@ -67,6 +67,7 @@ Messages support branching for conversation alternatives with full metadata trac
 - UI provides navigation between branches with branch-specific timestamps
 - Editing or regenerating messages creates new branches with fresh timestamps
 - Full backward compatibility with existing branch data
+- Comprehensive branch statistics tracking including total branches and maximum branches per node
 
 ### API Integration
 
@@ -105,6 +106,7 @@ Messages support branching for conversation alternatives with full metadata trac
 - Professional modal components with portal rendering
 - Settings modal with reactive form controls and real-time validation
 - Confirmation modals for destructive actions
+- Chat statistics modal with comprehensive token analytics and cost estimation
 - Proper focus management and keyboard navigation
 
 ## CSS Architecture
@@ -178,14 +180,27 @@ src/
 │   ├── MessageBranching.tsx # Branch navigation
 │   ├── SettingsModal.tsx  # Settings interface
 │   ├── ConfirmModal.tsx   # Confirmation dialogs
+│   ├── ChatStatsModal.tsx # Chat statistics and analytics
 │   ├── Portal.tsx         # Modal portal system
 │   └── Icon.tsx           # Icon component
+│   └── ui/                # UI component library
+│       ├── Button.tsx     # Button component
+│       ├── Input.tsx      # Input field component
+│       ├── Select.tsx     # Select dropdown component
+│       ├── Textarea.tsx   # Textarea component
+│       ├── Checkbox.tsx   # Checkbox component
+│       ├── FormField.tsx  # Form field wrapper
+│       ├── Slider.tsx     # Slider component
+│       ├── Icon.tsx       # Icon component
+│       └── IconButton.tsx # Icon button component
 ├── services/
 │   └── ApiService.ts      # API communication
 ├── types/
 │   └── index.ts          # TypeScript type definitions
 └── utils/
-    └── index.ts          # Utility functions
+    ├── index.ts          # Utility functions
+    ├── tokenCounter.ts   # Token estimation and cost calculation
+    └── messageTree.ts    # Message tree utilities
 ```
 
 ### Performance Considerations
