@@ -12,6 +12,7 @@
     "format": "prettier --write ."
   },
   "devDependencies": {
+    "@types/marked": "^5.0.2",
     "@types/node": "^24.0.7",
     "@typescript-eslint/eslint-plugin": "^8.35.0",
     "@typescript-eslint/parser": "^8.35.0",
@@ -25,9 +26,10 @@
     "vite-plugin-solid": "^2.11.7"
   },
   "dependencies": {
-    "@solidjs/router": "^0.15.3",
     "@tailwindcss/vite": "^4.1.11",
+    "highlight.js": "^11.11.1",
     "marked": "^16.0.0",
+    "marked-highlight": "^2.2.2",
     "solid-js": "^1.9.7"
   }
 }

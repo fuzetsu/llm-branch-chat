@@ -3,7 +3,8 @@ import { MessageNode as MessageType, Chat } from '../types/index.js'
 import { useAppStore } from '../store/AppStore'
 import MessageBranching from './MessageBranching'
 import IconButton from './ui/IconButton'
-import { relativeTimestamp, renderMarkdown, throttle, classnames } from '../utils/index.js'
+import { relativeTimestamp, throttle, classnames } from '../utils/index.js'
+import { renderMarkdown } from '../utils/markdown.js'
 
 interface MessageProps {
   message: MessageType

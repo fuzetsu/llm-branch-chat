@@ -140,15 +140,6 @@ export function truncateText(text: string, maxLength: number): string {
   return text.substring(0, maxLength).trim() + '...'
 }
 
-/**
- * Renders markdown content to HTML
- */
-export async function renderMarkdown(content: string): Promise<string> {
-  const { marked } = await import('marked')
-  const result = marked(content)
-  return await result
-}
-
 type FalsyOr<T> = T | number | boolean | null | undefined | false | FalsyOr<T>[]
 
 /**

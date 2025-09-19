@@ -1,13 +1,5 @@
 import { render } from 'solid-js/web'
-import { Route, Router } from '@solidjs/router'
 import App from './App'
 import './index.css'
 
-render(
-  () => (
-    <Router>
-      <Route path={'/'} component={App} />
-    </Router>
-  ),
-  document.getElementById('root')!,
-)
+render(() => <App />, document.getElementById('root')!)
