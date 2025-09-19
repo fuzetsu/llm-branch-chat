@@ -1,4 +1,4 @@
-import { Component, createEffect, Show } from 'solid-js'
+import { Component, createEffect, createMemo, Show } from 'solid-js'
 import { useAppStore } from '../store/AppStore'
 import Icon from './ui/Icon'
 import FormField from './ui/FormField'
@@ -9,6 +9,7 @@ import Checkbox from './ui/Checkbox'
 import Slider from './ui/Slider'
 import Button from './ui/Button'
 import { createStore } from 'solid-js/store'
+import { StorageInfo } from './StorageInfo'
 
 interface SettingsModalProps {
   isOpen: boolean
@@ -17,6 +18,10 @@ interface SettingsModalProps {
 
 const SettingsModal: Component<SettingsModalProps> = (props) => {
   const store = useAppStore()
+
+  const storageSizeInBytes = createMemo(() =>
+    props.isOpen ? new TextEncoder().encode(JSON.stringify(store)).length : 0,
+  )
 
   // Local form state
   const [formData, setFormData] = createStore({
@@ -117,6 +122,8 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
           {/* Content */}
           <div class="flex-1 overflow-y-auto p-6">
             <div class="space-y-6">
+              <StorageInfo sizeInBytes={storageSizeInBytes()} />
+
               <FormField label="API Base URL">
                 <Input
                   type="text"

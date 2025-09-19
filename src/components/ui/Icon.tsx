@@ -14,6 +14,7 @@ export type IconName =
   | 'delete'
   | 'chevron'
   | 'check'
+  | 'database'
 
 interface IconProps {
   name: IconName
@@ -145,6 +146,39 @@ const Icon: Component<IconProps> = (props) => {
             stroke-width="2"
             d="M5 13l4 4L19 7"
           />
+        )
+
+      case 'database':
+        return (
+          <>
+            <ellipse
+              cx="12"
+              cy="6"
+              rx="9"
+              ry="3"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              fill="none"
+              stroke="currentColor"
+            />
+            <path
+              d="M3 6v6c0 1.657 4.03 3 9 3s9-1.343 9-3V6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              fill="none"
+              stroke="currentColor"
+            />
+            <path
+              d="M3 12v6c0 1.657 4.03 3 9 3s9-1.343 9-3v-6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              fill="none"
+              stroke="currentColor"
+            />
+          </>
         )
 
       default:
