@@ -51,16 +51,16 @@ const MessageBranching: Component<MessageBranchingProps> = (props) => {
           >
             <span>Branch</span>
             <div class="flex flex-wrap items-center space-x-1">
-              <Index each={Array.from({ length: info().total }, (_, i) => i)}>
-                {(index) => (
+              <Index each={Array(info().total)}>
+                {(_, index) => (
                   <button
-                    disabled={isSelected(index())}
-                    title={getBranchCount(index())}
-                    onMouseEnter={() => changeHover(index())}
+                    disabled={isSelected(index)}
+                    title={getBranchCount(index)}
+                    onMouseEnter={() => changeHover(index)}
                     onMouseLeave={() => setHoverIndex(-1)}
                     class={classnames(
                       'px-2 py-1 rounded text-xs transition-colors cursor-pointer',
-                      isSelected(index())
+                      isSelected(index)
                         ? props.isUserMessage
                           ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
                           : 'bg-primary text-white dark:bg-primary-dark'
@@ -69,9 +69,9 @@ const MessageBranching: Component<MessageBranchingProps> = (props) => {
                           : 'text-gray-900 dark:text-gray-300',
                     )}
                     // bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white
-                    onClick={() => handleBranchSwitch(index())}
+                    onClick={() => handleBranchSwitch(index)}
                   >
-                    {index() + 1}
+                    {index + 1}
                   </button>
                 )}
               </Index>

@@ -77,24 +77,6 @@ const Message: Component<MessageProps> = (props) => {
     }
   })
 
-  const renderMessageActions = () => {
-    if (!isHovered() || isEditing() || props.isStreaming) return null
-
-    return (
-      <div class="absolute top-1 right-1 flex items-center space-x-1 bg-white dark:bg-gray-800 rounded shadow-sm border border-gray-200 dark:border-gray-600 px-1">
-        <IconButton icon="edit" variant="compact" onClick={startEdit} title="Edit message" />
-        <Show when={isAssistant()}>
-          <IconButton
-            icon="regenerate"
-            variant="compact"
-            onClick={handleRegenerate}
-            title="Regenerate response"
-          />
-        </Show>
-      </div>
-    )
-  }
-
   const getRawContent = () => props.streamingContent || props.message.content
 
   const [html, setHtml] = createSignal('')
@@ -108,14 +90,6 @@ const Message: Component<MessageProps> = (props) => {
     throttledRender(getRawContent(), () => mounted)
     onCleanup(() => (mounted = false))
   })
-
-  const renderMessageContent = () => {
-    if (html()) {
-      // eslint-disable-next-line solid/no-innerhtml
-      return <div class="whitespace-normal" innerHTML={html()} />
-    }
-    return getRawContent()
-  }
 
   const streamingClassName = createMemo(() =>
     props.isStreaming && store.getStreamingContent().length <= 30 ? 'animate-pulse' : null,
@@ -139,42 +113,57 @@ const Message: Component<MessageProps> = (props) => {
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        {renderMessageActions()}
+        <Show when={isHovered() && !isEditing() && !props.isStreaming}>
+          <div class="absolute top-1 right-1 flex items-center space-x-1 bg-white dark:bg-gray-800 rounded shadow-sm border border-gray-200 dark:border-gray-600 px-1">
+            <IconButton icon="edit" variant="compact" onClick={startEdit} title="Edit message" />
+            <Show when={isAssistant()}>
+              <IconButton
+                icon="regenerate"
+                variant="compact"
+                onClick={handleRegenerate}
+                title="Regenerate response"
+              />
+            </Show>
+          </div>
+        </Show>
 
         <Show
-          when={!isEditing()}
+          when={isEditing()}
           fallback={
-            <div class="space-y-2">
-              <textarea
-                class="w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize max-w-full min-w-[30vw] min-h-40"
-                value={editContent()}
-                onInput={(e) => setEditContent((e.target as HTMLTextAreaElement).value)}
-                onKeyDown={handleKeyDown}
-                rows={Math.max(2, editContent().split('\n').length)}
-                autofocus
-              />
-              <div class="flex justify-end space-x-2">
-                <button
-                  class="px-2 py-1 text-xs bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-500 rounded transition-colors cursor-pointer"
-                  onClick={cancelEdit}
-                >
-                  Cancel
-                </button>
-                <button
-                  class="px-2 py-1 text-xs bg-primary hover:bg-blue-600 dark:bg-primary-dark dark:hover:bg-primary-darker text-white rounded transition-colors cursor-pointer"
-                  onClick={saveEdit}
-                >
-                  {isUser() ? 'Save & Send' : 'Save'}
-                </button>
-              </div>
+            <div class="message-content whitespace-pre-wrap">
+              <Show when={html()} fallback={getRawContent()}>
+                {/*eslint-disable-next-line solid/no-innerhtml*/}
+                <div class="whitespace-normal" innerHTML={html()} />
+              </Show>
+              <Show when={props.isStreaming}>
+                <span class="animate-pulse">▋</span>
+              </Show>
             </div>
           }
         >
-          <div class="message-content whitespace-pre-wrap">
-            {renderMessageContent()}
-            <Show when={props.isStreaming}>
-              <span class="animate-pulse">▋</span>
-            </Show>
+          <div class="space-y-2">
+            <textarea
+              class="w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize max-w-full min-w-[30vw] min-h-40"
+              value={editContent()}
+              onInput={(e) => setEditContent((e.target as HTMLTextAreaElement).value)}
+              onKeyDown={handleKeyDown}
+              rows={Math.max(2, editContent().split('\n').length)}
+              autofocus
+            />
+            <div class="flex justify-end space-x-2">
+              <button
+                class="px-2 py-1 text-xs bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-500 rounded transition-colors cursor-pointer"
+                onClick={cancelEdit}
+              >
+                Cancel
+              </button>
+              <button
+                class="px-2 py-1 text-xs bg-primary hover:bg-blue-600 dark:bg-primary-dark dark:hover:bg-primary-darker text-white rounded transition-colors cursor-pointer"
+                onClick={saveEdit}
+              >
+                {isUser() ? 'Save & Send' : 'Save'}
+              </button>
+            </div>
           </div>
         </Show>
 
