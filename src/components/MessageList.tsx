@@ -2,7 +2,7 @@ import { Component, For, createEffect, Show, onCleanup } from 'solid-js'
 import { Chat } from '../types/index.js'
 import { useAppStore } from '../store/AppStore'
 import Message from './Message'
-import { throttle } from '../utils/index.js'
+import { throttle, touch } from '../utils/index.js'
 import { createKeyedSignal } from '../utils/keyedSignal.js'
 
 interface MessageListProps {
@@ -21,8 +21,14 @@ const MessageList: Component<MessageListProps> = (props) => {
   let messagesContainer!: HTMLDivElement
   const scrollToEnd = throttle(() => messagesEndRef.scrollIntoView(), 250)
   createEffect(() => {
+    touch(props.chat.id)
+    let firstRenderSettled = false
+    let settledId = -1
     const observer = new ResizeObserver(() => {
-      if (shouldAutoScroll() && !store.state.flashingMessageId) scrollToEnd()
+      clearTimeout(settledId)
+      settledId = setTimeout(() => (firstRenderSettled = true), 1000)
+      const shouldScroll = shouldAutoScroll() || !firstRenderSettled
+      if (shouldScroll && !store.state.flashingMessageId) scrollToEnd()
     })
     observer.observe(messagesContainer)
     onCleanup(() => observer.disconnect())
