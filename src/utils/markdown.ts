@@ -12,6 +12,7 @@ const LANG_MAP: Record<string, string> = {
   txt: 'plaintext',
   typescript: 'typescript',
   js: 'javascript',
+  md: 'markdown',
 }
 
 /**
