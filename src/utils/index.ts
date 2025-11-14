@@ -1,3 +1,9 @@
+/** Basic console.log wrapper that returns first argument for easy debugging */
+export function p<T>(first: T, ...rest: unknown[]): T {
+  console.log(first, ...rest)
+  return first
+}
+
 /**
  * Generates a unique identifier using timestamp and random characters
  */
