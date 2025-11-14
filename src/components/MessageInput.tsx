@@ -2,6 +2,7 @@ import { Component, createEffect, createSignal, Show } from 'solid-js'
 import { useAppStore } from '../store/AppStore'
 import Icon from './ui/Icon'
 import { touch } from '../utils'
+import { isMessageListScrolledToBottom, scrollMessageListToBottom } from './MessageList'
 
 const MessageInput: Component = () => {
   const store = useAppStore()
@@ -41,9 +42,13 @@ const MessageInput: Component = () => {
     const target = e.target as HTMLTextAreaElement
     setInputValue(target.value)
 
+    const wasScrolledToBottom = isMessageListScrolledToBottom()
+
     // Auto-resize textarea
     target.style.height = 'auto'
     target.style.height = Math.min(target.scrollHeight, window.innerHeight / 2) + 'px'
+
+    if (wasScrolledToBottom) scrollMessageListToBottom()
   }
 
   const [getInput, setInput] = createSignal<HTMLTextAreaElement | null>(null)

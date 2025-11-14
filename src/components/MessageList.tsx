@@ -2,16 +2,24 @@ import { Component, For, createEffect, Show, onCleanup } from 'solid-js'
 import { Chat } from '../types/index.js'
 import { useAppStore } from '../store/AppStore'
 import Message from './Message'
-import { throttle, touch } from '../utils/index.js'
+import { querySelector, throttle, touch } from '../utils/index.js'
 import { createKeyedSignal } from '../utils/keyedSignal.js'
 
 interface MessageListProps {
   chat: Chat
 }
 
+export const scrollMessageListToBottom = () => querySelector('#message-list-end').scrollIntoView()
+const scrollToEnd = throttle(scrollMessageListToBottom, 100)
+
+export const isMessageListScrolledToBottom = () => {
+  const { scrollTop, scrollHeight, clientHeight } = querySelector('#message-list')
+  const isAtBottom = scrollHeight - scrollTop <= clientHeight + 50
+  return isAtBottom
+}
+
 const MessageList: Component<MessageListProps> = (props) => {
   const store = useAppStore()
-  let messagesEndRef!: HTMLDivElement
   const [shouldAutoScroll, setShouldAutoScroll] = createKeyedSignal(true, () => props.chat.id)
 
   // Get visible messages using store method to handle branching
@@ -19,12 +27,12 @@ const MessageList: Component<MessageListProps> = (props) => {
 
   // Auto-scroll to bottom when new messages arrive or streaming updates
   let messagesContainer!: HTMLDivElement
-  const scrollToEnd = throttle(() => messagesEndRef.scrollIntoView(), 250)
   createEffect(() => {
     touch(props.chat.id)
     let firstRenderSettled = false
     let settledId = -1
     const observer = new ResizeObserver(() => {
+      console.log('fired!')
       clearTimeout(settledId)
       settledId = setTimeout(() => (firstRenderSettled = true), 1000)
       const shouldScroll = shouldAutoScroll() || !firstRenderSettled
@@ -35,15 +43,10 @@ const MessageList: Component<MessageListProps> = (props) => {
   })
 
   // Handle scroll to detect if user has scrolled up
-  const handleScroll = (e: Event) => {
-    const target = e.target as HTMLDivElement
-    const { scrollTop, scrollHeight, clientHeight } = target
-    const isAtBottom = scrollHeight - scrollTop <= clientHeight + 50
-    setShouldAutoScroll(isAtBottom)
-  }
+  const handleScroll = () => setShouldAutoScroll(isMessageListScrolledToBottom())
 
   return (
-    <div class="flex-1 overflow-y-auto px-4 py-6" onScroll={handleScroll}>
+    <div id="message-list" class="flex-1 overflow-y-auto px-4 py-6" onScroll={handleScroll}>
       <div ref={messagesContainer} class="flex-1">
         <For each={visibleMessages()}>
           {(message) => (
@@ -73,7 +76,7 @@ const MessageList: Component<MessageListProps> = (props) => {
       </Show>
 
       {/* Scroll anchor */}
-      <div ref={messagesEndRef} />
+      <div id="message-list-end" />
     </div>
   )
 }
