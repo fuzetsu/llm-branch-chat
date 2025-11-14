@@ -196,13 +196,15 @@ function calculatePathTokenStatsWithModelCosts(
  */
 function estimateCost(inputTokens: number, outputTokens: number, model: string): number {
   const inputCostPer1K: Record<string, number> = {
-    'gpt-4.1': 0.003, // $3.00/1M input tokens
-    'gpt-4.1-mini': 0.0008, // $0.80/1M input tokens
+    'x-ai/grok-4-fast': 0.0002, // $0.20/1M input tokens
+    'deepseek-ai/deepseek-v3.2-exp': 0.00028, // $0.28/1M input tokens
+    'deepseek-ai/deepseek-v3.2-exp-thinking': 0.00028, // $0.28/1M input tokens
   }
 
   const outputCostPer1K: Record<string, number> = {
-    'gpt-4.1': 0.012, // $12.00/1M output tokens
-    'gpt-4.1-mini': 0.0032, // $3.20/1M output tokens
+    'x-ai/grok-4-fast': 0.0005, // $0.50/1M output tokens
+    'deepseek-ai/deepseek-v3.2-exp': 0.00042, // $0.42/1M input tokens
+    'deepseek-ai/deepseek-v3.2-exp-thinking': 0.00042, // $0.42/1M input tokens
   }
 
   const inputRate = inputCostPer1K[model] || 0
