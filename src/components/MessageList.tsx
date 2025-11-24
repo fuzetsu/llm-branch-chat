@@ -9,11 +9,13 @@ interface MessageListProps {
   chat: Chat
 }
 
-export const scrollMessageListToBottom = () => querySelector('#message-list-end').scrollIntoView()
+export const scrollMessageListToBottom = () => querySelector('#message-list-end')?.scrollIntoView()
 const scrollToEnd = throttle(scrollMessageListToBottom, 100)
 
 export const isMessageListScrolledToBottom = () => {
-  const { scrollTop, scrollHeight, clientHeight } = querySelector('#message-list')
+  const messageList = querySelector('#message-list')
+  if (!messageList) return true
+  const { scrollTop, scrollHeight, clientHeight } = messageList
   const isAtBottom = scrollHeight - scrollTop <= clientHeight + 50
   return isAtBottom
 }
