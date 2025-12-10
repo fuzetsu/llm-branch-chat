@@ -102,7 +102,7 @@ const Message: Component<MessageProps> = (props) => {
       <div
         ref={messageRef}
         class={classnames(
-          'relative max-w-3xl px-4 py-3 rounded-lg transition-all duration-300',
+          'relative w-full max-w-2xl px-4 py-3 rounded-lg transition-all duration-300',
           isUser()
             ? 'bg-primary dark:bg-primary-dark text-white'
             : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white',
