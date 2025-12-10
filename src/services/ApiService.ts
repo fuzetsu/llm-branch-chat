@@ -17,11 +17,13 @@ export const createApiService = ({ baseUrl, apiKey }: ApiServiceDeps) => {
   }
 
   const buildUrl = (entropy: boolean): string => {
-    if (!entropy) return baseUrl
+    const url = new URL(baseUrl + '/chat/completions')
+    if (!entropy) return url.toString()
 
     const timestamp = Date.now()
     const randomValue = Math.random().toString(32).slice(2)
-    return `${baseUrl}?rand=${timestamp}${randomValue}`
+    url.searchParams.append('rand', timestamp + randomValue)
+    return url.toString()
   }
 
   const buildRequestBody = (
@@ -192,8 +194,10 @@ export const createApiService = ({ baseUrl, apiKey }: ApiServiceDeps) => {
     async generateTitle(messages: MessageNode[], titleModel: string): Promise<string | null> {
       const titlePrompt = buildTitlePrompt(messages)
 
+      const url = buildUrl(false)
+
       try {
-        const response = await makeRequest(baseUrl, {
+        const response = await makeRequest(url, {
           messages: titlePrompt,
           model: titleModel,
           stream: false,
