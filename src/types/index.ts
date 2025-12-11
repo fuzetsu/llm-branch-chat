@@ -26,10 +26,17 @@ export interface Chat {
 }
 
 // Settings types
-export interface ApiSettings {
+export interface ProviderConfig {
+  name: string
   baseUrl: string
   key: string | undefined
   availableModels: string[]
+  isDefault: boolean
+}
+
+export interface ApiSettings {
+  providers: Map<string, ProviderConfig>
+  defaultProvider: string
 }
 
 export interface ChatSettings {
@@ -67,10 +74,27 @@ export interface AppStateData {
   ui: UISettings
 }
 
+export interface SerializableProviderConfig {
+  name: string
+  baseUrl: string
+  key: string | undefined
+  availableModels: string[]
+  isDefault: boolean
+}
+
+export interface SerializableApiSettings {
+  providers: Array<[string, SerializableProviderConfig]>
+  defaultProvider: string
+}
+
 export interface SerializableAppState {
   chats: Array<[string, SerializableChat]>
   currentChatId: string | null
-  settings: AppSettings
+  settings: {
+    api: SerializableApiSettings
+    chat: ChatSettings
+    ui: UISettings
+  }
   ui: UISettings
 }
 

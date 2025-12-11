@@ -1,14 +1,14 @@
-type ApiService = ReturnType<typeof import('./ApiService').createApiService>
+import type { ProviderApiService } from './ProviderApiService.js'
 import type { MessageNode } from '../types/index.js'
 
 export interface TitleServiceDeps {
-  apiService: ApiService
+  getApiService: () => ProviderApiService
   updateChat: (chatId: string, updates: { title?: string; isGeneratingTitle?: boolean }) => void
   getVisibleMessages: (chatId: string) => MessageNode[]
 }
 
 export const createTitleService = ({
-  apiService,
+  getApiService,
   updateChat,
   getVisibleMessages,
 }: TitleServiceDeps) => ({
@@ -23,7 +23,7 @@ export const createTitleService = ({
     try {
       updateChat(chatId, { isGeneratingTitle: true })
 
-      const title = await apiService.generateTitle(visibleMessages, titleModel)
+      const title = await getApiService().generateTitle(visibleMessages, titleModel)
 
       if (title) {
         updateChat(chatId, {

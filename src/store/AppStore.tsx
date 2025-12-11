@@ -13,6 +13,8 @@ import type {
   UISettings,
   SerializableAppState,
   SerializableChat,
+  SerializableApiSettings,
+  ProviderConfig,
 } from '../types/index.js'
 import { createAppStoreOperations, type AppStoreOperations } from './AppStoreOperations'
 import { STREAM_END } from '../services/MessageService.js'
@@ -75,11 +77,18 @@ const AppStoreContext = createContext<AppStoreContextType>()
 const STORAGE_KEY = 'llm-chat-state-tree-v1'
 
 function createDefaultSettings(): AppSettings {
+  const defaultProvider: ProviderConfig = {
+    name: 'Pollinations',
+    baseUrl: 'https://text.pollinations.ai',
+    key: 'dummym',
+    availableModels: ['llama', 'openai', 'openai-large', 'evil'],
+    isDefault: true,
+  }
+
   return {
     api: {
-      baseUrl: 'https://text.pollinations.ai',
-      key: 'dummym',
-      availableModels: ['llama', 'openai', 'openai-large', 'evil'],
+      providers: new Map([['Pollinations', defaultProvider]]),
+      defaultProvider: 'Pollinations',
     },
     chat: {
       model: 'llama',
@@ -141,6 +150,13 @@ function deserializeChat(chat: SerializableChat, settings: AppSettings): Chat {
   }
 }
 
+function deserializeApiSettings(serialized: SerializableApiSettings): AppSettings['api'] {
+  return {
+    providers: new Map(serialized.providers || []),
+    defaultProvider: serialized.defaultProvider || 'Pollinations',
+  }
+}
+
 function loadStateFromStorage(): AppStateStore {
   try {
     const saved = localStorage.getItem(STORAGE_KEY)
@@ -156,7 +172,23 @@ function loadStateFromStorage(): AppStateStore {
     }
 
     const state: SerializableAppState = JSON.parse(saved)
-    const settings = { ...createDefaultSettings(), ...state.settings }
+    const defaultSettings = createDefaultSettings()
+
+    // Handle migration from old settings format
+    let apiSettings: AppSettings['api']
+    if (state.settings && 'api' in state.settings && 'providers' in state.settings.api) {
+      // New format with providers
+      apiSettings = deserializeApiSettings(state.settings.api as SerializableApiSettings)
+    } else {
+      // Old format - use default providers
+      apiSettings = defaultSettings.api
+    }
+
+    const settings: AppSettings = {
+      api: apiSettings,
+      chat: { ...defaultSettings.chat, ...(state.settings?.chat || {}) },
+      ui: { ...defaultSettings.ui, ...(state.settings?.ui || {}) },
+    }
 
     return {
       chats: new Map(
@@ -181,11 +213,22 @@ function loadStateFromStorage(): AppStateStore {
   }
 }
 
+function serializeApiSettings(api: AppSettings['api']): SerializableApiSettings {
+  return {
+    providers: Array.from(api.providers.entries()),
+    defaultProvider: api.defaultProvider,
+  }
+}
+
 function saveStateToStorage(state: AppStateStore) {
   const stateToSave: SerializableAppState = {
     chats: Array.from(state.chats.entries()).map(([id, chat]) => [id, serializeChat(chat)]),
     currentChatId: state.currentChatId,
-    settings: state.settings,
+    settings: {
+      api: serializeApiSettings(state.settings.api),
+      chat: state.settings.chat,
+      ui: state.settings.ui,
+    },
     ui: state.ui,
   }
 
@@ -242,13 +285,7 @@ export const AppStoreProvider: ParentComponent = (props) => {
   }
 
   // Initialize composed operations
-  const operations = createAppStoreOperations(
-    { setState, getState: () => state },
-    {
-      baseUrl: initialState.settings.api.baseUrl,
-      apiKey: initialState.settings.api.key,
-    },
-  )
+  const operations = createAppStoreOperations({ setState, getState: () => state })
 
   const newAbort = () => new AbortController()
   const [abortController, setAbortController] = createSignal(newAbort())

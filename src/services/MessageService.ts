@@ -1,9 +1,9 @@
-type ApiService = ReturnType<typeof import('./ApiService').createApiService>
+import type { ProviderApiService } from './ProviderApiService.js'
 import { createMessageNode, findNodeById } from '../utils/messageTree.js'
 import type { AppSettings, Chat, MessageNode, ApiMessage } from '../types/index.js'
 
 export interface MessageServiceDeps {
-  apiService: ApiService
+  getApiService: () => ProviderApiService
   addMessage: (chatId: string, message: MessageNode, parentId: string | null) => void
   updateMessage: (chatId: string, messageId: string, updates: Partial<MessageNode>) => void
   startStreaming: (messageId: string) => void
@@ -16,7 +16,7 @@ export interface MessageServiceDeps {
 export const STREAM_END = 'stream-end'
 
 export const createMessageService = ({
-  apiService,
+  getApiService,
   addMessage,
   updateMessage,
   startStreaming,
@@ -102,7 +102,7 @@ export const createMessageService = ({
         const updatedVisibleMessages = getVisibleMessages(currentChat.id)
         const apiMessages = convertToApiMessages(updatedVisibleMessages)
 
-        await apiService.streamResponse(
+        await getApiService().streamResponse(
           apiMessages,
           assistantMessage.model || settings.chat.model,
           createStreamingHandler(currentChat.id, assistantMessage.id),
@@ -141,7 +141,7 @@ export const createMessageService = ({
       try {
         const apiMessages = convertToApiMessages(visibleMessages)
 
-        await apiService.streamResponse(
+        await getApiService().streamResponse(
           apiMessages,
           assistantMessage.model || settings.chat.model,
           createStreamingHandler(currentChat.id, assistantMessage.id),
@@ -195,7 +195,7 @@ export const createMessageService = ({
 
         const apiMessages = convertToApiMessages(conversationHistory)
 
-        await apiService.streamResponse(
+        await getApiService().streamResponse(
           apiMessages,
           newBranchMessage.model || settings.chat.model,
           createStreamingHandler(chatId, newBranchMessage.id),

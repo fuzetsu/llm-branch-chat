@@ -1,5 +1,4 @@
-import { createApiService } from '../services/ApiService'
-import type { ApiServiceDeps } from '../services/ApiService'
+import { createProviderApiService } from '../services/ProviderApiService'
 import { createMessageService } from '../services/MessageService'
 import { createTitleService } from '../services/TitleService'
 import { createChatOperations } from './ChatOperations'
@@ -9,9 +8,11 @@ import type { AppStoreOperationsDeps } from './AppStore'
 
 export function createAppStoreOperations(
   deps: AppStoreOperationsDeps,
-  apiServiceDeps: ApiServiceDeps,
 ) {
-  const apiService = createApiService(apiServiceDeps)
+  const getApiService = () => {
+    const state = deps.getState()
+    return createProviderApiService(state.settings.api.providers)
+  }
   // Initialize operation modules
   const chatOps = createChatOperations(deps)
   const messageOps = createMessageOperations(deps)
@@ -19,7 +20,7 @@ export function createAppStoreOperations(
 
   // Initialize services
   const messageService = createMessageService({
-    apiService,
+    getApiService,
     addMessage: messageOps.addMessage,
     updateMessage: messageOps.updateMessage,
     startStreaming: streamingOps.startStreaming,
@@ -30,7 +31,7 @@ export function createAppStoreOperations(
   })
 
   const titleService = createTitleService({
-    apiService,
+    getApiService,
     updateChat: chatOps.updateChat,
     getVisibleMessages: messageOps.getVisibleMessages,
   })

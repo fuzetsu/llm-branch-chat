@@ -5,6 +5,7 @@ import SettingsModal from './SettingsModal'
 import ChatStatsModal from './ChatStatsModal'
 import Button from './ui/Button'
 import { countDescendants } from '../utils/messageTree'
+import { getAllAvailableModels } from '../utils/providerUtils'
 
 const Header: Component = () => {
   const store = useAppStore()
@@ -51,7 +52,7 @@ const Header: Component = () => {
                   }
                 }}
               >
-                <For each={store.state.settings.chat.availableModels}>
+                <For each={getAllAvailableModels(store.state.settings.api.providers)}>
                   {(model) => <option value={model}>{model}</option>}
                 </For>
               </select>
