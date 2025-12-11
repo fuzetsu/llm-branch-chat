@@ -1,8 +1,8 @@
-import { Component, For, createEffect, Show, onCleanup } from 'solid-js'
+import { Component, For, createEffect, Show, onCleanup, createMemo } from 'solid-js'
 import { Chat } from '../types/index.js'
 import { useAppStore } from '../store/AppStore'
 import Message from './Message'
-import { querySelector, throttle, touch } from '../utils/index.js'
+import { querySelector, throttle } from '../utils/index.js'
 import { createKeyedSignal } from '../utils/keyedSignal.js'
 
 interface MessageListProps {
@@ -22,7 +22,10 @@ export const isMessageListScrolledToBottom = () => {
 
 const MessageList: Component<MessageListProps> = (props) => {
   const store = useAppStore()
-  const [shouldAutoScroll, setShouldAutoScroll] = createKeyedSignal(true, () => props.chat.id)
+
+  const chatId = createMemo(() => props.chat.id)
+
+  const [shouldAutoScroll, setShouldAutoScroll] = createKeyedSignal(true, () => chatId())
 
   // Get visible messages using store method to handle branching
   const visibleMessages = () => store.getVisibleMessages(props.chat.id)
@@ -30,7 +33,7 @@ const MessageList: Component<MessageListProps> = (props) => {
   // Auto-scroll to bottom when new messages arrive or streaming updates
   let messagesContainer!: HTMLDivElement
   createEffect(() => {
-    touch(props.chat.id)
+    chatId() // scroll to to bottom when chatId changes
     let firstRenderSettled = false
     let settledId = -1
     const observer = new ResizeObserver(() => {
