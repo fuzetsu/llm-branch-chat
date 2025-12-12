@@ -226,16 +226,13 @@ export function estimateNewMessageCost(
   newUserMessageTokens: number = 500,
   expectedResponseTokens: number = 1000,
 ): number {
-  // Calculate cumulative input tokens from ALL previous messages in visible path
-  const cumulativeInputTokens = visibleMessages.reduce(
-    (sum, m) => sum + estimateTokens(m.content),
-    0,
-  )
-
-  // Add the new user message tokens
-  const totalInputTokens = cumulativeInputTokens + newUserMessageTokens
-
+  const totalInputTokens = countCumulativeInputTokens(visibleMessages) + newUserMessageTokens
   return estimateCost(totalInputTokens, expectedResponseTokens, model)
+}
+
+export function countCumulativeInputTokens(visibleMessages: MessageNode[]) {
+  // Calculate cumulative input tokens from ALL previous messages in visible path
+  return visibleMessages.reduce((sum, m) => sum + estimateTokens(m.content), 0)
 }
 
 /**

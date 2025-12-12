@@ -7,6 +7,7 @@ import {
   getTokenBreakdown,
   type TokenStats,
   estimateNewMessageCost,
+  countCumulativeInputTokens,
 } from '../utils/tokenCounter'
 import { classnames } from '../utils'
 
@@ -42,6 +43,14 @@ const ChatStatsModal: Component<ChatStatsModalProps> = (props) => {
 
     const visibleMessages = store.getVisibleMessages(chat.id)
     return estimateNewMessageCost(visibleMessages, chatModel())
+  })
+
+  const nextMessageInputTokens = createMemo(() => {
+    const chat = currentChat()
+    if (!chat || !props.isOpen) return 0
+
+    const visibleMessages = store.getVisibleMessages(chat.id)
+    return countCumulativeInputTokens(visibleMessages)
   })
 
   return (
@@ -131,6 +140,10 @@ const ChatStatsModal: Component<ChatStatsModalProps> = (props) => {
                     <StatRow
                       label="Next Message Cost"
                       value={formatCost(estimatedNewMessageCost())}
+                    />
+                    <StatRow
+                      label="Next Message Input (Current Branch)"
+                      value={`${formatNumber(nextMessageInputTokens())} tokens`}
                     />
                     <StatRow label="Current Model" value={chatModel()} />
                   </div>
