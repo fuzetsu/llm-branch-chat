@@ -4,6 +4,7 @@ interface FormFieldProps {
   label: string
   children: JSX.Element
   helpText?: string
+  error?: string
 }
 
 const FormField: Component<FormFieldProps> = (props) => {
@@ -13,7 +14,10 @@ const FormField: Component<FormFieldProps> = (props) => {
         {props.label}
       </label>
       {props.children}
-      <Show when={props.helpText}>
+      <Show when={props.error}>
+        <p class="text-xs text-red-600 dark:text-red-400 mt-1">{props.error}</p>
+      </Show>
+      <Show when={props.helpText && !props.error}>
         <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{props.helpText}</p>
       </Show>
     </div>

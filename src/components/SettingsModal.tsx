@@ -32,6 +32,11 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
   const [activeTab, setActiveTab] = createSignal<Tab>('providers')
   const [editingProvider, setEditingProvider] = createSignal<string | null>(null)
   const [isFetchingModels, setIsFetchingModels] = createSignal(false)
+  const [validationErrors, setValidationErrors] = createStore<{
+    name?: string;
+    baseUrl?: string;
+    models?: string;
+  }>({})
 
   const storageSizeInBytes = createMemo(() =>
     props.isOpen ? new TextEncoder().encode(JSON.stringify(store)).length : 0,
@@ -139,9 +144,14 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
     const urlError = validateProviderUrl(providerForm.baseUrl)
     const modelsError = validateProviderModels(models)
 
+    // Set validation errors
+    setValidationErrors({
+      name: nameError || undefined,
+      baseUrl: urlError || undefined,
+      models: modelsError || undefined,
+    })
+
     if (nameError || urlError || modelsError) {
-      // TODO: Show validation errors to user
-      console.error('Validation errors:', { nameError, urlError, modelsError })
       return
     }
 
@@ -197,9 +207,13 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
     const urlError = validateProviderUrl(providerForm.baseUrl)
     const modelsError = validateProviderModels(models)
 
+    // Set validation errors
+    setValidationErrors({
+      baseUrl: urlError || undefined,
+      models: modelsError || undefined,
+    })
+
     if (urlError || modelsError) {
-      // TODO: Show validation errors to user
-      console.error('Validation errors:', { urlError, modelsError })
       return
     }
 
@@ -252,6 +266,10 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
   }
 
   const handleDeleteProvider = (providerName: string) => {
+    if (!confirm(`Are you sure you want to delete provider "${providerName}"? This cannot be undone.`)) {
+      return
+    }
+
     const newProviders = new Map(store.state.settings.api.providers)
     newProviders.delete(providerName)
 
@@ -317,7 +335,7 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
           <div class="border-b border-gray-200 dark:border-dark-border flex-shrink-0">
             <nav class="flex space-x-8 px-6">
               <button
-                class={`py-4 px-1 border-b-2 font-medium text-sm ${
+                class={`py-4 px-1 border-b-2 font-medium text-sm cursor-pointer ${
                   activeTab() === 'providers'
                     ? 'border-primary text-primary'
                     : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
@@ -327,7 +345,7 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
                 Providers
               </button>
               <button
-                class={`py-4 px-1 border-b-2 font-medium text-sm ${
+                class={`py-4 px-1 border-b-2 font-medium text-sm cursor-pointer ${
                   activeTab() === 'chat'
                     ? 'border-primary text-primary'
                     : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
@@ -337,7 +355,7 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
                 Chat
               </button>
               <button
-                class={`py-4 px-1 border-b-2 font-medium text-sm ${
+                class={`py-4 px-1 border-b-2 font-medium text-sm cursor-pointer ${
                   activeTab() === 'ui'
                     ? 'border-primary text-primary'
                     : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
@@ -358,9 +376,24 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
                 {/* Provider List */}
                 <div class="space-y-4">
                   <h4 class="text-md font-medium text-gray-900 dark:text-white">Configured Providers</h4>
+                  <Show when={providers().length === 0}>
+                    <div class="text-center py-8 border border-gray-200 dark:border-dark-border rounded-lg">
+                      <p class="text-gray-500 dark:text-gray-400">No providers configured</p>
+                      <p class="text-sm text-gray-400 dark:text-gray-500 mt-1">Add your first provider to get started</p>
+                      <div class="mt-4">
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={() => setActiveTab('providers')}
+                        >
+                          Add Provider
+                        </Button>
+                      </div>
+                    </div>
+                  </Show>
                   <For each={providers()}>
                     {([name, provider]) => (
-                      <div class="border border-gray-200 dark:border-dark-border rounded-lg p-4">
+                      <div class="border border-gray-200 dark:border-dark-border rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-colors">
                         <div class="flex justify-between items-start">
                           <div>
                             <div class="flex items-center space-x-2">
@@ -414,22 +447,30 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
                   </h4>
 
                   <div class="space-y-4">
-                    <FormField label="Provider Name">
+                    <FormField label="Provider Name" error={validationErrors.name}>
                       <Input
                         type="text"
                         placeholder="OpenAI, Local Ollama, etc."
                         value={providerForm.name}
-                        onInput={(value) => setProviderForm('name', value)}
+                        onInput={(value) => {
+                          setProviderForm('name', value)
+                          if (validationErrors.name) setValidationErrors('name', undefined)
+                        }}
                         disabled={isEditing()}
+                        class={validationErrors.name ? 'border-red-300 dark:border-red-500' : ''}
                       />
                     </FormField>
 
-                    <FormField label="Base URL">
+                    <FormField label="Base URL" error={validationErrors.baseUrl}>
                       <Input
                         type="text"
                         placeholder="https://api.openai.com/v1"
                         value={providerForm.baseUrl}
-                        onInput={(value) => setProviderForm('baseUrl', value)}
+                        onInput={(value) => {
+                          setProviderForm('baseUrl', value)
+                          if (validationErrors.baseUrl) setValidationErrors('baseUrl', undefined)
+                        }}
+                        class={validationErrors.baseUrl ? 'border-red-300 dark:border-red-500' : ''}
                       />
                     </FormField>
 
@@ -445,13 +486,18 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
                     <FormField
                       label="Available Models"
                       helpText="One model per line, or fetch automatically from provider"
+                      error={validationErrors.models}
                     >
                       <div class="space-y-2">
                         <Textarea
                           rows={4}
                           placeholder="gpt-4\ngpt-3.5-turbo\nclaude-3-sonnet"
                           value={providerForm.availableModels}
-                          onInput={(value) => setProviderForm('availableModels', value)}
+                          onInput={(value) => {
+                            setProviderForm('availableModels', value)
+                            if (validationErrors.models) setValidationErrors('models', undefined)
+                          }}
+                          class={validationErrors.models ? 'border-red-300 dark:border-red-500' : ''}
                         />
                         <Button
                           variant="secondary"
@@ -459,7 +505,11 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
                           onClick={handleFetchModels}
                           disabled={isFetchingModels() || !providerForm.baseUrl}
                         >
-                          {isFetchingModels() ? 'Fetching...' : 'Fetch Models Automatically'}
+                          {isFetchingModels() ? (
+                            <>
+                              <span class="animate-spin mr-2">🔄</span> Fetching...
+                            </>
+                          ) : 'Fetch Models Automatically'}
                         </Button>
                       </div>
                     </FormField>
