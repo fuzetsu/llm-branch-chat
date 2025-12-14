@@ -1,4 +1,4 @@
-import { Component, createSignal, For } from 'solid-js'
+import { Component, createSignal, For, Show, createEffect, onCleanup } from 'solid-js'
 import { useAppStore } from '../store/AppStore'
 import Icon from './ui/Icon'
 import SettingsModal from './SettingsModal'
@@ -12,6 +12,7 @@ const Header: Component = () => {
 
   const [showSettings, setShowSettings] = createSignal(false)
   const [showStats, setShowStats] = createSignal(false)
+  const [showMobileMenu, setShowMobileMenu] = createSignal(false)
   const handleSettings = () => setShowSettings(true)
   const handleStats = () => setShowStats(true)
   const toggleSidebar = () => store.setUI({ sidebarCollapsed: !store.state.ui.sidebarCollapsed })
@@ -23,56 +24,112 @@ const Header: Component = () => {
     return chat ? countDescendants(chat.nodes, null) : 0
   }
 
+  // Close mobile menu when clicking outside
+  createEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      if (showMobileMenu() && !target.closest('.mobile-menu-container')) {
+        setShowMobileMenu(false)
+      }
+    }
+
+    document.addEventListener('click', handleClickOutside)
+    onCleanup(() => document.removeEventListener('click', handleClickOutside))
+  })
+
   return (
     <header class="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-dark-surface border-b border-gray-200 dark:border-dark-border shadow-sm">
       <div class="flex items-center justify-between h-16 px-4">
-        <div class="flex items-center space-x-4">
-          <Button variant="ghost" class="lg:hidden p-2" onClick={toggleSidebar}>
-            <Icon name="menu" size="lg" class="text-gray-600 dark:text-gray-300" />
+        <div class="flex items-center space-x-4 flex-1 min-w-0">
+          <Button variant="ghost" class="lg:hidden p-2 flex-shrink-0" onClick={toggleSidebar}>
+            <Icon name="menu" class="text-gray-600 dark:text-gray-300" />
           </Button>
-          <div class="flex items-center space-x-3">
-            <div class="relative flex items-center min-w-[120px]">
-              <h1 class="text-lg font-semibold text-gray-900 dark:text-white truncate max-w-xs cursor-pointer hover:text-primary dark:hover:text-primary-dark transition-colors">
-                {currentChat()?.title || 'New Chat'}
-              </h1>
-            </div>
-            <div class="hidden sm:block">
-              <select
-                class="px-3 py-2 text-sm bg-white dark:bg-dark-surface border border-gray-300 dark:border-dark-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-gray-900 dark:text-white"
-                value={currentChat()?.model || store.state.settings.chat.model}
-                onChange={(e) => {
-                  const selectedModel = e.currentTarget.value
-                  const chat = currentChat()
-                  if (chat) {
-                    store.updateChat(chat.id, { model: selectedModel })
-                  } else {
-                    store.updateSettings({
-                      chat: { ...store.state.settings.chat, model: selectedModel },
-                    })
-                  }
-                }}
-              >
-                <For each={getAllAvailableModels(store.state.settings.api.providers)}>
-                  {(model) => <option value={model}>{model}</option>}
-                </For>
-              </select>
-            </div>
-            <button
-              class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-primary-dark transition-colors cursor-pointer"
-              onClick={handleStats}
-              title="View chat statistics"
-            >
-              {messageCount()} messages
-            </button>
+          <div class="flex items-center flex-1 min-w-0">
+            <h1 class="text-lg font-semibold text-gray-900 dark:text-white truncate">
+              {currentChat()?.title || 'New Chat'}
+            </h1>
           </div>
         </div>
-        <div class="flex items-center space-x-2">
-          <Button variant="ghost" class="p-2" onClick={handleSettings}>
-            <Icon name="settings" class="text-gray-600 dark:text-gray-300" />
-          </Button>
-          <Button variant="primary" class="p-2" onClick={handleNewChat}>
-            <Icon name="plus" />
-          </Button>
+        <div class="flex items-center space-x-2 flex-shrink-0">
+          {/* Mobile menu button - visible only on small screens */}
+          <div class="relative md:hidden mobile-menu-container flex-shrink-0">
+            <Button
+              variant="ghost"
+              class="p-2"
+              onClick={() => setShowMobileMenu(!showMobileMenu())}
+            >
+              <Icon name="settings-gear" class="text-gray-600 dark:text-gray-300" />
+            </Button>
+
+            {/* Mobile dropdown menu */}
+            <Show when={showMobileMenu()}>
+              <div class="absolute right-0 mt-2 w-48 bg-white dark:bg-dark-surface rounded-md shadow-lg py-1 z-50 border border-gray-200 dark:border-dark-border">
+                <button
+                  class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-hover transition-colors"
+                  onClick={() => {
+                    handleStats()
+                    setShowMobileMenu(false)
+                  }}
+                >
+                  <Icon name="edit" size="sm" class="inline mr-2" />
+                  Chat Statistics
+                </button>
+                <button
+                  class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-hover transition-colors"
+                  onClick={() => {
+                    handleSettings()
+                    setShowMobileMenu(false)
+                  }}
+                >
+                  <Icon name="settings" size="sm" class="inline mr-2" />
+                  Settings
+                </button>
+                <button
+                  class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-hover transition-colors"
+                  onClick={() => {
+                    handleNewChat()
+                    setShowMobileMenu(false)
+                  }}
+                >
+                  <Icon name="plus" size="sm" class="inline mr-2" />
+                  New Chat
+                </button>
+              </div>
+            </Show>
+          </div>
+
+          {/* Desktop controls - visible on medium screens and up */}
+          <div class="hidden md:flex items-center space-x-2 flex-shrink-0">
+            <select
+              class="px-3 py-2 text-sm bg-white dark:bg-dark-surface border border-gray-300 dark:border-dark-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-gray-900 dark:text-white"
+              value={currentChat()?.model || store.state.settings.chat.model}
+              onChange={(e) => {
+                const selectedModel = e.currentTarget.value
+                const chat = currentChat()
+                if (chat) {
+                  store.updateChat(chat.id, { model: selectedModel })
+                } else {
+                  store.updateSettings({
+                    chat: { ...store.state.settings.chat, model: selectedModel },
+                  })
+                }
+              }}
+            >
+              <For each={getAllAvailableModels(store.state.settings.api.providers)}>
+                {(model) => <option value={model}>{model}</option>}
+              </For>
+            </select>
+            <Button variant="plain" onClick={handleStats} title="View chat statistics">
+              {messageCount()} messages
+            </Button>
+
+            <Button variant="ghost" onClick={handleSettings}>
+              <Icon name="settings" class="text-gray-600 dark:text-gray-300" />
+            </Button>
+            <Button variant="primary" onClick={handleNewChat}>
+              <Icon name="plus" />
+            </Button>
+          </div>
         </div>
       </div>
       <SettingsModal isOpen={showSettings()} onClose={() => setShowSettings(false)} />

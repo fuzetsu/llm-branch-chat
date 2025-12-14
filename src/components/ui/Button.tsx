@@ -1,13 +1,14 @@
 import { Component, JSX } from 'solid-js'
 import { classnames } from '../../utils'
 
-type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost'
+type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost' | 'plain'
 type ButtonSize = 'sm' | 'md' | 'lg'
 
 interface ButtonProps {
   variant?: ButtonVariant
   size?: ButtonSize
   onClick?: () => void
+  title?: string
   disabled?: boolean
   class?: string
   children: JSX.Element
@@ -25,6 +26,8 @@ const Button: Component<ButtonProps> = (props) => {
         return 'text-white bg-danger hover:bg-red-600'
       case 'ghost':
         return 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+      case 'plain':
+        return 'text-sm text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-primary-dark'
       default:
         return 'text-white bg-primary hover:bg-blue-600 dark:bg-primary-dark dark:hover:bg-primary-darker'
     }
@@ -52,6 +55,7 @@ const Button: Component<ButtonProps> = (props) => {
       class={classnames(baseClasses, getVariantClasses(), getSizeClasses(), props.class)}
       onClick={() => props.onClick?.()}
       disabled={props.disabled}
+      title={props.title}
     >
       {props.children}
     </button>

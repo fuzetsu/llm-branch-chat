@@ -12,6 +12,7 @@
   --color-dark-bg: #1a1d1a;
   --color-dark-surface: #242724;
   --color-dark-border: #3a3d3a;
+  --color-dark-hover: #2a2d2a;
 }
 
 @custom-variant dark (&:where(.dark, .dark *));
