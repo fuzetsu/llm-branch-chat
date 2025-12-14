@@ -86,7 +86,7 @@ const ChatStatsModal: Component<ChatStatsModalProps> = (props) => {
               {(currentStats) => (
                 <div class="space-y-6">
                   {/* Summary Section */}
-                  <div class="grid grid-cols-3 gap-4">
+                  <div class="grid grid-cols-2 gap-4">
                     <SummaryCard
                       label="Total Messages"
                       value={currentStats().messageCount}
@@ -96,6 +96,11 @@ const ChatStatsModal: Component<ChatStatsModalProps> = (props) => {
                       label="Input Tokens"
                       value={currentStats().totalInputTokens}
                       colorClass="text-blue-600 dark:text-blue-400"
+                    />
+                    <SummaryCard
+                      label="Cached Input Tokens"
+                      value={currentStats().totalCachedInputTokens}
+                      colorClass="text-blue-500 dark:text-blue-300"
                     />
                     <SummaryCard
                       label="Output Tokens"
@@ -178,6 +183,7 @@ const ChatStatsModal: Component<ChatStatsModalProps> = (props) => {
                               model={modelStat.model}
                               messageCount={modelStat.messageCount}
                               inputTokens={modelStat.inputTokens}
+                              cachedInputTokens={modelStat.cachedInputTokens}
                               outputTokens={modelStat.outputTokens}
                               totalTokens={modelStat.totalTokens}
                               estimatedCost={modelStat.estimatedCost}
@@ -275,6 +281,7 @@ const ModelBreakdownItem: Component<{
   model: string
   messageCount: number
   inputTokens: number
+  cachedInputTokens: number
   outputTokens: number
   totalTokens: number
   estimatedCost: number
@@ -299,11 +306,17 @@ const ModelBreakdownItem: Component<{
       </div>
 
       {/* Token breakdown */}
-      <div class="grid grid-cols-2 gap-3 mb-3">
+      <div class="grid grid-cols-3 gap-3 mb-3">
         <div class="text-center">
           <div class="text-xs text-blue-600 dark:text-blue-400 mb-1">Input</div>
           <div class="text-sm font-medium text-gray-900 dark:text-white">
             {formatNumber(props.inputTokens)}
+          </div>
+        </div>
+        <div class="text-center">
+          <div class="text-xs text-blue-500 dark:text-blue-300 mb-1">Cached Input</div>
+          <div class="text-sm font-medium text-gray-900 dark:text-white">
+            {formatNumber(props.cachedInputTokens)}
           </div>
         </div>
         <div class="text-center">

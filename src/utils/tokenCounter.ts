@@ -12,6 +12,7 @@ export function estimateTokens(text: string): number {
  */
 export interface TokenStats {
   totalInputTokens: number
+  totalCachedInputTokens: number
   totalOutputTokens: number
   totalTokens: number
   estimatedCost: number
@@ -28,6 +29,7 @@ export interface TokenStats {
 export interface ModelTokenStats {
   model: string
   inputTokens: number
+  cachedInputTokens: number
   outputTokens: number
   totalTokens: number
   estimatedCost: number
@@ -46,6 +48,7 @@ function getAllPathsTokenStats(nodes: Map<string, MessageNode>): TokenStats {
   const rootMessages = Array.from(nodes.values()).filter((node) => node.parentId === null)
 
   let totalInputTokens = 0
+  let totalCachedInputTokens = 0
   let totalOutputTokens = 0
   let userMessageCount = 0
   let assistantMessageCount = 0
@@ -54,20 +57,21 @@ function getAllPathsTokenStats(nodes: Map<string, MessageNode>): TokenStats {
   // Track model-specific statistics
   const modelStats = new Map<
     string,
-    { inputTokens: number; outputTokens: number; messageCount: number }
+    { inputTokens: number; outputTokens: number; messageCount: number; cachedInputTokens: number }
   >()
 
   // Calculate statistics for each root conversation path with per-message model costs
   rootMessages.forEach((rootMessage) => {
     const pathStats = calculatePathTokenStatsWithModelCosts(nodes, rootMessage.id, modelStats)
     totalInputTokens += pathStats.totalInputTokens
+    totalCachedInputTokens += pathStats.totalCachedInputTokens
     totalOutputTokens += pathStats.totalOutputTokens
     userMessageCount += pathStats.userMessageCount
     assistantMessageCount += pathStats.assistantMessageCount
     systemMessageCount += pathStats.systemMessageCount
   })
 
-  const totalTokens = totalInputTokens + totalOutputTokens
+  const totalTokens = totalInputTokens + totalOutputTokens + totalCachedInputTokens
   const messageCount = userMessageCount + assistantMessageCount + systemMessageCount
   const averageTokensPerMessage = messageCount > 0 ? Math.round(totalTokens / messageCount) : 0
 
@@ -79,14 +83,20 @@ function getAllPathsTokenStats(nodes: Map<string, MessageNode>): TokenStats {
   let totalEstimatedCost = 0
 
   for (const [modelName, stats] of modelStats.entries()) {
-    const modelCost = estimateCost(stats.inputTokens, stats.outputTokens, modelName)
+    const modelCost = estimateCost(
+      stats.inputTokens,
+      stats.outputTokens,
+      modelName,
+      stats.cachedInputTokens,
+    )
     totalEstimatedCost += modelCost
 
     modelBreakdown.push({
       model: modelName,
       inputTokens: stats.inputTokens,
       outputTokens: stats.outputTokens,
-      totalTokens: stats.inputTokens + stats.outputTokens,
+      cachedInputTokens: stats.cachedInputTokens,
+      totalTokens: stats.inputTokens + stats.outputTokens + stats.cachedInputTokens,
       estimatedCost: modelCost,
       messageCount: stats.messageCount,
     })
@@ -97,6 +107,7 @@ function getAllPathsTokenStats(nodes: Map<string, MessageNode>): TokenStats {
 
   return {
     totalInputTokens,
+    totalCachedInputTokens,
     totalOutputTokens,
     totalTokens,
     estimatedCost: totalEstimatedCost,
@@ -114,9 +125,13 @@ function getAllPathsTokenStats(nodes: Map<string, MessageNode>): TokenStats {
 function calculatePathTokenStatsWithModelCosts(
   nodes: Map<string, MessageNode>,
   startNodeId: string,
-  modelStats: Map<string, { inputTokens: number; outputTokens: number; messageCount: number }>,
+  modelStats: Map<
+    string,
+    { inputTokens: number; outputTokens: number; messageCount: number; cachedInputTokens: number }
+  >,
 ): {
   totalInputTokens: number
+  totalCachedInputTokens: number
   totalOutputTokens: number
   userMessageCount: number
   assistantMessageCount: number
@@ -143,25 +158,48 @@ function calculatePathTokenStatsWithModelCosts(
   messagesInPath.sort((a, b) => a.timestamp - b.timestamp)
 
   let pathInputTokens = 0
+  let pathCachedInputTokens = 0
   let pathOutputTokens = 0
   let pathUserCount = 0
   let pathAssistantCount = 0
   let pathSystemCount = 0
 
+  // Track which messages have been processed as new (first time)
+  const processedMessageIds = new Set<string>()
+
   // Calculate cumulative input tokens for this path with per-message model costs
   messagesInPath.forEach((message, index) => {
-    const messageTokens = estimateTokens(message.content)
-
     if (message.role === 'assistant') {
-      // Cumulative input tokens for this assistant response - ALL previous messages
-      const contextMessages = messagesInPath.slice(0, index + 1)
-      const cumulativeInputTokens = contextMessages.reduce(
-        (sum, m) => sum + estimateTokens(m.content),
-        0,
-      )
+      // For each assistant response, we need to count:
+      // 1. The user message that triggered this response (full price input)
+      // 2. This assistant response (full price output)
+      // 3. All previous messages in context (cached price input)
 
-      pathInputTokens += cumulativeInputTokens
-      pathOutputTokens += messageTokens
+      const contextMessages = messagesInPath.slice(0, index + 1)
+
+      let newInputTokens = 0
+      let cachedInputTokens = 0
+      let outputTokens = 0
+
+      contextMessages.forEach((m) => {
+        const tokens = estimateTokens(m.content)
+        if (m.role === 'user' && !processedMessageIds.has(m.id)) {
+          // User message being processed for the first time - full price input
+          newInputTokens += tokens
+          processedMessageIds.add(m.id)
+        } else if (m.role === 'assistant' && !processedMessageIds.has(m.id)) {
+          // Assistant message being processed for the first time - full price output
+          outputTokens += tokens
+          processedMessageIds.add(m.id)
+        } else {
+          // All other messages (already processed or system messages) - cached price input
+          cachedInputTokens += tokens
+        }
+      })
+
+      pathInputTokens += newInputTokens
+      pathCachedInputTokens += cachedInputTokens
+      pathOutputTokens += outputTokens
       pathAssistantCount++
 
       // Update model-specific statistics
@@ -170,11 +208,13 @@ function calculatePathTokenStatsWithModelCosts(
         inputTokens: 0,
         outputTokens: 0,
         messageCount: 0,
+        cachedInputTokens: 0,
       }
       modelStats.set(model, {
-        inputTokens: currentStats.inputTokens + cumulativeInputTokens,
-        outputTokens: currentStats.outputTokens + messageTokens,
+        inputTokens: currentStats.inputTokens + newInputTokens,
+        outputTokens: currentStats.outputTokens + outputTokens,
         messageCount: currentStats.messageCount + 1,
+        cachedInputTokens: currentStats.cachedInputTokens + cachedInputTokens,
       })
     } else {
       if (message.role === 'user') pathUserCount++
@@ -184,6 +224,7 @@ function calculatePathTokenStatsWithModelCosts(
 
   return {
     totalInputTokens: pathInputTokens,
+    totalCachedInputTokens: pathCachedInputTokens,
     totalOutputTokens: pathOutputTokens,
     userMessageCount: pathUserCount,
     assistantMessageCount: pathAssistantCount,
@@ -192,25 +233,62 @@ function calculatePathTokenStatsWithModelCosts(
 }
 
 /**
- * Cost estimation with separate input/output pricing
+ * Cost estimation with separate input/output pricing and optional cached token pricing
  */
-function estimateCost(inputTokens: number, outputTokens: number, model: string): number {
-  const inputCostPer1K: Record<string, number> = {
-    'x-ai/grok-4-fast': 0.0002, // $0.20/1M input tokens
-    'deepseek-ai/deepseek-v3.2-exp': 0.00028, // $0.28/1M input tokens
-    'deepseek-ai/deepseek-v3.2-exp-thinking': 0.00028, // $0.28/1M input tokens
+interface ModelPricing {
+  inputCostPer1K: number
+  outputCostPer1K: number
+  cachedInputCostPer1K?: number // Optional: lower price for cached tokens
+}
+
+const MODEL_PRICING: Record<string, ModelPricing> = {
+  'x-ai: grok-4-1-fast-non-reasoning': {
+    inputCostPer1K: 0.0002, // $0.20/1M input tokens
+    outputCostPer1K: 0.0005, // $0.50/1M output tokens
+    cachedInputCostPer1K: 0.00002, // $0.02/1M cached input tokens (90% discount)
+  },
+  'x-ai: grok-4-1-fast-reasoning': {
+    inputCostPer1K: 0.0002, // $0.20/1M input tokens
+    outputCostPer1K: 0.0005, // $0.50/1M output tokens
+    cachedInputCostPer1K: 0.00002, // $0.02/1M cached input tokens (90% discount)
+  },
+  'deepseek: deepseek-chat': {
+    inputCostPer1K: 0.00028, // $0.28/1M input tokens
+    outputCostPer1K: 0.00042, // $0.42/1M output tokens
+    cachedInputCostPer1K: 0.000028, // $0.14/1M cached input tokens (90% discount)
+  },
+  'deepseek: deepseek-reasoner': {
+    inputCostPer1K: 0.00028, // $0.28/1M input tokens
+    outputCostPer1K: 0.00042, // $0.42/1M output tokens
+    cachedInputCostPer1K: 0.000028, // $0.028/1M cached input tokens (90% discount)
+  },
+}
+
+function estimateCost(
+  inputTokens: number,
+  outputTokens: number,
+  model: string,
+  cachedInputTokens: number = 0,
+): number {
+  const pricing = MODEL_PRICING[model] || {
+    inputCostPer1K: 0,
+    outputCostPer1K: 0,
   }
 
-  const outputCostPer1K: Record<string, number> = {
-    'x-ai/grok-4-fast': 0.0005, // $0.50/1M output tokens
-    'deepseek-ai/deepseek-v3.2-exp': 0.00042, // $0.42/1M input tokens
-    'deepseek-ai/deepseek-v3.2-exp-thinking': 0.00042, // $0.42/1M input tokens
-  }
+  const { inputCostPer1K, outputCostPer1K, cachedInputCostPer1K } = pricing
 
-  const inputRate = inputCostPer1K[model] || 0
-  const outputRate = outputCostPer1K[model] || 0
+  // Calculate input cost based on cached pricing availability
+  // inputTokens = total input tokens (new + cached)
+  // cachedInputTokens = portion that should be charged at cached rate if available
+  // If no cached pricing is available, all input tokens are charged at full rate
+  const inputCost =
+    cachedInputCostPer1K !== undefined
+      ? (inputTokens / 1000) * inputCostPer1K + (cachedInputTokens / 1000) * cachedInputCostPer1K
+      : ((inputTokens + cachedInputTokens) / 1000) * inputCostPer1K
 
-  return (inputTokens / 1000) * inputRate + (outputTokens / 1000) * outputRate
+  const outputCost = (outputTokens / 1000) * outputCostPer1K
+
+  return inputCost + outputCost
 }
 
 /**
@@ -226,8 +304,8 @@ export function estimateNewMessageCost(
   newUserMessageTokens: number = 500,
   expectedResponseTokens: number = 1000,
 ): number {
-  const totalInputTokens = countCumulativeInputTokens(visibleMessages) + newUserMessageTokens
-  return estimateCost(totalInputTokens, expectedResponseTokens, model)
+  const cachedInputTokens = countCumulativeInputTokens(visibleMessages)
+  return estimateCost(newUserMessageTokens, expectedResponseTokens, model, cachedInputTokens)
 }
 
 export function countCumulativeInputTokens(visibleMessages: MessageNode[]) {
