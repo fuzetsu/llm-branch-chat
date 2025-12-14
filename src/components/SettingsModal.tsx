@@ -1,5 +1,6 @@
 import { Component, createEffect, createMemo, Show, For, createSignal } from 'solid-js'
-import { useAppStore } from '../store/AppStore'
+import { useAppStore, exportStateToJson, importStateFromJson } from '../store/AppStore'
+import { downloadJsonFile, createFileInput } from '../utils/fileUtils'
 import Icon from './ui/Icon'
 import FormField from './ui/FormField'
 import Input from './ui/Input'
@@ -41,6 +42,51 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
   const storageSizeInBytes = createMemo(() =>
     props.isOpen ? new TextEncoder().encode(JSON.stringify(store)).length : 0,
   )
+
+  // Import/export state
+  const [importState, setImportState] = createSignal<{ success: boolean; message: string } | null>(
+    null,
+  )
+
+  const handleExportState = () => {
+    try {
+      const jsonData = exportStateToJson(store.state, true)
+      const filename = `llm-chat-state-export-${new Date().toISOString().split('T')[0]}.json`
+      downloadJsonFile(jsonData, filename)
+    } catch (error) {
+      console.error('Failed to export state:', error)
+      setImportState({ success: false, message: 'Failed to export state. Please try again.' })
+    }
+  }
+
+  const handleImportState = (content: string) => {
+    setImportState(null)
+
+    try {
+      if (!content.trim()) {
+        throw new Error('Empty file')
+      }
+
+      const newState = importStateFromJson(content)
+
+      // Update the store with imported state
+      store.replaceState(newState)
+
+      // Show success message
+      setImportState({ success: true, message: 'State imported successfully!' })
+      setTimeout(() => setImportState(null), 3000)
+    } catch (error) {
+      console.error('Failed to import state:', error)
+      setImportState({
+        success: false,
+        message: error instanceof Error ? error.message : 'Failed to import state',
+      })
+    }
+  }
+
+  const triggerFileImport = () => {
+    createFileInput(handleImportState, '.json')
+  }
 
   // Provider form state
   const [providerForm, setProviderForm] = createStore({
@@ -368,7 +414,30 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
           <div class="flex-1 overflow-y-auto p-6">
             <div class="space-y-6">
               <Show when={activeTab() === 'providers'}>
-                <StorageInfo sizeInBytes={storageSizeInBytes()} />
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
+                  <StorageInfo sizeInBytes={storageSizeInBytes()} />
+
+                  <div class="flex space-x-3 flex-shrink-0">
+                    <Button variant="secondary" size="sm" onClick={triggerFileImport}>
+                      Import State
+                    </Button>
+                    <Button variant="secondary" size="sm" onClick={handleExportState}>
+                      Export State
+                    </Button>
+                  </div>
+                </div>
+
+                <Show when={importState()}>
+                  <div
+                    class={`p-3 rounded-md text-sm mb-4 ${
+                      importState()?.success
+                        ? 'bg-green-50 text-green-800 dark:bg-green-900/20 dark:text-green-200'
+                        : 'bg-red-50 text-red-800 dark:bg-red-900/20 dark:text-red-200'
+                    }`}
+                  >
+                    {importState()?.message}
+                  </div>
+                </Show>
 
                 {/* Provider List */}
                 <div class="space-y-4">

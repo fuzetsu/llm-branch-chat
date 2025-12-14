@@ -57,6 +57,7 @@ interface AppStoreContextType extends BaseOperations {
   setCurrentChatId: (id: string | null) => void
   updateSettings: (settings: Partial<AppSettings>) => void
   setUI: (ui: Partial<UISettings>) => void
+  replaceState: (newState: AppStateStore) => void
   // Chat operations with wrapped signatures
   createNewChat: () => void
   getCurrentChat: () => Chat | null
@@ -133,11 +134,29 @@ function createDefaultStreamingState() {
   }
 }
 
+function createDefaultState() {
+  return {
+    chats: new Map(),
+    currentChatId: null,
+    settings: createDefaultSettings(),
+    ui: createDefaultUISettings(),
+    streaming: createDefaultStreamingState(),
+    flashingMessageId: null,
+  }
+}
+
 function serializeChat(chat: Chat): SerializableChat {
   return {
     ...chat,
     nodes: Array.from(chat.nodes.entries()),
     activeBranches: Array.from(chat.activeBranches.entries()),
+  }
+}
+
+function serializeApiSettings(api: AppSettings['api']): SerializableApiSettings {
+  return {
+    providers: Array.from(api.providers.entries()),
+    defaultProvider: api.defaultProvider,
   }
 }
 
@@ -157,35 +176,27 @@ function deserializeApiSettings(serialized: SerializableApiSettings): AppSetting
   }
 }
 
-function loadStateFromStorage(): AppStateStore {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY)
-    if (!saved) {
-      return {
-        chats: new Map(),
-        currentChatId: null,
-        settings: createDefaultSettings(),
-        ui: createDefaultUISettings(),
-        streaming: createDefaultStreamingState(),
-        flashingMessageId: null,
-      }
-    }
+export function exportStateToJson(state: AppStateStore, pretty = false): string {
+  const stateToExport: SerializableAppState = {
+    chats: Array.from(state.chats.entries()).map(([id, chat]) => [id, serializeChat(chat)]),
+    currentChatId: state.currentChatId,
+    settings: {
+      api: serializeApiSettings(state.settings.api),
+      chat: state.settings.chat,
+      ui: state.settings.ui,
+    },
+    ui: state.ui,
+  }
+  return pretty ? JSON.stringify(stateToExport, null, 2) : JSON.stringify(stateToExport)
+}
 
-    const state: SerializableAppState = JSON.parse(saved)
+export function importStateFromJson(jsonString: string): AppStateStore {
+  try {
+    const state: SerializableAppState = JSON.parse(jsonString)
     const defaultSettings = createDefaultSettings()
 
-    // Handle migration from old settings format
-    let apiSettings: AppSettings['api']
-    if (state.settings && 'api' in state.settings && 'providers' in state.settings.api) {
-      // New format with providers
-      apiSettings = deserializeApiSettings(state.settings.api as SerializableApiSettings)
-    } else {
-      // Old format - use default providers
-      apiSettings = defaultSettings.api
-    }
-
     const settings: AppSettings = {
-      api: apiSettings,
+      api: deserializeApiSettings(state.settings.api),
       chat: { ...defaultSettings.chat, ...(state.settings?.chat || {}) },
       ui: { ...defaultSettings.ui, ...(state.settings?.ui || {}) },
     }
@@ -201,39 +212,25 @@ function loadStateFromStorage(): AppStateStore {
       flashingMessageId: null,
     }
   } catch (error) {
-    console.error('Failed to load state:', error)
-    return {
-      chats: new Map(),
-      currentChatId: null,
-      settings: createDefaultSettings(),
-      ui: createDefaultUISettings(),
-      streaming: createDefaultStreamingState(),
-      flashingMessageId: null,
-    }
+    console.error('Failed to import state:', error)
+    throw new Error('Invalid JSON data or corrupted state file')
   }
 }
 
-function serializeApiSettings(api: AppSettings['api']): SerializableApiSettings {
-  return {
-    providers: Array.from(api.providers.entries()),
-    defaultProvider: api.defaultProvider,
+function loadStateFromStorage(): AppStateStore {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY)
+    if (!saved) return createDefaultState()
+    return importStateFromJson(saved)
+  } catch (error) {
+    console.error('Failed to load state:', error)
+    return createDefaultState()
   }
 }
 
 function saveStateToStorage(state: AppStateStore) {
-  const stateToSave: SerializableAppState = {
-    chats: Array.from(state.chats.entries()).map(([id, chat]) => [id, serializeChat(chat)]),
-    currentChatId: state.currentChatId,
-    settings: {
-      api: serializeApiSettings(state.settings.api),
-      chat: state.settings.chat,
-      ui: state.settings.ui,
-    },
-    ui: state.ui,
-  }
-
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave))
+    localStorage.setItem(STORAGE_KEY, exportStateToJson(state))
   } catch (error) {
     console.error('Failed to save state:', error)
   }
@@ -359,11 +356,16 @@ export const AppStoreProvider: ParentComponent = (props) => {
     setState('flashingMessageId', messageId)
   }
 
+  const replaceState = (newState: AppStateStore) => {
+    setState(newState)
+  }
+
   const storeValue: AppStoreContextType = {
     state,
     setCurrentChatId,
     updateSettings,
     setUI,
+    replaceState,
     // Chat operations
     addChat: operations.addChat,
     updateChat: operations.updateChat,
