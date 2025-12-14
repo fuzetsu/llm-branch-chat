@@ -159,4 +159,3 @@ export async function fetchModelsFromProvider(baseUrl: string, apiKey?: string):
     throw error
   }
 }
-

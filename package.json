@@ -7,7 +7,7 @@
     "dev": "vite",
     "serve": "vite preview",
     "type-check": "tsc --noEmit",
-    "verify-build": "npm run lint && npm run type-check && npm run build",
+    "verify-build": "npm run lint && npm run type-check && vite build -l error",
     "lint": "eslint src --ext .ts,.tsx",
     "format": "prettier --write ."
   },
@@ -28,7 +28,7 @@
   "dependencies": {
     "@tailwindcss/vite": "^4.1.11",
     "highlight.js": "^11.11.1",
-    "marked": "^16.0.0",
+    "marked": "^17.0.1",
     "marked-highlight": "^2.2.2",
     "solid-js": "^1.9.7"
   }

@@ -33,9 +33,9 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
   const [editingProvider, setEditingProvider] = createSignal<string | null>(null)
   const [isFetchingModels, setIsFetchingModels] = createSignal(false)
   const [validationErrors, setValidationErrors] = createStore<{
-    name?: string;
-    baseUrl?: string;
-    models?: string;
+    name?: string | null
+    baseUrl?: string | null
+    models?: string | null
   }>({})
 
   const storageSizeInBytes = createMemo(() =>
@@ -137,19 +137,15 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
   const handleAddProvider = () => {
     const models = providerForm.availableModels
       .split('\n')
-      .map(model => model.trim())
-      .filter(model => model.length > 0)
+      .map((model) => model.trim())
+      .filter((model) => model.length > 0)
 
     const nameError = validateProviderName(providerForm.name, store.state.settings.api.providers)
     const urlError = validateProviderUrl(providerForm.baseUrl)
     const modelsError = validateProviderModels(models)
 
     // Set validation errors
-    setValidationErrors({
-      name: nameError || undefined,
-      baseUrl: urlError || undefined,
-      models: modelsError || undefined,
-    })
+    setValidationErrors({ name: nameError, baseUrl: urlError, models: modelsError })
 
     if (nameError || urlError || modelsError) {
       return
@@ -160,7 +156,7 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
       providerForm.baseUrl,
       providerForm.key,
       models,
-      providers().length === 0 // First provider is default
+      providers().length === 0, // First provider is default
     )
 
     const newProviders = new Map(store.state.settings.api.providers)
@@ -169,7 +165,8 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
     store.updateSettings({
       api: {
         providers: newProviders,
-        defaultProvider: providers().length === 0 ? providerForm.name : store.state.settings.api.defaultProvider,
+        defaultProvider:
+          providers().length === 0 ? providerForm.name : store.state.settings.api.defaultProvider,
       },
     })
 
@@ -201,17 +198,14 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
 
     const models = providerForm.availableModels
       .split('\n')
-      .map(model => model.trim())
-      .filter(model => model.length > 0)
+      .map((model) => model.trim())
+      .filter((model) => model.length > 0)
 
     const urlError = validateProviderUrl(providerForm.baseUrl)
     const modelsError = validateProviderModels(models)
 
     // Set validation errors
-    setValidationErrors({
-      baseUrl: urlError || undefined,
-      models: modelsError || undefined,
-    })
+    setValidationErrors({ baseUrl: urlError, models: modelsError })
 
     if (urlError || modelsError) {
       return
@@ -235,9 +229,10 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
       newProviders.set(providerForm.name, updatedProvider)
 
       // Update default provider if needed
-      const newDefaultProvider = store.state.settings.api.defaultProvider === editing
-        ? providerForm.name
-        : store.state.settings.api.defaultProvider
+      const newDefaultProvider =
+        store.state.settings.api.defaultProvider === editing
+          ? providerForm.name
+          : store.state.settings.api.defaultProvider
 
       store.updateSettings({
         api: {
@@ -266,7 +261,9 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
   }
 
   const handleDeleteProvider = (providerName: string) => {
-    if (!confirm(`Are you sure you want to delete provider "${providerName}"? This cannot be undone.`)) {
+    if (
+      !confirm(`Are you sure you want to delete provider "${providerName}"? This cannot be undone.`)
+    ) {
       return
     }
 
@@ -375,11 +372,15 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
 
                 {/* Provider List */}
                 <div class="space-y-4">
-                  <h4 class="text-md font-medium text-gray-900 dark:text-white">Configured Providers</h4>
+                  <h4 class="text-md font-medium text-gray-900 dark:text-white">
+                    Configured Providers
+                  </h4>
                   <Show when={providers().length === 0}>
                     <div class="text-center py-8 border border-gray-200 dark:border-dark-border rounded-lg">
                       <p class="text-gray-500 dark:text-gray-400">No providers configured</p>
-                      <p class="text-sm text-gray-400 dark:text-gray-500 mt-1">Add your first provider to get started</p>
+                      <p class="text-sm text-gray-400 dark:text-gray-500 mt-1">
+                        Add your first provider to get started
+                      </p>
                       <div class="mt-4">
                         <Button
                           variant="primary"
@@ -404,7 +405,9 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
                                 </span>
                               </Show>
                             </div>
-                            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{provider.baseUrl}</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                              {provider.baseUrl}
+                            </p>
                             <p class="text-sm text-gray-500 dark:text-gray-400">
                               {provider.availableModels.length} models
                             </p>
@@ -497,7 +500,9 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
                             setProviderForm('availableModels', value)
                             if (validationErrors.models) setValidationErrors('models', undefined)
                           }}
-                          class={validationErrors.models ? 'border-red-300 dark:border-red-500' : ''}
+                          class={
+                            validationErrors.models ? 'border-red-300 dark:border-red-500' : ''
+                          }
                         />
                         <Button
                           variant="secondary"
@@ -509,22 +514,27 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
                             <>
                               <span class="animate-spin mr-2">🔄</span> Fetching...
                             </>
-                          ) : 'Fetch Models Automatically'}
+                          ) : (
+                            'Fetch Models Automatically'
+                          )}
                         </Button>
                       </div>
                     </FormField>
 
                     <div class="flex space-x-2">
                       <Show when={isEditing()}>
-                        <Button variant="secondary" onClick={() => {
-                          setEditingProvider(null)
-                          setProviderForm({
-                            name: '',
-                            baseUrl: '',
-                            key: undefined,
-                            availableModels: '',
-                          })
-                        }}>
+                        <Button
+                          variant="secondary"
+                          onClick={() => {
+                            setEditingProvider(null)
+                            setProviderForm({
+                              name: '',
+                              baseUrl: '',
+                              key: undefined,
+                              availableModels: '',
+                            })
+                          }}
+                        >
                           Cancel Edit
                         </Button>
                         <Button variant="primary" onClick={handleUpdateProvider}>
@@ -546,7 +556,9 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
                   <Select
                     value={chatForm.model}
                     onChange={(value) => setChatForm('model', value)}
-                    options={() => allAvailableModels().map(model => ({ value: model, label: model }))}
+                    options={() =>
+                      allAvailableModels().map((model) => ({ value: model, label: model }))
+                    }
                     placeholder="Select a model"
                   />
                 </FormField>
@@ -595,7 +607,9 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
                   <Select
                     value={chatForm.titleModel}
                     onChange={(value) => setChatForm('titleModel', value)}
-                    options={() => allAvailableModels().map(model => ({ value: model, label: model }))}
+                    options={() =>
+                      allAvailableModels().map((model) => ({ value: model, label: model }))
+                    }
                     placeholder="Select a model"
                   />
                 </FormField>

@@ -16,7 +16,9 @@ export interface ProviderApiService {
   generateTitle(messages: MessageNode[], titleModel: string): Promise<string | null>
 }
 
-export function createProviderApiService(providers: Map<string, ProviderConfig>): ProviderApiService {
+export function createProviderApiService(
+  providers: Map<string, ProviderConfig>,
+): ProviderApiService {
   // Create a cache of API services per provider
   const serviceCache = new Map<string, ReturnType<typeof createApiService>>()
 
@@ -58,10 +60,21 @@ export function createProviderApiService(providers: Map<string, ProviderConfig>)
       entropy = false,
     ): Promise<void> {
       const { service, model } = getServiceForModel(modelWithPrefix)
-      return service.streamResponse(messages, model, callbacks, temperature, maxTokens, signal, entropy)
+      return service.streamResponse(
+        messages,
+        model,
+        callbacks,
+        temperature,
+        maxTokens,
+        signal,
+        entropy,
+      )
     },
 
-    async generateTitle(messages: MessageNode[], titleModelWithPrefix: string): Promise<string | null> {
+    async generateTitle(
+      messages: MessageNode[],
+      titleModelWithPrefix: string,
+    ): Promise<string | null> {
       const { service, model } = getServiceForModel(titleModelWithPrefix)
       return service.generateTitle(messages, model)
     },

@@ -4,7 +4,7 @@ interface FormFieldProps {
   label: string
   children: JSX.Element
   helpText?: string
-  error?: string
+  error?: string | null | undefined
 }
 
 const FormField: Component<FormFieldProps> = (props) => {

@@ -6,9 +6,7 @@ import { createMessageOperations } from './MessageOperations'
 import { createStreamingOperations } from './StreamingOperations'
 import type { AppStoreOperationsDeps } from './AppStore'
 
-export function createAppStoreOperations(
-  deps: AppStoreOperationsDeps,
-) {
+export function createAppStoreOperations(deps: AppStoreOperationsDeps) {
   const getApiService = () => {
     const state = deps.getState()
     return createProviderApiService(state.settings.api.providers)
