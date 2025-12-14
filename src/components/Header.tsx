@@ -1,11 +1,11 @@
-import { Component, createSignal, For, Show, createEffect, onCleanup } from 'solid-js'
+import { Component, createSignal, Show, createEffect, onCleanup } from 'solid-js'
 import { useAppStore } from '../store/AppStore'
 import Icon from './ui/Icon'
 import SettingsModal from './SettingsModal'
 import ChatStatsModal from './ChatStatsModal'
 import Button from './ui/Button'
+import ModelSelector from './ModelSelector'
 import { countDescendants } from '../utils/messageTree'
-import { getAllAvailableModels } from '../utils/providerUtils'
 
 const Header: Component = () => {
   const store = useAppStore()
@@ -37,6 +37,9 @@ const Header: Component = () => {
     onCleanup(() => document.removeEventListener('click', handleClickOutside))
   })
 
+  const moreActionsButton =
+    'w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-hover transition-colors cursor-pointer'
+
   return (
     <header class="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-dark-surface border-b border-gray-200 dark:border-dark-border shadow-sm">
       <div class="flex items-center justify-between h-16 px-4">
@@ -63,9 +66,12 @@ const Header: Component = () => {
 
             {/* Mobile dropdown menu */}
             <Show when={showMobileMenu()}>
-              <div class="absolute right-0 mt-2 w-48 bg-white dark:bg-dark-surface rounded-md shadow-lg py-1 z-50 border border-gray-200 dark:border-dark-border">
+              <div class="absolute right-0 mt-2 w-56 bg-white dark:bg-dark-surface rounded-md shadow-lg py-1 z-50 border border-gray-200 dark:border-dark-border">
+                <div class="px-4 py-2">
+                  <ModelSelector class="w-full py-1" />
+                </div>
                 <button
-                  class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-hover transition-colors"
+                  class={moreActionsButton}
                   onClick={() => {
                     handleStats()
                     setShowMobileMenu(false)
@@ -75,7 +81,7 @@ const Header: Component = () => {
                   Chat Statistics
                 </button>
                 <button
-                  class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-hover transition-colors"
+                  class={moreActionsButton}
                   onClick={() => {
                     handleSettings()
                     setShowMobileMenu(false)
@@ -85,7 +91,7 @@ const Header: Component = () => {
                   Settings
                 </button>
                 <button
-                  class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-hover transition-colors"
+                  class={moreActionsButton}
                   onClick={() => {
                     handleNewChat()
                     setShowMobileMenu(false)
@@ -100,25 +106,7 @@ const Header: Component = () => {
 
           {/* Desktop controls - visible on medium screens and up */}
           <div class="hidden md:flex items-center space-x-2 flex-shrink-0">
-            <select
-              class="px-3 py-2 text-sm bg-white dark:bg-dark-surface border border-gray-300 dark:border-dark-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-gray-900 dark:text-white"
-              value={currentChat()?.model || store.state.settings.chat.model}
-              onChange={(e) => {
-                const selectedModel = e.currentTarget.value
-                const chat = currentChat()
-                if (chat) {
-                  store.updateChat(chat.id, { model: selectedModel })
-                } else {
-                  store.updateSettings({
-                    chat: { ...store.state.settings.chat, model: selectedModel },
-                  })
-                }
-              }}
-            >
-              <For each={getAllAvailableModels(store.state.settings.api.providers)}>
-                {(model) => <option value={model}>{model}</option>}
-              </For>
-            </select>
+            <ModelSelector />
             <Button variant="plain" onClick={handleStats} title="View chat statistics">
               {messageCount()} messages
             </Button>
