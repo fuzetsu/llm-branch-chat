@@ -40,7 +40,7 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
   }>({})
 
   const storageSizeInBytes = createMemo(() =>
-    props.isOpen ? new TextEncoder().encode(JSON.stringify(store)).length : 0,
+    props.isOpen ? new TextEncoder().encode(exportStateToJson(store.state)).length : 0,
   )
 
   // Import/export state
