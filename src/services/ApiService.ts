@@ -97,7 +97,7 @@ export const createApiService = ({ baseUrl, apiKey }: ApiServiceDeps) => {
     let buffer = ''
     let lastTokenTime = Date.now()
     let hasReceivedTokens = false
-    const TIMEOUT_MS = 1200 // 1.2 seconds after last token
+    const TIMEOUT_MS = 8000 // 8 seconds after last token
 
     try {
       while (true) {
