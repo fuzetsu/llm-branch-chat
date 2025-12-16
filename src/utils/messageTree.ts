@@ -70,9 +70,7 @@ export function addNodeToPool(
     }
   } else {
     // Root level node - update root's active branch
-    const rootChildren = Array.from(newNodes.values()).filter(
-      (node) => node.parentId === null,
-    ).length
+    const rootChildren = getRootChildren(newNodes).length
     newBranches.set(rootNodeId, rootChildren - 1)
   }
 
@@ -182,28 +180,9 @@ export function getBranchInfo(
   const node = nodes.get(nodeId)
   if (!node) return null
 
-  let siblings: MessageNode[]
-  let currentIndex: number
-
-  if (node.parentId === null) {
-    // Root level node
-    siblings = Array.from(nodes.values())
-      .filter((n) => n.parentId === null)
-      .sort((a, b) => a.branchIndex - b.branchIndex)
-    currentIndex = node.branchIndex
-  } else {
-    // Regular node - find siblings
-    const parent = nodes.get(node.parentId)
-    if (!parent) return null
-
-    siblings = parent.childIds
-      .map((id) => nodes.get(id)!)
-      .filter(Boolean)
-      .sort((a, b) => a.branchIndex - b.branchIndex)
-
-    currentIndex = siblings.findIndex((sibling) => sibling.id === nodeId)
-    if (currentIndex === -1) return null
-  }
+  const siblings =
+    node.parentId === null ? getRootChildren(nodes) : getNodeChildren(nodes, node.parentId)
+  const currentIndex = siblings.findIndex((sibling) => sibling.id === node.id)
 
   return {
     total: siblings.length,
@@ -229,7 +208,7 @@ export function switchToBranch(
   let siblingCount: number
   if (node.parentId === null) {
     // Root level - count nodes with null parentId
-    siblingCount = Array.from(nodes.values()).filter((n) => n.parentId === null).length
+    siblingCount = getRootChildren(nodes).length
   } else {
     // Regular node - count parent's children
     const parent = nodes.get(node.parentId)
@@ -247,38 +226,4 @@ export function getNodeChildren(nodes: Map<string, MessageNode>, nodeId: string)
     .map((id) => nodes.get(id)!)
     .filter(Boolean)
     .sort((a, b) => a.branchIndex - b.branchIndex)
-}
-
-export function isNonRootMessage(message: MessageNode | null): message is MessageNode {
-  return Boolean(message)
-}
-
-export function getSwitchedBranchMessage(
-  nodes: Map<string, MessageNode>,
-  rootNodeId: string,
-  messageId: string,
-  branchIndex: number,
-): MessageNode | null {
-  const currentNode = nodes.get(messageId)
-  if (!currentNode) return null
-
-  let siblings: MessageNode[]
-
-  if (currentNode.parentId === null) {
-    // Root level node
-    siblings = Array.from(nodes.values())
-      .filter((n) => n.parentId === null)
-      .sort((a, b) => a.branchIndex - b.branchIndex)
-  } else {
-    // Regular node
-    const parent = nodes.get(currentNode.parentId)
-    if (!parent) return null
-
-    siblings = parent.childIds
-      .map((id) => nodes.get(id)!)
-      .filter(Boolean)
-      .sort((a, b) => a.branchIndex - b.branchIndex)
-  }
-
-  return siblings[branchIndex] || null
 }

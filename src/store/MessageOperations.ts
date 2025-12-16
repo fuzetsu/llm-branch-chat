@@ -7,6 +7,7 @@ import {
   findNodeById,
   switchToBranch,
   getBranchInfo,
+  getRootChildren,
 } from '../utils/messageTree.js'
 import type { AppStoreOperationsDeps } from './AppStore'
 
@@ -160,16 +161,10 @@ export const createMessageOperations = ({ setState, getState }: MessageOperation
       const targetNode = chat.nodes.get(messageId)
       if (!targetNode) return
 
-      // Find siblings and target message
       let siblings: string[]
       if (targetNode.parentId === null) {
-        // Root level - get all nodes with null parentId
-        siblings = Array.from(chat.nodes.values())
-          .filter((n) => n.parentId === null)
-          .sort((a, b) => a.branchIndex - b.branchIndex)
-          .map((n) => n.id)
+        siblings = getRootChildren(chat.nodes).map((n) => n.id)
       } else {
-        // Regular node - get parent's children
         const parent = chat.nodes.get(targetNode.parentId)
         siblings = parent?.childIds || []
       }
