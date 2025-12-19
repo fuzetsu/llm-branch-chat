@@ -65,7 +65,7 @@ const ChatStatsModal: Component<ChatStatsModalProps> = (props) => {
         {/* Modal */}
         <div class="relative w-full max-w-md max-h-[90vh] overflow-hidden text-left align-middle transition-all transform bg-white dark:bg-dark-surface shadow-xl rounded-2xl border dark:border-dark-border flex flex-col">
           {/* Header */}
-          <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-dark-border flex-shrink-0">
+          <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-dark-border shrink-0">
             <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-white">
               Chat Statistics
             </h3>
@@ -208,7 +208,7 @@ const ChatStatsModal: Component<ChatStatsModalProps> = (props) => {
           </div>
 
           {/* Footer */}
-          <div class="flex justify-end p-6 border-t border-gray-200 dark:border-dark-border flex-shrink-0">
+          <div class="flex justify-end p-6 border-t border-gray-200 dark:border-dark-border shrink-0">
             <Button variant="primary" onClick={props.onClose}>
               Close
             </Button>

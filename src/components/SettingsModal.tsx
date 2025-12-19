@@ -364,7 +364,7 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
         {/* Modal */}
         <div class="relative w-full max-w-2xl max-h-[90vh] overflow-hidden text-left align-middle transition-all transform bg-white dark:bg-dark-surface shadow-xl rounded-2xl border dark:border-dark-border flex flex-col">
           {/* Header */}
-          <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-dark-border flex-shrink-0">
+          <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-dark-border shrink-0">
             <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-white">Settings</h3>
             <button
               class="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
@@ -375,7 +375,7 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
           </div>
 
           {/* Tabs */}
-          <div class="border-b border-gray-200 dark:border-dark-border flex-shrink-0">
+          <div class="border-b border-gray-200 dark:border-dark-border shrink-0">
             <nav class="flex space-x-8 px-6">
               <button
                 class={`py-4 px-1 border-b-2 font-medium text-sm cursor-pointer ${
@@ -417,7 +417,7 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
                   <StorageInfo sizeInBytes={storageSizeInBytes()} />
 
-                  <div class="flex space-x-3 flex-shrink-0">
+                  <div class="flex space-x-3 shrink-0">
                     <Button variant="secondary" size="sm" onClick={triggerFileImport}>
                       Import State
                     </Button>
@@ -702,7 +702,7 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
           </div>
 
           {/* Footer */}
-          <div class="flex justify-end space-x-3 p-6 border-t border-gray-200 dark:border-dark-border flex-shrink-0">
+          <div class="flex justify-end space-x-3 p-6 border-t border-gray-200 dark:border-dark-border shrink-0">
             <Button variant="secondary" onClick={handleCancel}>
               Cancel
             </Button>

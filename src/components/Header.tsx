@@ -44,7 +44,7 @@ const Header: Component = () => {
     <header class="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-dark-surface border-b border-gray-200 dark:border-dark-border shadow-sm">
       <div class="flex items-center justify-between h-16 px-4">
         <div class="flex items-center space-x-4 flex-1 min-w-0">
-          <Button variant="ghost" class="lg:hidden p-2 flex-shrink-0" onClick={toggleSidebar}>
+          <Button variant="ghost" class="lg:hidden p-2 shrink-0" onClick={toggleSidebar}>
             <Icon name="menu" class="text-gray-600 dark:text-gray-300" />
           </Button>
           <div class="flex items-center flex-1 min-w-0">
@@ -53,9 +53,9 @@ const Header: Component = () => {
             </h1>
           </div>
         </div>
-        <div class="flex items-center space-x-2 flex-shrink-0">
+        <div class="flex items-center space-x-2 shrink-0">
           {/* Mobile menu button - visible only on small screens */}
-          <div class="relative md:hidden mobile-menu-container flex-shrink-0">
+          <div class="relative md:hidden mobile-menu-container shrink-0">
             <Button
               variant="ghost"
               class="p-2"
@@ -105,7 +105,7 @@ const Header: Component = () => {
           </div>
 
           {/* Desktop controls - visible on medium screens and up */}
-          <div class="hidden md:flex items-center space-x-2 flex-shrink-0">
+          <div class="hidden md:flex items-center space-x-2 shrink-0">
             <ModelSelector />
             <Button variant="plain" onClick={handleStats} title="View chat statistics">
               {messageCount()} messages
