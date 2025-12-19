@@ -84,7 +84,7 @@
 }
 
 .message-content table {
-  @apply w-full border-collapse my-4;
+  @apply w-full my-4;
 }
 
 .message-content th,

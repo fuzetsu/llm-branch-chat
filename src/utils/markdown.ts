@@ -20,19 +20,32 @@ const LANG_MAP: Record<string, string> = {
  */
 export async function renderMarkdown(content: string): Promise<string> {
   if (!savedMarked) {
-    const [{ Marked }, { markedHighlight }, { default: hljs }, { default: plaintextLang }] =
-      await Promise.all([
-        import('marked'),
-        import('marked-highlight'),
-        import('highlight.js/lib/common'),
-        import('highlight.js/lib/languages/plaintext'),
-      ])
+    const [
+      { Marked, Renderer },
+      { markedHighlight },
+      { default: hljs },
+      { default: plaintextLang },
+    ] = await Promise.all([
+      import('marked'),
+      import('marked-highlight'),
+      import('highlight.js/lib/common'),
+      import('highlight.js/lib/languages/plaintext'),
+    ])
 
     // always add plaintext
     seenLang.add('plaintext')
     hljs.registerLanguage('plaintext', plaintextLang)
 
+    const renderer = new Renderer()
+
     savedMarked = new Marked(
+      {
+        renderer: {
+          table(...args) {
+            return `<div class="overflow-x-auto">${renderer.table.apply(this, args)}</div>`
+          },
+        },
+      },
       markedHighlight({
         emptyLangClass: 'hljs',
         langPrefix: 'hljs language-',
