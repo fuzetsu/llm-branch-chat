@@ -10,7 +10,7 @@ interface MessageListProps {
 }
 
 export const scrollMessageListToBottom = () => querySelector('#message-list-end')?.scrollIntoView()
-const scrollToEnd = throttle(scrollMessageListToBottom, 100)
+const throttledScrollToEnd = throttle(scrollMessageListToBottom, 100)
 
 export const isMessageListScrolledToBottom = () => {
   const messageList = querySelector('#message-list')
@@ -37,11 +37,12 @@ const MessageList: Component<MessageListProps> = (props) => {
     let firstRenderSettled = false
     let settledId = -1
     const observer = new ResizeObserver(() => {
-      console.log('fired!')
-      clearTimeout(settledId)
-      settledId = setTimeout(() => (firstRenderSettled = true), 1000)
+      if (!firstRenderSettled) {
+        clearTimeout(settledId)
+        settledId = setTimeout(() => (firstRenderSettled = true), 1000)
+      }
       const shouldScroll = shouldAutoScroll() || !firstRenderSettled
-      if (shouldScroll && !store.state.flashingMessageId) scrollToEnd()
+      if (shouldScroll && !store.state.flashingMessageId) throttledScrollToEnd()
     })
     observer.observe(messagesContainer)
     onCleanup(() => observer.disconnect())
