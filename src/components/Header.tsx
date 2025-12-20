@@ -1,4 +1,4 @@
-import { Component, createSignal, Show, createEffect, onCleanup } from 'solid-js'
+import { Component, createSignal, Show, createEffect, onCleanup, createMemo } from 'solid-js'
 import { useAppStore } from '../store/AppStore'
 import Icon from './ui/Icon'
 import SettingsModal from './SettingsModal'
@@ -19,10 +19,10 @@ const Header: Component = () => {
   const currentChat = () => store.getCurrentChat()
   const handleNewChat = () => store.createNewChat()
 
-  const messageCount = () => {
+  const messageCount = createMemo(() => {
     const chat = store.getCurrentChat()
     return chat ? countDescendants(chat.nodes, null) : 0
-  }
+  })
 
   // Close mobile menu when clicking outside
   createEffect(() => {
