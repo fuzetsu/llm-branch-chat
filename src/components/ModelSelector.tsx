@@ -15,14 +15,8 @@ const ModelSelector: Component<ModelSelectorProps> = (props) => {
 
   const handleModelChange = (e: Event) => {
     const selectedModel = (e.currentTarget as HTMLSelectElement).value
-    const chat = currentChat()
-    if (chat) {
-      store.updateChat(chat.id, { model: selectedModel })
-    } else {
-      store.updateSettings({
-        chat: { ...store.state.settings.chat, model: selectedModel },
-      })
-    }
+    const chatId = store.ensureCurrentChat()
+    store.updateChat(chatId, { model: selectedModel })
   }
 
   return (
