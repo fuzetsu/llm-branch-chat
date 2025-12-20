@@ -69,41 +69,37 @@ export const createMessageOperations = ({ setState, getState }: MessageOperation
       // Determine branch index
       const state = getState()
       const chat = state.chats.get(chatId)
+      if (!chat) throw new Error('createMessageBranch: chat not found')
       let branchIndex = 0
 
-      if (chat) {
-        if (parentId === null) {
-          // Root level - count existing root children
-          branchIndex = Array.from(chat.nodes.values()).filter(
-            (node) => node.parentId === null,
-          ).length
-        } else {
-          // Regular node - count parent's children
-          const parent = chat.nodes.get(parentId)
-          branchIndex = parent?.childIds.length || 0
-        }
+      if (parentId === null) {
+        // Root level - count existing root children
+        branchIndex = Array.from(chat.nodes.values()).filter(
+          (node) => node.parentId === null,
+        ).length
+      } else {
+        // Regular node - count parent's children
+        const parent = chat.nodes.get(parentId)
+        branchIndex = parent?.childIds.length || 0
       }
 
       const newMessage = createMessageNode(role, content, model, parentId, branchIndex)
 
       setState('chats', (chats: Map<string, Chat>) => {
         const newChats = new Map(chats)
-        const chat = newChats.get(chatId)
-        if (chat) {
-          const { nodes: newNodes, activeBranches: newBranches } = addNodeToPool(
-            chat.nodes,
-            chat.activeBranches,
-            chat.rootNodeId,
-            newMessage,
-            parentId,
-          )
-          newChats.set(chatId, {
-            ...chat,
-            nodes: newNodes,
-            activeBranches: newBranches,
-            updatedAt: Date.now(),
-          })
-        }
+        const { nodes: newNodes, activeBranches: newBranches } = addNodeToPool(
+          chat.nodes,
+          chat.activeBranches,
+          chat.rootNodeId,
+          newMessage,
+          parentId,
+        )
+        newChats.set(chatId, {
+          ...chat,
+          nodes: newNodes,
+          activeBranches: newBranches,
+          updatedAt: Date.now(),
+        })
         return newChats
       })
 
