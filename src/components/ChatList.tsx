@@ -24,6 +24,11 @@ const ChatList: Component = () => {
     })
   })
 
+  const selectChat = (chatId: string) => {
+    store.setCurrentChatId(chatId)
+    store.setUI({ sidebarCollapsed: true })
+  }
+
   return (
     <div class="flex-1 overflow-y-auto p-4">
       <For each={activeChats()}>
@@ -31,7 +36,7 @@ const ChatList: Component = () => {
           <ChatItem
             chat={chat}
             isSelected={store.state.currentChatId === chat.id}
-            onSelect={() => store.setCurrentChatId(chat.id)}
+            onSelect={() => selectChat(chat.id)}
           />
         )}
       </For>
@@ -67,7 +72,7 @@ const ChatList: Component = () => {
                     <ChatItem
                       chat={chat}
                       isSelected={store.state.currentChatId === chat.id}
-                      onSelect={() => store.setCurrentChatId(chat.id)}
+                      onSelect={() => selectChat(chat.id)}
                       isArchived={true}
                     />
                   </div>
