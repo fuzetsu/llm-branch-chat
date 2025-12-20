@@ -53,7 +53,6 @@ export async function renderMarkdown(content: string): Promise<string> {
         async highlight(code, lang) {
           let mappedLang = LANG_MAP[lang]
           if (!mappedLang) {
-            console.error('uknown lang: ' + lang)
             mappedLang = lang
           }
           if (!seenLang.has(mappedLang)) {
@@ -64,6 +63,7 @@ export async function renderMarkdown(content: string): Promise<string> {
               )
               hljs.registerLanguage(mappedLang, handler)
             } catch (e) {
+              console.error('unknown lang: ' + lang)
               console.error(e)
             }
           }
