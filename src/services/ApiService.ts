@@ -12,10 +12,6 @@ export interface ApiServiceDeps {
 }
 
 export const createApiService = ({ baseUrl, apiKey }: ApiServiceDeps) => {
-  const filterSystemMessages = (messages: ApiMessage[]): ApiMessage[] => {
-    return messages.filter((message) => message.role !== 'system')
-  }
-
   const buildUrl = (entropy: boolean): string => {
     const url = new URL(baseUrl + '/chat/completions')
     if (!entropy) return url.toString()
@@ -175,9 +171,8 @@ export const createApiService = ({ baseUrl, apiKey }: ApiServiceDeps) => {
       try {
         callbacks.onStart?.()
 
-        const cleanMessages = filterSystemMessages(messages)
         const url = buildUrl(entropy)
-        const requestBody = buildRequestBody(cleanMessages, model, temperature, maxTokens)
+        const requestBody = buildRequestBody(messages, model, temperature, maxTokens)
 
         const response = await makeRequest(url, requestBody, signal)
 
