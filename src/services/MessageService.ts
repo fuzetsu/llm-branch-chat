@@ -108,6 +108,7 @@ export const createMessageService = ({
       // Add user message
       const userMessage = createMessageNode('user', content.trim(), 'user', parentId)
       addMessage(currentChat.id, userMessage, parentId)
+      visibleMessages.push(userMessage)
 
       // Create assistant message placeholder
       const assistantMessage = createMessageNode(
@@ -121,9 +122,8 @@ export const createMessageService = ({
       startStreaming(assistantMessage.id)
 
       try {
-        const updatedVisibleMessages = getVisibleMessages(currentChat.id)
         const apiMessages = convertToApiMessages(
-          updatedVisibleMessages,
+          visibleMessages,
           currentChat.systemPromptId,
           settings,
         )
