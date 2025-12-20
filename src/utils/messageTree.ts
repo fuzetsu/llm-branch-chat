@@ -22,7 +22,7 @@ export function createMessageNode(
   }
 }
 
-export function createEmptyChat(id: string, title: string, model: string) {
+export function createEmptyChat(id: string, title: string, model: string, systemPromptId: string | null = null) {
   const rootNodeId = generateMessageId()
   return {
     id,
@@ -35,6 +35,7 @@ export function createEmptyChat(id: string, title: string, model: string) {
     isGeneratingTitle: false,
     isArchived: false,
     model,
+    systemPromptId,
   }
 }
 

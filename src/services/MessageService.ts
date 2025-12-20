@@ -25,9 +25,31 @@ export const createMessageService = ({
   getStreamingContent,
   getVisibleMessages,
 }: MessageServiceDeps) => {
-  // Helper: Convert messages to API format
-  const convertToApiMessages = (messages: MessageNode[]): ApiMessage[] =>
-    messages.map((msg) => ({ role: msg.role, content: msg.content }))
+  // Helper: Convert messages to API format with optional system prompt
+  const convertToApiMessages = (
+    messages: MessageNode[],
+    chatSystemPromptId: string | null,
+    settings: AppSettings,
+  ): ApiMessage[] => {
+    const apiMessages: ApiMessage[] = []
+
+    // Determine which system prompt to use: chat-specific or default
+    const systemPromptId = chatSystemPromptId || settings.chat.defaultSystemPromptId
+
+    // Add system prompt if specified and exists
+    if (systemPromptId) {
+      const systemPrompt = settings.systemPrompts.get(systemPromptId)
+      if (systemPrompt) {
+        apiMessages.push({
+          role: 'system',
+          content: systemPrompt.content,
+        })
+      }
+    }
+
+    // Add conversation messages
+    return apiMessages.concat(messages.map((msg) => ({ role: msg.role, content: msg.content })))
+  }
 
   const endStream = (chatId: string, messageId: string) => {
     const finalContent = getStreamingContent()
@@ -100,7 +122,11 @@ export const createMessageService = ({
 
       try {
         const updatedVisibleMessages = getVisibleMessages(currentChat.id)
-        const apiMessages = convertToApiMessages(updatedVisibleMessages)
+        const apiMessages = convertToApiMessages(
+          updatedVisibleMessages,
+          currentChat.systemPromptId,
+          settings,
+        )
 
         await getApiService().streamResponse(
           apiMessages,
@@ -139,7 +165,11 @@ export const createMessageService = ({
       startStreaming(assistantMessage.id)
 
       try {
-        const apiMessages = convertToApiMessages(visibleMessages)
+        const apiMessages = convertToApiMessages(
+          visibleMessages,
+          currentChat.systemPromptId,
+          settings,
+        )
 
         await getApiService().streamResponse(
           apiMessages,
@@ -193,7 +223,7 @@ export const createMessageService = ({
         // Start streaming for regeneration
         startStreaming(newBranchMessage.id)
 
-        const apiMessages = convertToApiMessages(conversationHistory)
+        const apiMessages = convertToApiMessages(conversationHistory, chat.systemPromptId, settings)
 
         await getApiService().streamResponse(
           apiMessages,

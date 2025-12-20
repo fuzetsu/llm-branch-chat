@@ -14,7 +14,9 @@ import type {
   SerializableAppState,
   SerializableChat,
   SerializableApiSettings,
+  SerializableSystemPrompt,
   ProviderConfig,
+  SystemPrompt,
 } from '../types/index.js'
 import { createAppStoreOperations, type AppStoreOperations } from './AppStoreOperations'
 import { STREAM_END } from '../services/MessageService.js'
@@ -49,6 +51,7 @@ type BaseOperations = Pick<
   | 'appendStreamingContent'
   | 'stopStreaming'
   | 'getStreamingContent'
+  | 'ensureCurrentChat'
   | 'cancelStreaming'
 >
 
@@ -99,6 +102,7 @@ function createDefaultSettings(): AppSettings {
       autoGenerateTitle: true,
       titleGenerationTrigger: 2,
       titleModel: 'llama',
+      defaultSystemPromptId: null,
     },
     ui: {
       sidebarCollapsed: false,
@@ -110,6 +114,7 @@ function createDefaultSettings(): AppSettings {
         height: '120px',
       },
     },
+    systemPrompts: new Map(),
   }
 }
 
@@ -166,6 +171,7 @@ function deserializeChat(chat: SerializableChat, settings: AppSettings): Chat {
     nodes: new Map(chat.nodes || []),
     activeBranches: new Map(chat.activeBranches || []),
     model: chat.model || settings.chat.model,
+    systemPromptId: chat.systemPromptId || null,
   }
 }
 
@@ -176,6 +182,12 @@ function deserializeApiSettings(serialized: SerializableApiSettings): AppSetting
   }
 }
 
+function serializeSystemPrompts(
+  systemPrompts: Map<string, SystemPrompt>,
+): Array<[string, SerializableSystemPrompt]> {
+  return Array.from(systemPrompts.entries())
+}
+
 export function exportStateToJson(state: AppStateStore, pretty = false): string {
   const stateToExport: SerializableAppState = {
     chats: Array.from(state.chats.entries()).map(([id, chat]) => [id, serializeChat(chat)]),
@@ -184,6 +196,7 @@ export function exportStateToJson(state: AppStateStore, pretty = false): string 
       api: serializeApiSettings(state.settings.api),
       chat: state.settings.chat,
       ui: state.settings.ui,
+      systemPrompts: serializeSystemPrompts(state.settings.systemPrompts),
     },
     ui: state.ui,
   }
@@ -199,6 +212,7 @@ export function importStateFromJson(jsonString: string): AppStateStore {
       api: deserializeApiSettings(state.settings.api),
       chat: { ...defaultSettings.chat, ...(state.settings?.chat || {}) },
       ui: { ...defaultSettings.ui, ...(state.settings?.ui || {}) },
+      systemPrompts: new Map(state.settings?.systemPrompts || []),
     }
 
     return {
@@ -295,9 +309,9 @@ export const AppStoreProvider: ParentComponent = (props) => {
 
   // High-level operations with business logic
   const sendMessage = async (content: string) => {
-    const currentChat = operations.getCurrentChat(state.currentChatId, state.chats)
+    const currentChat = operations.getCurrentChat()
     if (!currentChat) {
-      operations.createNewChat(setCurrentChatId)
+      operations.createNewChat()
       return sendMessage(content)
     }
 
@@ -327,7 +341,7 @@ export const AppStoreProvider: ParentComponent = (props) => {
   }
 
   const generateAssistantResponse = async () => {
-    const currentChat = operations.getCurrentChat(state.currentChatId, state.chats)
+    const currentChat = operations.getCurrentChat()
     if (!currentChat) return
 
     await operations.generateAssistantResponse(
@@ -346,10 +360,6 @@ export const AppStoreProvider: ParentComponent = (props) => {
 
   // Simplified operation wrappers
   const createNewChat = () => setCurrentChatId(null)
-  const getCurrentChat = (): Chat | null =>
-    operations.getCurrentChat(state.currentChatId, state.chats)
-  const getActiveChats = (): Chat[] => operations.getActiveChats(state.chats)
-  const getArchivedChats = (): Chat[] => operations.getArchivedChats(state.chats)
 
   // Message flash operations
   const setFlashingMessage = (messageId: string | null) => {
@@ -371,9 +381,10 @@ export const AppStoreProvider: ParentComponent = (props) => {
     updateChat: operations.updateChat,
     deleteChat: operations.deleteChat,
     createNewChat,
-    getCurrentChat,
-    getActiveChats,
-    getArchivedChats,
+    getCurrentChat: operations.getCurrentChat,
+    getActiveChats: operations.getActiveChats,
+    getArchivedChats: operations.getActiveChats,
+    ensureCurrentChat: operations.ensureCurrentChat,
     // Message flash operations
     setFlashingMessage,
     // Message operations

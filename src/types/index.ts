@@ -23,6 +23,7 @@ export interface Chat {
   isGeneratingTitle: boolean
   isArchived: boolean
   model: string
+  systemPromptId: string | null
 }
 
 // Settings types
@@ -39,6 +40,12 @@ export interface ApiSettings {
   defaultProvider: string
 }
 
+export interface SystemPrompt {
+  id: string
+  title: string
+  content: string
+}
+
 export interface ChatSettings {
   model: string
   temperature: number
@@ -47,6 +54,7 @@ export interface ChatSettings {
   autoGenerateTitle: boolean
   titleGenerationTrigger: number
   titleModel: string
+  defaultSystemPromptId: string | null
 }
 
 export interface UISettings {
@@ -64,6 +72,7 @@ export interface AppSettings {
   api: ApiSettings
   chat: ChatSettings
   ui: UISettings
+  systemPrompts: Map<string, SystemPrompt>
 }
 
 // State types
@@ -94,8 +103,15 @@ export interface SerializableAppState {
     api: SerializableApiSettings
     chat: ChatSettings
     ui: UISettings
+    systemPrompts: Array<[string, SerializableSystemPrompt]>
   }
   ui: UISettings
+}
+
+export interface SerializableSystemPrompt {
+  id: string
+  title: string
+  content: string
 }
 
 export interface SerializableChat {
@@ -109,6 +125,7 @@ export interface SerializableChat {
   isGeneratingTitle: boolean
   isArchived: boolean
   model: string
+  systemPromptId: string | null
 }
 
 // API types

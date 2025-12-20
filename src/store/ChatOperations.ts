@@ -5,58 +5,78 @@ import type { AppStoreOperationsDeps } from './AppStore'
 
 export type ChatOperationsDeps = AppStoreOperationsDeps
 
-export const createChatOperations = ({ setState, getState }: ChatOperationsDeps) => ({
-  addChat: (chat: Chat) => {
-    setState('chats', (chats: Map<string, Chat>) => {
-      const newChats = new Map(chats)
-      newChats.set(chat.id, chat)
-      return newChats
-    })
-  },
+export const createChatOperations = ({ setState, getState }: ChatOperationsDeps) => {
+  const operations = {
+    addChat: (chat: Chat) => {
+      setState('chats', (chats: Map<string, Chat>) => {
+        const newChats = new Map(chats)
+        newChats.set(chat.id, chat)
+        return newChats
+      })
+    },
 
-  updateChat: (chatId: string, updates: Partial<Chat>) => {
-    setState('chats', (chats: Map<string, Chat>) => {
-      const newChats = new Map(chats)
-      const existingChat = newChats.get(chatId)
-      if (existingChat) {
-        newChats.set(chatId, { ...existingChat, ...updates })
-      }
-      return newChats
-    })
-  },
+    ensureCurrentChat: () => {
+      const chat = operations.getCurrentChat()
+      if (chat) return chat.id
+      return operations.createNewChat()
+    },
 
-  deleteChat: (chatId: string) => {
-    setState('chats', (chats: Map<string, Chat>) => {
-      const newChats = new Map(chats)
-      newChats.delete(chatId)
-      return newChats
-    })
-  },
+    setCurrentChatId: (chatId: string) => {
+      setState('currentChatId', chatId)
+    },
 
-  createNewChat: (setCurrentChatId: (id: string) => void): string => {
-    const state = getState()
-    const chatId = generateChatId()
-    const newChat = createEmptyChat(chatId, 'New Chat', state.settings.chat.model)
+    updateChat: (chatId: string, updates: Partial<Chat>) => {
+      setState('chats', (chats: Map<string, Chat>) => {
+        const newChats = new Map(chats)
+        const existingChat = newChats.get(chatId)
+        if (existingChat) {
+          newChats.set(chatId, { ...existingChat, ...updates })
+        }
+        return newChats
+      })
+    },
 
-    const addChat = createChatOperations({ setState, getState }).addChat
-    addChat(newChat)
-    setCurrentChatId(newChat.id)
-    return newChat.id
-  },
+    deleteChat: (chatId: string) => {
+      setState('chats', (chats: Map<string, Chat>) => {
+        const newChats = new Map(chats)
+        newChats.delete(chatId)
+        return newChats
+      })
+    },
 
-  getCurrentChat: (currentChatId: string | null, chats: Map<string, Chat>): Chat | null => {
-    return currentChatId ? chats.get(currentChatId) || null : null
-  },
+    createNewChat: (): string => {
+      const state = getState()
+      const chatId = generateChatId()
+      const newChat = createEmptyChat(
+        chatId,
+        'New Chat',
+        state.settings.chat.model,
+        null, // inherit default system prompt on new chats until overriden
+      )
 
-  getActiveChats: (chats: Map<string, Chat>): Chat[] => {
-    return Array.from(chats.values())
-      .filter((chat) => !chat.isArchived)
-      .sort((a, b) => b.updatedAt - a.updatedAt)
-  },
+      const addChat = createChatOperations({ setState, getState }).addChat
+      addChat(newChat)
+      operations.setCurrentChatId(newChat.id)
+      return newChat.id
+    },
 
-  getArchivedChats: (chats: Map<string, Chat>): Chat[] => {
-    return Array.from(chats.values())
-      .filter((chat) => chat.isArchived)
-      .sort((a, b) => b.updatedAt - a.updatedAt)
-  },
-})
+    getCurrentChat: (): Chat | null => {
+      const state = getState()
+      return state.currentChatId ? (state.chats.get(state.currentChatId) ?? null) : null
+    },
+
+    getActiveChats: (): Chat[] => {
+      return Array.from(getState().chats.values())
+        .filter((chat) => !chat.isArchived)
+        .sort((a, b) => b.updatedAt - a.updatedAt)
+    },
+
+    getArchivedChats: (): Chat[] => {
+      return Array.from(getState().chats.values())
+        .filter((chat) => chat.isArchived)
+        .sort((a, b) => b.updatedAt - a.updatedAt)
+    },
+  }
+
+  return operations
+}

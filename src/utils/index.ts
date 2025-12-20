@@ -26,6 +26,13 @@ export function generateMessageId(): string {
 }
 
 /**
+ * Generates a unique system prompt identifier
+ */
+export function generateSystemPromptId(): string {
+  return generateId()
+}
+
+/**
  * Formats a timestamp into a human-readable relative time string
  */
 export function relativeTimestamp(timestamp: number) {

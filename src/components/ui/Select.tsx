@@ -35,7 +35,9 @@ const Select: Component<SelectProps> = (props) => {
       onChange={handleChange}
       disabled={props.disabled}
     >
-      <option value="">{props.placeholder || 'Select an option'}</option>
+      <option disabled value="__placeholder__">
+        {props.placeholder || 'Select an option'}
+      </option>
       <For each={getOptions()}>
         {(option) => <option value={option.value}>{option.label}</option>}
       </For>

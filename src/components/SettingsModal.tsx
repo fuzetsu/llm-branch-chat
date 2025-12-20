@@ -1,4 +1,4 @@
-import { Component, createEffect, createMemo, Show, For, createSignal } from 'solid-js'
+import { Component, createEffect, createMemo, Show, For, createSignal, untrack } from 'solid-js'
 import { useAppStore, exportStateToJson, importStateFromJson } from '../store/AppStore'
 import { downloadJsonFile, createFileInput } from '../utils/fileUtils'
 import Icon from './ui/Icon'
@@ -9,8 +9,9 @@ import Select from './ui/Select'
 import Checkbox from './ui/Checkbox'
 import Slider from './ui/Slider'
 import Button from './ui/Button'
-import { createStore } from 'solid-js/store'
+import { createStore, unwrap } from 'solid-js/store'
 import { StorageInfo } from './StorageInfo'
+import SystemPromptsTab from './SystemPromptsTab'
 import {
   validateProviderName,
   validateProviderUrl,
@@ -26,7 +27,7 @@ interface SettingsModalProps {
   onClose: () => void
 }
 
-type Tab = 'providers' | 'chat' | 'ui'
+type Tab = 'providers' | 'chat' | 'ui' | 'system'
 
 const SettingsModal: Component<SettingsModalProps> = (props) => {
   const store = useAppStore()
@@ -104,6 +105,7 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
     autoGenerateTitle: true,
     titleGenerationTrigger: 2,
     titleModel: '',
+    systemPromptId: null as string | null,
   })
 
   // UI settings form state
@@ -124,7 +126,8 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
   // Load current settings into forms when modal opens
   createEffect(() => {
     if (props.isOpen) {
-      const settings = store.state.settings
+      // read state without tracking to avoid overwriting form early
+      const settings = untrack(() => unwrap(store.state.settings))
 
       // Reset provider form
       setProviderForm({
@@ -136,6 +139,7 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
       setEditingProvider(null)
 
       // Load chat settings
+      const currentChat = store.getCurrentChat()
       setChatForm({
         model: settings.chat.model,
         temperature: settings.chat.temperature,
@@ -143,6 +147,7 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
         autoGenerateTitle: settings.chat.autoGenerateTitle,
         titleGenerationTrigger: settings.chat.titleGenerationTrigger,
         titleModel: settings.chat.titleModel,
+        systemPromptId: currentChat?.systemPromptId || null,
       })
 
       // Load UI settings
@@ -163,6 +168,7 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
         autoGenerateTitle: chatForm.autoGenerateTitle,
         titleGenerationTrigger: chatForm.titleGenerationTrigger,
         titleModel: chatForm.titleModel,
+        defaultSystemPromptId: store.state.settings.chat.defaultSystemPromptId,
       },
       ui: {
         theme: uiForm.theme,
@@ -172,6 +178,9 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
         editTextareaSize: store.state.settings.ui.editTextareaSize,
       },
     })
+
+    const chat = store.ensureCurrentChat()
+    store.updateChat(chat, { systemPromptId: chatForm.systemPromptId })
 
     props.onClose()
   }
@@ -407,6 +416,16 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
               >
                 UI
               </button>
+              <button
+                class={`py-4 px-1 border-b-2 font-medium text-sm cursor-pointer ${
+                  activeTab() === 'system'
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                }`}
+                onClick={() => setActiveTab('system')}
+              >
+                System
+              </button>
             </nav>
           </div>
 
@@ -632,6 +651,21 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
                   />
                 </FormField>
 
+                <FormField label="System Prompt (for current chat)">
+                  <Select
+                    value={chatForm.systemPromptId || ''}
+                    onChange={(value) => setChatForm('systemPromptId', value || null)}
+                    options={() => [
+                      { value: '', label: 'None (use default)' },
+                      ...Array.from(store.state.settings.systemPrompts.values()).map((prompt) => ({
+                        value: prompt.id,
+                        label: prompt.title,
+                      })),
+                    ]}
+                    placeholder="Select a system prompt"
+                  />
+                </FormField>
+
                 <FormField label="Temperature">
                   <Slider
                     value={chatForm.temperature}
@@ -697,6 +731,26 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
                     placeholder="Select theme"
                   />
                 </FormField>
+              </Show>
+
+              <Show when={activeTab() === 'system'}>
+                <SystemPromptsTab
+                  systemPrompts={store.state.settings.systemPrompts}
+                  defaultSystemPromptId={store.state.settings.chat.defaultSystemPromptId}
+                  onUpdateSystemPrompts={(newPrompts) => {
+                    store.updateSettings({
+                      systemPrompts: newPrompts,
+                    })
+                  }}
+                  onUpdateDefaultSystemPromptId={(newDefaultId) => {
+                    store.updateSettings({
+                      chat: {
+                        ...store.state.settings.chat,
+                        defaultSystemPromptId: newDefaultId,
+                      },
+                    })
+                  }}
+                />
               </Show>
             </div>
           </div>
