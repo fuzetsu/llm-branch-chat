@@ -105,7 +105,6 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
     autoGenerateTitle: true,
     titleGenerationTrigger: 2,
     titleModel: '',
-    systemPromptId: null as string | null,
   })
 
   // UI settings form state
@@ -139,7 +138,6 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
       setEditingProvider(null)
 
       // Load chat settings
-      const currentChat = store.getCurrentChat()
       setChatForm({
         model: settings.chat.model,
         temperature: settings.chat.temperature,
@@ -147,7 +145,6 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
         autoGenerateTitle: settings.chat.autoGenerateTitle,
         titleGenerationTrigger: settings.chat.titleGenerationTrigger,
         titleModel: settings.chat.titleModel,
-        systemPromptId: currentChat?.systemPromptId || null,
       })
 
       // Load UI settings
@@ -178,9 +175,6 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
         editTextareaSize: store.state.settings.ui.editTextareaSize,
       },
     })
-
-    const chat = store.ensureCurrentChat()
-    store.updateChat(chat, { systemPromptId: chatForm.systemPromptId })
 
     props.onClose()
   }
@@ -648,21 +642,6 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
                       allAvailableModels().map((model) => ({ value: model, label: model }))
                     }
                     placeholder="Select a model"
-                  />
-                </FormField>
-
-                <FormField label="System Prompt (for current chat)">
-                  <Select
-                    value={chatForm.systemPromptId || ''}
-                    onChange={(value) => setChatForm('systemPromptId', value || null)}
-                    options={() => [
-                      { value: '', label: 'None (use default)' },
-                      ...Array.from(store.state.settings.systemPrompts.values()).map((prompt) => ({
-                        value: prompt.id,
-                        label: prompt.title,
-                      })),
-                    ]}
-                    placeholder="Select a system prompt"
                   />
                 </FormField>
 

@@ -1,11 +1,11 @@
-import { Component, createSignal, Show, createEffect, onCleanup, createMemo } from 'solid-js'
+import { Component, createSignal, Show, createEffect, onCleanup } from 'solid-js'
 import { useAppStore } from '../store/AppStore'
 import Icon from './ui/Icon'
 import SettingsModal from './SettingsModal'
 import ChatStatsModal from './ChatStatsModal'
 import Button from './ui/Button'
 import ModelSelector from './ModelSelector'
-import { countDescendants } from '../utils/messageTree'
+import SystemPromptSelector from './SystemPromptSelector'
 
 const Header: Component = () => {
   const store = useAppStore()
@@ -18,11 +18,19 @@ const Header: Component = () => {
   const toggleSidebar = () => store.setUI({ sidebarCollapsed: !store.state.ui.sidebarCollapsed })
   const currentChat = () => store.getCurrentChat()
   const handleNewChat = () => store.createNewChat()
-
-  const messageCount = createMemo(() => {
+  const handleCopyBranch = () => {
     const chat = store.getCurrentChat()
-    return chat ? countDescendants(chat.nodes, null) : 0
-  })
+    if (!chat) return
+    const promptId = chat.systemPromptId ?? store.state.settings.chat.defaultSystemPromptId
+
+    const systemMessage = promptId ? store.state.settings.systemPrompts.get(promptId) : null
+    const systemText = systemMessage ? `[system]: ${systemMessage}` : ''
+    const conversationLines = store
+      .getVisibleMessages(chat.id)
+      .map((message) => `[${message.role}]: ${message.content}`)
+    const text = [systemText, ...conversationLines].join('\n\n')
+    navigator.clipboard.writeText(text).catch((e) => alert('Copy operation failed: ' + e))
+  }
 
   // Close mobile menu when clicking outside
   createEffect(() => {
@@ -61,15 +69,22 @@ const Header: Component = () => {
               class="p-2"
               onClick={() => setShowMobileMenu(!showMobileMenu())}
             >
-              <Icon name="settings-gear" class="text-gray-600 dark:text-gray-300" />
+              <Icon name="more-vertical" class="text-gray-600 dark:text-gray-300" />
             </Button>
 
             {/* Mobile dropdown menu */}
             <Show when={showMobileMenu()}>
               <div class="absolute right-0 mt-2 w-56 bg-white dark:bg-dark-surface rounded-md shadow-lg py-1 z-50 border border-gray-200 dark:border-dark-border">
-                <div class="px-4 py-2">
+                <div class="px-2 py-1">
                   <ModelSelector class="w-full py-1" />
                 </div>
+                <div class="px-2 py-1">
+                  <SystemPromptSelector />
+                </div>
+                <button class={moreActionsButton} onClick={handleCopyBranch}>
+                  <Icon name="copy" size="sm" class="inline mr-2" />
+                  Copy branch messages
+                </button>
                 <button
                   class={moreActionsButton}
                   onClick={() => {
@@ -105,17 +120,23 @@ const Header: Component = () => {
           </div>
 
           {/* Desktop controls - visible on medium screens and up */}
-          <div class="hidden md:flex items-center space-x-2 shrink-0">
+          <div class="hidden md:flex items-center space-x-1 shrink-0">
             <ModelSelector />
-            <Button variant="plain" onClick={handleStats} title="View chat statistics">
-              {messageCount()} messages
+            <SystemPromptSelector />
+            <Button variant="ghost" onClick={handleStats} title="View chat statistics">
+              <Icon name="bar-chart" />
+            </Button>
+
+            <Button
+              variant="ghost"
+              onClick={handleCopyBranch}
+              title="Copy current branch to clipboard"
+            >
+              <Icon name="copy" />
             </Button>
 
             <Button variant="ghost" onClick={handleSettings}>
               <Icon name="settings" class="text-gray-600 dark:text-gray-300" />
-            </Button>
-            <Button variant="primary" onClick={handleNewChat}>
-              <Icon name="plus" />
             </Button>
           </div>
         </div>

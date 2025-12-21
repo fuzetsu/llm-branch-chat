@@ -11,7 +11,7 @@ interface SelectProps {
   onChange?: (value: string) => void
   options: SelectOption[] | (() => SelectOption[])
   placeholder?: string
-  class?: string
+  class?: string | undefined
   disabled?: boolean
 }
 
