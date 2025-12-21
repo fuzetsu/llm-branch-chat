@@ -98,7 +98,7 @@ const Message: Component<MessageProps> = (props) => {
   const fullMessageDate = () => new Date(props.message.timestamp).toLocaleString()
 
   return (
-    <div class={classnames('flex mb-4', isUser() ? 'justify-end' : 'justify-start')}>
+    <div class={classnames('flex', isUser() ? 'justify-end' : 'justify-start')}>
       <div
         ref={messageRef}
         class={classnames(

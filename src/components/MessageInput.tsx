@@ -72,10 +72,10 @@ const MessageInput: Component = () => {
 
   return (
     <div class="bg-white dark:bg-dark-surface">
-      <div class="flex space-x-3">
+      <div class="flex gap-2">
         <textarea
           ref={setInput}
-          class="flex-1 resize-none border border-gray-300 dark:border-dark-border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-dark-surface text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 disabled:opacity-50"
+          class="flex-1 resize-none border border-gray-300 dark:border-dark-border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-dark-surface text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 disabled:opacity-50"
           placeholder={isStreaming() ? 'Waiting for response...' : 'Type your message...'}
           rows="1"
           value={inputValue()}
@@ -84,7 +84,7 @@ const MessageInput: Component = () => {
           disabled={isStreaming()}
         />
         <button
-          class="px-6 py-3 bg-primary hover:bg-blue-600 dark:bg-primary-dark dark:hover:bg-primary-darker disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors flex items-center space-x-2 cursor-pointer"
+          class="px-4 py-2 bg-primary hover:bg-blue-600 dark:bg-primary-dark dark:hover:bg-primary-darker disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors flex items-center space-x-2 cursor-pointer"
           onClick={handleSend}
           disabled={!isStreaming() && !inputValue().trim()}
         >

@@ -53,7 +53,7 @@ const Header: Component = () => {
 
   return (
     <header class="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-dark-surface border-b border-gray-200 dark:border-dark-border shadow-sm">
-      <div class="flex items-center justify-between h-16 px-1">
+      <div class="flex items-center justify-between px-1 py-2">
         <div class="flex items-center space-x-1 flex-1 min-w-0">
           <Button variant="ghost" class="lg:hidden p-2 shrink-0" onClick={toggleSidebar}>
             <Icon name="menu" class="text-gray-600 dark:text-gray-300" />

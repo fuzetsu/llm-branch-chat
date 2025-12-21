@@ -52,8 +52,8 @@ const MessageList: Component<MessageListProps> = (props) => {
   const handleScroll = () => setShouldAutoScroll(isMessageListScrolledToBottom())
 
   return (
-    <div id="message-list" class="flex-1 overflow-y-auto px-4 py-6" onScroll={handleScroll}>
-      <div ref={messagesContainer} class="flex-1">
+    <div id="message-list" class="flex-1 overflow-y-auto px-2 py-2" onScroll={handleScroll}>
+      <div ref={messagesContainer} class="flex-1 flex flex-col gap-2">
         <For each={visibleMessages()}>
           {(message) => (
             <Message

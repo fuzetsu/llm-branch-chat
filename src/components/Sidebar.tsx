@@ -19,11 +19,11 @@ const Sidebar: Component = () => {
         store.state.ui.sidebarCollapsed ? '-translate-x-full' : 'translate-x-0',
       )}
     >
-      <div class="flex flex-col h-full pt-16">
+      <div class="flex flex-col h-full pt-15">
         <div class="p-2 border-b border-gray-200 dark:border-dark-border">
           <button
             class={classnames(
-              'w-full px-4 py-3 text-left hover:bg-blue-600 dark:hover:bg-primary-darker text-white rounded-lg transition-colors flex items-center space-x-2 cursor-pointer',
+              'w-full px-4 py-2 text-left hover:bg-blue-600 dark:hover:bg-primary-darker text-white rounded-lg transition-colors flex items-center space-x-2 cursor-pointer',
               store.state.currentChatId == null && 'bg-primary dark:bg-primary-dark',
             )}
             onClick={handleNewChat}
