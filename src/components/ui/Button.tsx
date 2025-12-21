@@ -2,7 +2,7 @@ import { Component, JSX } from 'solid-js'
 import { classnames } from '../../utils'
 
 type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost' | 'plain'
-type ButtonSize = 'sm' | 'md' | 'lg'
+type ButtonSize = 'micro' | 'sm' | 'md' | 'lg'
 
 interface ButtonProps {
   variant?: ButtonVariant
@@ -35,6 +35,8 @@ const Button: Component<ButtonProps> = (props) => {
 
   const getSizeClasses = () => {
     switch (props.size) {
+      case 'micro':
+        return 'px-2 py-0.5 text-xs'
       case 'sm':
         return 'px-3 py-1.5 text-xs'
       case 'md':

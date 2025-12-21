@@ -5,6 +5,7 @@ import MessageBranching from './MessageBranching'
 import IconButton from './ui/IconButton'
 import { relativeTimestamp, throttle, classnames, isMobileBrowser } from '../utils/index.js'
 import { renderMarkdown } from '../utils/markdown.js'
+import Button from './ui/Button.jsx'
 
 interface MessageProps {
   message: MessageType
@@ -39,20 +40,23 @@ const Message: Component<MessageProps> = (props) => {
     setEditContent('')
   }
 
-  const saveEdit = async () => {
+  const saveEdit = async (inPlace = false) => {
     const newContent = editContent().trim()
     if (newContent !== props.message.content) {
-      store.createMessageBranch(
-        props.chat.id,
-        props.message.parentId,
-        newContent,
-        props.message.role,
-        props.message.model || props.chat.model || store.state.settings.chat.model,
-      )
-
-      // If this is a user message, automatically generate assistant response
-      if (isUser()) {
-        await store.generateAssistantResponse()
+      if (inPlace) {
+        store.updateMessage(props.chat.id, props.message.id, { content: newContent })
+      } else {
+        store.createMessageBranch(
+          props.chat.id,
+          props.message.parentId,
+          newContent,
+          props.message.role,
+          props.message.model || props.chat.model || store.state.settings.chat.model,
+        )
+        // If this is a user message, automatically generate assistant response
+        if (isUser()) {
+          await store.generateAssistantResponse()
+        }
       }
     }
     setIsEditing(false)
@@ -157,18 +161,15 @@ const Message: Component<MessageProps> = (props) => {
               autofocus
             />
             <div class="flex justify-end space-x-2">
-              <button
-                class="px-2 py-1 text-xs bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-500 rounded transition-colors cursor-pointer"
-                onClick={cancelEdit}
-              >
+              <Button variant="secondary" size="micro" onClick={cancelEdit}>
                 Cancel
-              </button>
-              <button
-                class="px-2 py-1 text-xs bg-primary hover:bg-blue-600 dark:bg-primary-dark dark:hover:bg-primary-darker text-white rounded transition-colors cursor-pointer"
-                onClick={saveEdit}
-              >
+              </Button>
+              <Button variant="secondary" size="micro" onClick={() => saveEdit(true)}>
+                Save in place
+              </Button>
+              <Button variant="primary" size="micro" onClick={() => saveEdit()}>
                 {isUser() ? 'Save & Send' : 'Save'}
-              </button>
+              </Button>
             </div>
           </div>
         </Show>
