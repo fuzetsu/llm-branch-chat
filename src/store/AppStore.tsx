@@ -100,19 +100,21 @@ function createDefaultSettings(): AppSettings {
     isDefault: true,
   }
 
+  const defaultModel = 'Pollinations: deepseek'
+
   return {
     api: {
       providers: new Map([['Pollinations', defaultProvider]]),
       defaultProvider: 'Pollinations',
     },
     chat: {
-      model: 'deepseek',
+      model: defaultModel,
       temperature: 0.7,
       maxTokens: 2048,
       availableModels,
       autoGenerateTitle: true,
       titleGenerationTrigger: 2,
-      titleModel: 'deepseek',
+      titleModel: defaultModel,
       defaultSystemPromptId: null,
     },
     ui: {
