@@ -10,6 +10,7 @@ const LANG_MAP: Record<string, string> = {
   tsx: 'typescript',
   '': 'plaintext',
   txt: 'plaintext',
+  text: 'plaintext',
   typescript: 'typescript',
   js: 'javascript',
   md: 'markdown',
