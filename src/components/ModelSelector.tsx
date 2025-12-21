@@ -2,6 +2,7 @@ import { Component } from 'solid-js'
 import { useAppStore } from '../store/AppStore'
 import { getAllAvailableModels } from '../utils/providerUtils'
 import Select from './ui/Select'
+import { classnames } from '../utils'
 
 interface ModelSelectorProps {
   class?: string
@@ -21,7 +22,8 @@ const ModelSelector: Component<ModelSelectorProps> = (props) => {
   return (
     <Select
       placeholder="Select a model"
-      class={props.class}
+      fullWidth={false}
+      class={classnames(props.class, 'truncate')}
       value={currentModel()}
       onChange={handleModelChange}
       options={() =>

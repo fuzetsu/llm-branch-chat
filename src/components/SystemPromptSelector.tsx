@@ -1,6 +1,7 @@
 import { Component } from 'solid-js'
 import { useAppStore } from '../store/AppStore'
 import Select from './ui/Select'
+import { classnames } from '../utils'
 
 interface ModelSelectorProps {
   class?: string
@@ -19,7 +20,8 @@ const SystemPromptSelector: Component<ModelSelectorProps> = (props) => {
 
   return (
     <Select
-      class={props.class}
+      class={classnames(props.class, 'truncate')}
+      fullWidth={false}
       value={currentPrompt() || ''}
       onChange={handlePromptChange}
       options={() => [

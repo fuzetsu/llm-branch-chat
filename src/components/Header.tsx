@@ -66,7 +66,7 @@ const Header: Component = () => {
         </div>
         <div class="flex items-center space-x-2 shrink-0">
           {/* Mobile menu button - visible only on small screens */}
-          <div class="relative md:hidden mobile-menu-container shrink-0">
+          <div class="relative lg:hidden mobile-menu-container shrink-0">
             <Button
               variant="ghost"
               class="p-2"
@@ -82,7 +82,7 @@ const Header: Component = () => {
                   <ModelSelector class="w-full py-1" />
                 </div>
                 <div class="px-2 py-1">
-                  <SystemPromptSelector />
+                  <SystemPromptSelector class="w-full py-1" />
                 </div>
                 <Show when={hasActiveChat()}>
                   <button class={moreActionsButton} onClick={handleCopyBranch}>
@@ -125,9 +125,9 @@ const Header: Component = () => {
           </div>
 
           {/* Desktop controls - visible on medium screens and up */}
-          <div class="hidden md:flex items-center space-x-1 shrink-0">
-            <ModelSelector />
-            <SystemPromptSelector />
+          <div class="hidden lg:flex items-center space-x-1 shrink-0">
+            <ModelSelector class="w-50" />
+            <SystemPromptSelector class="w-50" />
             <Show when={hasActiveChat()}>
               <Button variant="ghost" onClick={handleStats} title="View chat statistics">
                 <Icon name="bar-chart" />
