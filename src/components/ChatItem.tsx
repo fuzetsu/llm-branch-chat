@@ -1,9 +1,9 @@
-import { Component, createSignal, Show } from 'solid-js'
+import { Component, createMemo, createSignal, Show } from 'solid-js'
 import { useAppStore } from '../store/AppStore'
 import type { Chat } from '../types/index.js'
 import IconButton from './ui/IconButton'
 import ConfirmModal from './ConfirmModal'
-import { classnames } from '../utils'
+import { classnames, isMobileBrowser } from '../utils'
 
 interface ChatItemProps {
   chat: Chat
@@ -18,6 +18,10 @@ const ChatItem: Component<ChatItemProps> = (props) => {
   const [isEditing, setIsEditing] = createSignal(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = createSignal(false)
   let editableRef: HTMLDivElement | undefined
+
+  const shouldShowActions = createMemo(
+    () => showActions() || (isMobileBrowser() && props.isSelected),
+  )
 
   const handleContentEdit = () => {
     if (editableRef) {
@@ -109,7 +113,7 @@ const ChatItem: Component<ChatItemProps> = (props) => {
     <>
       <div
         class={classnames(
-          'mb-2 rounded-lg cursor-pointer transition-all duration-200 group relative',
+          'group mb-2 rounded-lg cursor-pointer transition-all duration-200 relative',
           props.isSelected
             ? 'bg-primary dark:bg-primary-dark text-white shadow-md'
             : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white hover:shadow-sm',
@@ -125,12 +129,10 @@ const ChatItem: Component<ChatItemProps> = (props) => {
                 ref={editableRef}
                 class={classnames(
                   'font-medium truncate transition-all duration-200',
-                  props.isSelected && 'cursor-text',
                   isEditing()
                     ? 'bg-white/10 rounded px-2 py-1 -mx-2 -my-1 ring-1 ring-primary/30'
-                    : [props.isSelected && 'hover:bg-white/5', 'rounded px-2 py-1 -mx-2 -my-1'],
+                    : 'rounded px-2 py-1 -mx-2 -my-1',
                 )}
-                onDblClick={handleContentEdit}
                 onKeyDown={handleContentKeyDown}
                 onBlur={handleContentBlur}
                 title="Double-click to edit"
@@ -139,8 +141,13 @@ const ChatItem: Component<ChatItemProps> = (props) => {
               </div>
               <div class="text-sm opacity-70 mt-1">{formatDate(props.chat.updatedAt)}</div>
             </div>
-            <Show when={showActions()}>
-              <div class="flex items-center space-x-1 ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Show when={shouldShowActions()}>
+              <div
+                class={classnames(
+                  'flex items-center space-x-1 ml-2',
+                  !isMobileBrowser() && 'opacity-0 group-hover:opacity-100 transition-opacity',
+                )}
+              >
                 <IconButton
                   icon="edit"
                   variant="ghost"
