@@ -81,17 +81,7 @@ const AppStoreContext = createContext<AppStoreContextType>()
 const STORAGE_KEY = 'llm-chat-state-tree-v1'
 
 function createDefaultSettings(): AppSettings {
-  const availableModels = [
-    'openai',
-    'openai-fast',
-    'qwen-coder',
-    'mistral',
-    'deepseek',
-    'openai-reasoning',
-    'gemini',
-    'gemini-search',
-    'evil',
-  ]
+  const availableModels = ['openai', 'openai-fast', 'bidara', 'chickytutor', 'midijourney']
   const defaultProvider: ProviderConfig = {
     name: 'Pollinations',
     baseUrl: 'https://text.pollinations.ai/openai',
@@ -100,7 +90,7 @@ function createDefaultSettings(): AppSettings {
     isDefault: true,
   }
 
-  const defaultModel = 'Pollinations: deepseek'
+  const defaultModel = 'Pollinations: openai-fast'
 
   return {
     api: {
