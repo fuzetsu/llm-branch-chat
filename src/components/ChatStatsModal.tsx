@@ -86,7 +86,7 @@ const ChatStatsModal: Component<ChatStatsModalProps> = (props) => {
               {(currentStats) => (
                 <div class="space-y-6">
                   {/* Summary Section */}
-                  <div class="grid grid-cols-2 gap-4">
+                  <div class="grid grid-cols-2 gap-2">
                     <SummaryCard
                       label="Total Messages"
                       value={currentStats().messageCount}
@@ -226,7 +226,7 @@ const SummaryCard: Component<{
   colorClass: string
 }> = (props) => {
   return (
-    <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg flex flex-col justify-between">
+    <div class="bg-gray-50 dark:bg-gray-800 p-2 rounded-lg flex flex-col justify-between">
       <div class="text-sm text-gray-600 dark:text-gray-400">{props.label}</div>
       <div class={classnames('text-2xl font-bold', props.colorClass)}>
         {formatNumber(props.value)}
@@ -288,7 +288,7 @@ const ModelBreakdownItem: Component<{
   percentage: number
 }> = (props) => {
   return (
-    <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+    <div class="bg-gray-50 dark:bg-gray-800 p-2 rounded-lg">
       {/* Header with model name and usage percentage */}
       <div class="flex justify-between items-center mb-3">
         <span class="text-sm font-medium text-gray-900 dark:text-white">{props.model}</span>

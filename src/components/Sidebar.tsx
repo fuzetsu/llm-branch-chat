@@ -20,7 +20,7 @@ const Sidebar: Component = () => {
       )}
     >
       <div class="flex flex-col h-full pt-16">
-        <div class="p-4 border-b border-gray-200 dark:border-dark-border">
+        <div class="p-2 border-b border-gray-200 dark:border-dark-border">
           <button
             class={classnames(
               'w-full px-4 py-3 text-left hover:bg-blue-600 dark:hover:bg-primary-darker text-white rounded-lg transition-colors flex items-center space-x-2 cursor-pointer',

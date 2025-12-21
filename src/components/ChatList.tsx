@@ -30,7 +30,7 @@ const ChatList: Component = () => {
   }
 
   return (
-    <div class="flex-1 overflow-y-auto p-4">
+    <div class="flex-1 overflow-y-auto p-2">
       <For each={activeChats()}>
         {(chat) => (
           <ChatItem

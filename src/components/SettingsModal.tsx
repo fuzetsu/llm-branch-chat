@@ -21,6 +21,7 @@ import {
   getAllAvailableModels,
   fetchModelsFromProvider,
 } from '../utils/providerUtils.js'
+import { classnames } from '../utils/index.js'
 
 interface SettingsModalProps {
   isOpen: boolean
@@ -39,6 +40,8 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
     baseUrl?: string | null
     models?: string | null
   }>({})
+
+  let providerFormSection!: HTMLDivElement
 
   const storageSizeInBytes = createMemo(() =>
     props.isOpen ? new TextEncoder().encode(exportStateToJson(store.state)).length : 0,
@@ -239,6 +242,7 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
       key: provider.key,
       availableModels: provider.availableModels.join('\n'),
     })
+    providerFormSection.scrollIntoView({ behavior: 'smooth' })
   }
 
   const handleUpdateProvider = () => {
@@ -358,6 +362,19 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
 
   const isEditing = () => editingProvider() !== null
 
+  const tabsClass = (tabName: Tab) =>
+    classnames(
+      'py-2 px-1 border-b-2 font-medium text-sm cursor-pointer',
+      activeTab() === tabName
+        ? 'border-primary text-primary'
+        : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300',
+    )
+
+  const tabsProps = (tabName: Tab) => ({
+    class: tabsClass(tabName),
+    onClick: () => setActiveTab(tabName),
+  })
+
   return (
     <Show when={props.isOpen}>
       <div class="fixed inset-0 z-50 flex items-center justify-center p-4 transition-opacity duration-300">
@@ -367,8 +384,8 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
         {/* Modal */}
         <div class="relative w-full max-w-2xl max-h-[90vh] overflow-hidden text-left align-middle transition-all transform bg-white dark:bg-dark-surface shadow-xl rounded-2xl border dark:border-dark-border flex flex-col">
           {/* Header */}
-          <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-dark-border shrink-0">
-            <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-white">Settings</h3>
+          <div class="flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-dark-border shrink-0">
+            <h3 class="text-lg font-medium leading-4 text-gray-900 dark:text-white">Settings</h3>
             <button
               class="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
               onClick={handleCancel}
@@ -379,55 +396,19 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
 
           {/* Tabs */}
           <div class="border-b border-gray-200 dark:border-dark-border shrink-0">
-            <nav class="flex space-x-8 px-6">
-              <button
-                class={`py-4 px-1 border-b-2 font-medium text-sm cursor-pointer ${
-                  activeTab() === 'providers'
-                    ? 'border-primary text-primary'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
-                }`}
-                onClick={() => setActiveTab('providers')}
-              >
-                Providers
-              </button>
-              <button
-                class={`py-4 px-1 border-b-2 font-medium text-sm cursor-pointer ${
-                  activeTab() === 'chat'
-                    ? 'border-primary text-primary'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
-                }`}
-                onClick={() => setActiveTab('chat')}
-              >
-                Chat
-              </button>
-              <button
-                class={`py-4 px-1 border-b-2 font-medium text-sm cursor-pointer ${
-                  activeTab() === 'ui'
-                    ? 'border-primary text-primary'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
-                }`}
-                onClick={() => setActiveTab('ui')}
-              >
-                UI
-              </button>
-              <button
-                class={`py-4 px-1 border-b-2 font-medium text-sm cursor-pointer ${
-                  activeTab() === 'system'
-                    ? 'border-primary text-primary'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
-                }`}
-                onClick={() => setActiveTab('system')}
-              >
-                System
-              </button>
+            <nav class="flex space-x-8 px-4">
+              <button {...tabsProps('providers')}>Providers</button>
+              <button {...tabsProps('chat')}>Chat</button>
+              <button {...tabsProps('ui')}>UI</button>
+              <button {...tabsProps('system')}>System</button>
             </nav>
           </div>
 
           {/* Content */}
-          <div class="flex-1 overflow-y-auto p-6">
-            <div class="space-y-6">
+          <div class="flex-1 overflow-y-auto p-4">
+            <div class="space-y-4">
               <Show when={activeTab() === 'providers'}>
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
                   <StorageInfo sizeInBytes={storageSizeInBytes()} />
 
                   <div class="flex space-x-3 shrink-0">
@@ -526,7 +507,7 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
                 </div>
 
                 {/* Provider Form */}
-                <div class="border-t border-gray-200 dark:border-dark-border pt-6">
+                <div ref={providerFormSection} class="border-gray-200 dark:border-dark-border pt-4">
                   <h4 class="text-md font-medium text-gray-900 dark:text-white mb-4">
                     {isEditing() ? 'Edit Provider' : 'Add New Provider'}
                   </h4>
@@ -735,7 +716,7 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
           </div>
 
           {/* Footer */}
-          <div class="flex justify-end space-x-3 p-6 border-t border-gray-200 dark:border-dark-border shrink-0">
+          <div class="flex justify-end space-x-3 px-4 py-2 border-t border-gray-200 dark:border-dark-border shrink-0">
             <Button variant="secondary" onClick={handleCancel}>
               Cancel
             </Button>

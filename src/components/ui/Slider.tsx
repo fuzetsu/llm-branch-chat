@@ -1,4 +1,5 @@
 import { Component, JSX } from 'solid-js'
+import { classnames } from '../../utils'
 
 interface SliderProps {
   value?: number
@@ -19,15 +20,15 @@ const Slider: Component<SliderProps> = (props) => {
   }
 
   return (
-    <div class={props.class}>
-      <div class="flex items-center justify-between mb-2">
+    <div class={classnames(props.class, 'flex gap-4 items-center')}>
+      <div class="flex items-center justify-between">
         {props.label && (
           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
             {props.label}
           </label>
         )}
         {props.showValue && (
-          <span class="text-primary font-semibold text-sm">{props.value || 0}</span>
+          <span class="text-primary font-semibold text-sm min-w-6">{props.value || 0}</span>
         )}
       </div>
       <input
