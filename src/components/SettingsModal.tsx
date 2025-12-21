@@ -477,7 +477,7 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
                   <For each={providers()}>
                     {([name, provider]) => (
                       <div class="border border-gray-200 dark:border-dark-border rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-colors">
-                        <div class="flex justify-between items-start">
+                        <div class="flex justify-between items-start gap-2 flex-wrap md:flex-nowrap">
                           <div>
                             <div class="flex items-center space-x-2">
                               <span class="font-medium text-gray-900 dark:text-white">{name}</span>
@@ -494,7 +494,7 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
                               {provider.availableModels.length} models
                             </p>
                           </div>
-                          <div class="flex space-x-2">
+                          <div class="flex gap-2">
                             <Show when={store.state.settings.api.defaultProvider !== name}>
                               <Button
                                 variant="secondary"

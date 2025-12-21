@@ -120,9 +120,9 @@ const SystemPromptsTab: Component<SystemPromptsTabProps> = (props) => {
         <For each={promptsList()}>
           {(prompt) => (
             <div class="border border-gray-200 dark:border-dark-border rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-colors">
-              <div class="flex justify-between items-start">
-                <div class="flex-1">
-                  <div class="flex items-center space-x-2">
+              <div class="flex justify-between items-start flex-wrap md:flex-nowrap gap-2">
+                <div>
+                  <div class="flex items-center gap-2">
                     <span class="font-medium text-gray-900 dark:text-white">{prompt.title}</span>
                     <Show when={props.defaultSystemPromptId === prompt.id}>
                       <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
@@ -134,7 +134,7 @@ const SystemPromptsTab: Component<SystemPromptsTabProps> = (props) => {
                     {prompt.content}
                   </p>
                 </div>
-                <div class="flex space-x-2 ml-4">
+                <div class="flex gap-2">
                   <Button
                     variant="secondary"
                     size="sm"
