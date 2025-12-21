@@ -24,6 +24,11 @@ const Message: Component<MessageProps> = (props) => {
   const isUser = () => props.message.role === 'user'
   const isAssistant = () => props.message.role === 'assistant'
 
+  const handleCopy = () =>
+    navigator.clipboard
+      .writeText(props.message.content)
+      .catch((e) => alert('Failed to copy message content: ' + e))
+
   const startEdit = () => {
     setEditContent(props.message.content)
     setIsEditing(true)
@@ -115,6 +120,7 @@ const Message: Component<MessageProps> = (props) => {
       >
         <Show when={isHovered() && !isEditing() && !props.isStreaming}>
           <div class="absolute top-1 right-1 flex items-center space-x-1 bg-white dark:bg-gray-800 rounded shadow-sm border border-gray-200 dark:border-gray-600 px-1">
+            <IconButton icon="copy" variant="compact" onClick={handleCopy} title="Copy message" />
             <IconButton icon="edit" variant="compact" onClick={startEdit} title="Edit message" />
             <Show when={isAssistant()}>
               <IconButton
