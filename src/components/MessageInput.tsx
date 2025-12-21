@@ -32,7 +32,7 @@ const MessageInput: Component = () => {
   }
 
   const handleKeyPress = (e: KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey && !isMobileBrowser()) {
       e.preventDefault()
       handleSend()
     }
