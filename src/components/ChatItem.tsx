@@ -109,7 +109,7 @@ const ChatItem: Component<ChatItemProps> = (props) => {
     <>
       <div
         class={classnames(
-          'group mb-2 rounded-lg cursor-pointer transition-all duration-200 relative',
+          'group mb-2 rounded-lg cursor-pointer transition-all duration-200 relative touch-manipulation',
           props.isSelected
             ? 'bg-primary dark:bg-primary-dark text-white shadow-md'
             : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white hover:shadow-sm',
