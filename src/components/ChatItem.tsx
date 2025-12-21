@@ -1,4 +1,4 @@
-import { Component, createMemo, createSignal, Show } from 'solid-js'
+import { Component, createSignal, Show } from 'solid-js'
 import { useAppStore } from '../store/AppStore'
 import type { Chat } from '../types/index.js'
 import IconButton from './ui/IconButton'
@@ -18,10 +18,6 @@ const ChatItem: Component<ChatItemProps> = (props) => {
   const [isEditing, setIsEditing] = createSignal(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = createSignal(false)
   let editableRef: HTMLDivElement | undefined
-
-  const shouldShowActions = createMemo(
-    () => showActions() || (isMobileBrowser() && props.isSelected),
-  )
 
   const handleContentEdit = () => {
     if (editableRef) {
@@ -141,7 +137,7 @@ const ChatItem: Component<ChatItemProps> = (props) => {
               </div>
               <div class="text-sm opacity-70 mt-1">{formatDate(props.chat.updatedAt)}</div>
             </div>
-            <Show when={shouldShowActions()}>
+            <Show when={showActions()}>
               <div
                 class={classnames(
                   'flex items-center space-x-1 ml-2',

@@ -17,6 +17,10 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+body {
+  touch-action: manipulation;
+}
+
 .dark select {
   appearance: none;
   -webkit-text-fill-color: white;
