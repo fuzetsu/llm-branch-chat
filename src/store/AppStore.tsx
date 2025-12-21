@@ -383,7 +383,7 @@ export const AppStoreProvider: ParentComponent = (props) => {
     createNewChat,
     getCurrentChat: operations.getCurrentChat,
     getActiveChats: operations.getActiveChats,
-    getArchivedChats: operations.getActiveChats,
+    getArchivedChats: operations.getArchivedChats,
     ensureCurrentChat: operations.ensureCurrentChat,
     // Message flash operations
     setFlashingMessage,
