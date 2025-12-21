@@ -17,6 +17,16 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+.dark select {
+  appearance: none;
+  -webkit-text-fill-color: white;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 4px center;
+  background-size: 16px;
+  @apply pr-4;
+}
+
 /* Custom prose styles for markdown content */
 .message-content h1,
 .message-content h2,

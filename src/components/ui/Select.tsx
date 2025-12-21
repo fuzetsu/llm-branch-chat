@@ -18,7 +18,7 @@ interface SelectProps {
 
 const Select: Component<SelectProps> = (props) => {
   const baseClasses =
-    'px-3 py-2 border border-gray-300 dark:border-dark-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-dark-surface text-gray-900 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed'
+    'px-3 py-2 border border-gray-300 dark:border-dark-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-dark-surface text-gray-900 dark:text-white disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed'
 
   const handleChange: JSX.EventHandlerUnion<HTMLSelectElement, Event> = (e) => {
     const value = e.currentTarget.value
