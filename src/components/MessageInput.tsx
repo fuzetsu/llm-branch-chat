@@ -1,7 +1,7 @@
 import { Component, createEffect, createSignal, Show } from 'solid-js'
 import { useAppStore } from '../store/AppStore'
 import Icon from './ui/Icon'
-import { touch } from '../utils'
+import { isMobileBrowser, touch } from '../utils'
 import { isMessageListScrolledToBottom, scrollMessageListToBottom } from './MessageList'
 
 const MessageInput: Component = () => {
@@ -52,10 +52,13 @@ const MessageInput: Component = () => {
   }
 
   const [getInput, setInput] = createSignal<HTMLTextAreaElement | null>(null)
+  const focusInputIfDesktop = () => {
+    if (!isMobileBrowser()) getInput()?.focus()
+  }
 
   createEffect(() => {
     touch(store.state.currentChatId)
-    getInput()?.focus()
+    focusInputIfDesktop()
   })
 
   createEffect(() => {
@@ -63,7 +66,7 @@ const MessageInput: Component = () => {
       const input = getInput()
       if (input) input.style.height = ''
     } else {
-      getInput()?.focus()
+      focusInputIfDesktop()
     }
   })
 

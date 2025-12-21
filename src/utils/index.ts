@@ -187,3 +187,16 @@ export function touch(_x: unknown): void {}
 export function block<T>(callback: () => T): T {
   return callback()
 }
+
+export function isMobileBrowser() {
+  if (window.matchMedia('(pointer:coarse)').matches) {
+    return true // Touch-first devices
+  }
+
+  const ua = navigator.userAgent.toLowerCase()
+  return (
+    /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(ua) ||
+    navigator.maxTouchPoints > 0 ||
+    'ontouchstart' in window
+  )
+}
