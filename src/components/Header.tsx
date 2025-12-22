@@ -1,5 +1,6 @@
 import { Component, createSignal, Show, createEffect, onCleanup, createMemo } from 'solid-js'
 import { useAppStore } from '../store/AppStore'
+import { useToast } from './ToastProvider'
 import Icon from './ui/Icon'
 import SettingsModal from './SettingsModal'
 import ChatStatsModal from './ChatStatsModal'
@@ -11,6 +12,7 @@ import { classnames } from '../utils'
 
 const Header: Component = () => {
   const store = useAppStore()
+  const { showToast } = useToast()
 
   const [showSettings, setShowSettings] = createSignal(false)
   const [showStats, setShowStats] = createSignal(false)
@@ -56,7 +58,10 @@ const Header: Component = () => {
       .getVisibleMessages(chat.id)
       .map((message) => `[${message.role}]: ${message.content}`)
     const text = [systemText, ...conversationLines].join('\n\n')
-    navigator.clipboard.writeText(text).catch((e) => alert('Copy operation failed: ' + e))
+    navigator.clipboard
+      .writeText(text)
+      .then(() => showToast('Branch messages copied to clipboard', 'success'))
+      .catch((e) => showToast(`Failed to copy: ${e.message || e}`, 'error'))
     setShowMoreMenu(false)
   }
 

@@ -20,6 +20,8 @@ export type IconName =
   | 'copy'
   | 'bar-chart'
   | 'file-text'
+  | 'check-circle'
+  | 'x-circle'
 
 interface IconProps {
   name: IconName
@@ -155,6 +157,22 @@ const Icon: Component<IconProps> = (props) => {
             <line x1="16" y1="13" x2="8" y2="13" {...commonProps} />
             <line x1="16" y1="17" x2="8" y2="17" {...commonProps} />
             <polyline points="10 9 9 9 8 9" {...commonProps} />
+          </>
+        )
+
+      case 'check-circle':
+        return (
+          <>
+            <circle cx="12" cy="12" r="10" {...commonProps} />
+            <path {...commonProps} d="M9 12l2 2 4-4" />
+          </>
+        )
+
+      case 'x-circle':
+        return (
+          <>
+            <circle cx="12" cy="12" r="10" {...commonProps} />
+            <path {...commonProps} d="M15 9l-6 6M9 9l6 6" />
           </>
         )
 

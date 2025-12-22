@@ -1,6 +1,7 @@
 import { Component, createEffect, createMemo, createSignal, onCleanup, Show } from 'solid-js'
 import { MessageNode as MessageType, Chat } from '../types'
 import { useAppStore } from '../store/AppStore'
+import { useToast } from './ToastProvider'
 import MessageBranching from './MessageBranching'
 import IconButton from './ui/IconButton'
 import Textarea from './ui/Textarea'
@@ -18,6 +19,7 @@ interface MessageProps {
 
 const Message: Component<MessageProps> = (props) => {
   const store = useAppStore()
+  const { showToast } = useToast()
   const [isEditing, setIsEditing] = createSignal(false)
   const [editContent, setEditContent] = createSignal('')
   const [isHovered, setIsHovered] = createSignal(false)
@@ -27,10 +29,12 @@ const Message: Component<MessageProps> = (props) => {
   const isUser = () => props.message.role === 'user'
   const isAssistant = () => props.message.role === 'assistant'
 
-  const handleCopy = () =>
+  const handleCopy = () => {
     navigator.clipboard
       .writeText(props.message.content)
-      .catch((e) => alert('Failed to copy message content: ' + e))
+      .then(() => showToast('Message copied to clipboard', 'success'))
+      .catch((e) => showToast(`Failed to copy: ${e.message || e}`, 'error'))
+  }
 
   const startEdit = () => {
     setEditContent(props.message.content)

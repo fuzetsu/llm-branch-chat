@@ -1,11 +1,14 @@
 import { Component } from 'solid-js'
 import { AppStoreProvider } from './store/AppStore'
+import { ToastProvider } from './components/ToastProvider'
 import Layout from './components/Layout'
 
 const App: Component = () => {
   return (
     <AppStoreProvider>
-      <Layout />
+      <ToastProvider>
+        <Layout />
+      </ToastProvider>
     </AppStoreProvider>
   )
 }
