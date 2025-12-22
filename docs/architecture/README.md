@@ -9,6 +9,7 @@ This directory contains architecture documentation for deeper understanding of t
 | [state-management.md](./state-management.md) | Store composition, context, persistence | Modifying state, adding features that need reactive data     |
 | [services.md](./services.md)                 | API abstraction, providers, streaming   | Working with API calls, adding providers, debugging requests |
 | [message-model.md](./message-model.md)       | Node pool structure, branching logic    | Touching message display, editing, or branch navigation      |
+| [styling.md](./styling.md)                   | Theming, component styles, patterns     | Working with UI styling, adding components, theming          |
 
 ## High-Level Data Flow
 

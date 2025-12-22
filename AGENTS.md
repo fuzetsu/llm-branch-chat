@@ -25,6 +25,7 @@ For deeper understanding, see `docs/architecture/README.md` which indexes topic-
 - **state-management.md** - Store composition, context pattern, persistence (read when modifying state or adding features)
 - **services.md** - API abstraction, provider routing, streaming (read when working with API calls or adding providers)
 - **message-model.md** - Node pool structure, branching logic (read when touching message display, editing, or navigation)
+- **styling.md** - Theming approach, shared styles, UI patterns (read when working with styling, adding components, or theming)
 
 ## Build, Test, and Development Commands
 
