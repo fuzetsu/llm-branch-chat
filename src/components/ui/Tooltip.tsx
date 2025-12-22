@@ -119,7 +119,7 @@ const Tooltip: Component<TooltipProps> = (props) => {
           <div
             ref={tooltipRef}
             class={classnames(
-              'fixed z-[9999] px-2 py-1 text-xs text-white bg-gray-900 rounded shadow-lg whitespace-nowrap pointer-events-none',
+              'fixed z-9999 px-2 py-1 text-xs text-white bg-gray-900 rounded shadow-lg whitespace-nowrap pointer-events-none',
               exiting() ? 'animate-fade-out' : 'animate-fade-in',
             )}
             style={tooltipStyle()}

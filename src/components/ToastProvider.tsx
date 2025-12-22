@@ -48,7 +48,7 @@ export const ToastProvider: ParentComponent = (props) => {
   return (
     <ToastContext.Provider value={{ showToast }}>
       {props.children}
-      <div class="fixed bottom-20 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-2">
+      <div class="fixed bottom-20 left-1/2 -translate-x-1/2 z-100 flex flex-col gap-2">
         <For each={toasts()}>
           {(toast) => (
             <AnimatedShow
