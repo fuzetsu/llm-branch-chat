@@ -32,10 +32,8 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
   // Form state for all settings - kept local until save
   const [providersForm, setProvidersForm] = createStore<{
     providers: Map<string, ProviderConfig>
-    defaultProvider: string
   }>({
     providers: new Map(),
-    defaultProvider: '',
   })
 
   const [chatForm, setChatForm] = createStore<ChatSettingsForm>({
@@ -74,7 +72,6 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
       // Load providers
       setProvidersForm({
         providers: new Map(settings.api.providers),
-        defaultProvider: settings.api.defaultProvider,
       })
 
       // Load chat settings
@@ -152,7 +149,6 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
     store.updateSettings({
       api: {
         providers: providersForm.providers,
-        defaultProvider: providersForm.defaultProvider,
       },
       chat: {
         model: chatForm.model,
@@ -233,11 +229,10 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
               <Show when={activeTab() === 'providers'}>
                 <ProvidersTab
                   providers={providersForm.providers}
-                  defaultProvider={providersForm.defaultProvider}
                   storageSizeInBytes={storageSizeInBytes()}
                   importState={importState()}
-                  onUpdateProviders={(providers, defaultProvider) => {
-                    setProvidersForm({ providers, defaultProvider })
+                  onUpdateProviders={(providers) => {
+                    setProvidersForm({ providers })
                   }}
                   onExportState={handleExportState}
                   onImportState={triggerFileImport}

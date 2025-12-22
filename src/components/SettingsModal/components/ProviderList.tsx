@@ -7,10 +7,8 @@ import SectionHeader from '../../ui/SectionHeader'
 
 interface ProviderListProps {
   providers: Array<[string, ProviderConfig]>
-  defaultProvider: string
   onEdit: (name: string) => void
   onDelete: (name: string) => void
-  onSetDefault: (name: string) => void
 }
 
 const ProviderList: Component<ProviderListProps> = (props) => {
@@ -29,14 +27,8 @@ const ProviderList: Component<ProviderListProps> = (props) => {
         {([name, provider]) => (
           <ItemCard
             title={name}
-            badge={props.defaultProvider === name ? 'Default' : undefined}
             actions={
               <>
-                <Show when={props.defaultProvider !== name}>
-                  <Button variant="secondary" size="sm" onClick={() => props.onSetDefault(name)}>
-                    Set Default
-                  </Button>
-                </Show>
                 <Button variant="secondary" size="sm" onClick={() => props.onEdit(name)}>
                   Edit
                 </Button>

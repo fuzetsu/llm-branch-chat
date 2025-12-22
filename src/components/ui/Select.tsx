@@ -27,6 +27,8 @@ const Select: Component<SelectProps> = (props) => {
     return typeof props.options === 'function' ? props.options() : props.options
   }
 
+  const currentValue = () => props.value || ''
+
   return (
     <select
       class={classnames(
@@ -35,15 +37,19 @@ const Select: Component<SelectProps> = (props) => {
         props.fullWidth !== false && inputFullWidth,
         props.class
       )}
-      value={props.value || ''}
+      value={currentValue()}
       onChange={handleChange}
       disabled={props.disabled}
     >
-      <option disabled value="__placeholder__">
+      <option disabled value="__placeholder__" selected={currentValue() === '__placeholder__'}>
         {props.placeholder || 'Select an option'}
       </option>
       <For each={getOptions()}>
-        {(option) => <option value={option.value}>{option.label}</option>}
+        {(option) => (
+          <option value={option.value} selected={option.value === currentValue()}>
+            {option.label}
+          </option>
+        )}
       </For>
     </select>
   )

@@ -40,7 +40,6 @@ export function createProvider(
   baseUrl: string,
   key: string | undefined,
   availableModels: string[],
-  isDefault: boolean = false,
 ): ProviderConfig {
   return {
     name: name.trim(),
@@ -49,7 +48,6 @@ export function createProvider(
     availableModels: availableModels
       .map((model) => model.trim())
       .filter((model) => model.length > 0),
-    isDefault,
   }
 }
 

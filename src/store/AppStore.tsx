@@ -87,7 +87,6 @@ function createDefaultSettings(): AppSettings {
     baseUrl: 'https://text.pollinations.ai/openai',
     key: 'dummy',
     availableModels,
-    isDefault: true,
   }
 
   const defaultModel = 'Pollinations: openai-fast'
@@ -95,7 +94,6 @@ function createDefaultSettings(): AppSettings {
   return {
     api: {
       providers: new Map([['Pollinations', defaultProvider]]),
-      defaultProvider: 'Pollinations',
     },
     chat: {
       model: defaultModel,
@@ -164,7 +162,6 @@ function serializeChat(chat: Chat): SerializableChat {
 function serializeApiSettings(api: AppSettings['api']): SerializableApiSettings {
   return {
     providers: Array.from(api.providers.entries()),
-    defaultProvider: api.defaultProvider,
   }
 }
 
@@ -181,7 +178,6 @@ function deserializeChat(chat: SerializableChat, settings: AppSettings): Chat {
 function deserializeApiSettings(serialized: SerializableApiSettings): AppSettings['api'] {
   return {
     providers: new Map(serialized.providers || []),
-    defaultProvider: serialized.defaultProvider || 'Pollinations',
   }
 }
 

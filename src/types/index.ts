@@ -32,12 +32,10 @@ export interface ProviderConfig {
   baseUrl: string
   key: string | undefined
   availableModels: string[]
-  isDefault: boolean
 }
 
 export interface ApiSettings {
   providers: Map<string, ProviderConfig>
-  defaultProvider: string
 }
 
 export interface SystemPrompt {
@@ -88,12 +86,10 @@ export interface SerializableProviderConfig {
   baseUrl: string
   key: string | undefined
   availableModels: string[]
-  isDefault: boolean
 }
 
 export interface SerializableApiSettings {
   providers: Array<[string, SerializableProviderConfig]>
-  defaultProvider: string
 }
 
 export interface SerializableAppState {

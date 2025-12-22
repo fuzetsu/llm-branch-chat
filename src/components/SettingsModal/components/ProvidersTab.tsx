@@ -15,10 +15,9 @@ import ProviderForm, { type ProviderFormData, type ProviderFormErrors } from './
 
 interface ProvidersTabProps {
   providers: Map<string, ProviderConfig>
-  defaultProvider: string
   storageSizeInBytes: number
   importState: { success: boolean; message: string } | null
-  onUpdateProviders: (providers: Map<string, ProviderConfig>, defaultProvider: string) => void
+  onUpdateProviders: (providers: Map<string, ProviderConfig>) => void
   onExportState: () => void
   onImportState: () => void
 }
@@ -76,17 +75,13 @@ const ProvidersTab: Component<ProvidersTabProps> = (props) => {
       providerForm.name,
       providerForm.baseUrl,
       providerForm.key,
-      models,
-      providersList().length === 0
+      models
     )
 
     const newProviders = new Map(props.providers)
     newProviders.set(providerForm.name, newProvider)
 
-    const newDefaultProvider =
-      providersList().length === 0 ? providerForm.name : props.defaultProvider
-
-    props.onUpdateProviders(newProviders, newDefaultProvider)
+    props.onUpdateProviders(newProviders)
     resetForm()
   }
 
@@ -134,19 +129,14 @@ const ProvidersTab: Component<ProvidersTabProps> = (props) => {
 
     const newProviders = new Map(props.providers)
 
-    let newDefaultProvider = props.defaultProvider
-
     if (editing !== providerForm.name) {
       newProviders.delete(editing)
       newProviders.set(providerForm.name, updatedProvider)
-      if (props.defaultProvider === editing) {
-        newDefaultProvider = providerForm.name
-      }
     } else {
       newProviders.set(editing, updatedProvider)
     }
 
-    props.onUpdateProviders(newProviders, newDefaultProvider)
+    props.onUpdateProviders(newProviders)
     resetForm()
   }
 
@@ -160,18 +150,7 @@ const ProvidersTab: Component<ProvidersTabProps> = (props) => {
     const newProviders = new Map(props.providers)
     newProviders.delete(providerName)
 
-    let newDefaultProvider = props.defaultProvider
-    if (providerName === props.defaultProvider && newProviders.size > 0) {
-      newDefaultProvider = Array.from(newProviders.keys())[0] || 'Pollinations'
-    } else if (newProviders.size === 0) {
-      newDefaultProvider = 'Pollinations'
-    }
-
-    props.onUpdateProviders(newProviders, newDefaultProvider)
-  }
-
-  const handleSetDefaultProvider = (providerName: string) => {
-    props.onUpdateProviders(props.providers, providerName)
+    props.onUpdateProviders(newProviders)
   }
 
   return (
@@ -203,10 +182,8 @@ const ProvidersTab: Component<ProvidersTabProps> = (props) => {
 
       <ProviderList
         providers={providersList()}
-        defaultProvider={props.defaultProvider}
         onEdit={handleEditProvider}
         onDelete={handleDeleteProvider}
-        onSetDefault={handleSetDefaultProvider}
       />
 
       <div ref={providerFormSection}>
