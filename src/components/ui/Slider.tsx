@@ -20,12 +20,10 @@ const Slider: Component<SliderProps> = (props) => {
   }
 
   return (
-    <div class={classnames(props.class, 'flex gap-4 items-center')}>
+    <div class={classnames(props.class, 'flex gap-3 items-center')}>
       <div class="flex items-center justify-between">
         {props.label && (
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            {props.label}
-          </label>
+          <label class="block text-sm font-medium text-text-secondary">{props.label}</label>
         )}
         {props.showValue && (
           <span class="text-primary font-semibold text-sm min-w-6">{props.value || 0}</span>
@@ -33,7 +31,7 @@ const Slider: Component<SliderProps> = (props) => {
       </div>
       <input
         type="range"
-        class="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+        class="w-full disabled:opacity-50 disabled:cursor-not-allowed"
         min={props.min || 0}
         max={props.max || 100}
         step={props.step || 1}

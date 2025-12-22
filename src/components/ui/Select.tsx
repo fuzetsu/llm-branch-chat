@@ -1,5 +1,6 @@
 import { Component, For, JSX } from 'solid-js'
 import { classnames } from '../../utils'
+import { inputBaseStyles, inputFullWidth } from './styles'
 
 interface SelectOption {
   value: string
@@ -17,9 +18,6 @@ interface SelectProps {
 }
 
 const Select: Component<SelectProps> = (props) => {
-  const baseClasses =
-    'px-3 py-2 border border-gray-300 dark:border-dark-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-dark-surface text-gray-900 dark:text-white disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed'
-
   const handleChange: JSX.EventHandlerUnion<HTMLSelectElement, Event> = (e) => {
     const value = e.currentTarget.value
     props.onChange?.(value)
@@ -31,7 +29,12 @@ const Select: Component<SelectProps> = (props) => {
 
   return (
     <select
-      class={classnames(baseClasses, props.class, props.fullWidth !== false && 'w-full')}
+      class={classnames(
+        inputBaseStyles,
+        'cursor-pointer',
+        props.fullWidth !== false && inputFullWidth,
+        props.class
+      )}
       value={props.value || ''}
       onChange={handleChange}
       disabled={props.disabled}

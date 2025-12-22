@@ -1,6 +1,7 @@
 import { Component } from 'solid-js'
 import { useAppStore } from '../store/AppStore'
 import ChatList from './ChatList'
+import Button from './ui/Button'
 import Icon from './ui/Icon'
 import { classnames } from '../utils'
 
@@ -12,25 +13,25 @@ const Sidebar: Component = () => {
     store.setUI({ sidebarCollapsed: true })
   }
 
+  const isNewChatActive = () => store.state.currentChatId == null
+
   return (
     <aside
       class={classnames(
-        'fixed inset-y-0 left-0 z-40 w-80 bg-white dark:bg-dark-surface border-r border-gray-200 dark:border-dark-border transition-transform duration-300 ease-in-out lg:translate-x-0',
-        store.state.ui.sidebarCollapsed ? '-translate-x-full' : 'translate-x-0',
+        'fixed inset-y-0 left-0 z-40 w-80 bg-surface border-r border-border transition-transform duration-300 ease-in-out lg:translate-x-0',
+        store.state.ui.sidebarCollapsed ? '-translate-x-full' : 'translate-x-0'
       )}
     >
       <div class="flex flex-col h-full pt-15">
-        <div class="p-2 border-b border-gray-200 dark:border-dark-border">
-          <button
-            class={classnames(
-              'w-full px-4 py-2 text-left hover:bg-blue-600 dark:hover:bg-primary-darker text-white rounded-lg transition-colors flex items-center space-x-2 cursor-pointer',
-              store.state.currentChatId == null && 'bg-primary dark:bg-primary-dark',
-            )}
+        <div class="p-2 border-b border-border">
+          <Button
+            variant={isNewChatActive() ? 'primary' : 'ghost'}
+            class="w-full justify-start gap-2"
             onClick={handleNewChat}
           >
             <Icon name="plus" />
             <span>New Chat</span>
-          </button>
+          </Button>
         </div>
         <ChatList />
       </div>

@@ -1,4 +1,5 @@
 import { Component, JSX, Show } from 'solid-js'
+import { labelStyles, helpTextStyles, errorTextStyles } from './styles'
 
 interface FormFieldProps {
   label: string
@@ -10,15 +11,13 @@ interface FormFieldProps {
 const FormField: Component<FormFieldProps> = (props) => {
   return (
     <div>
-      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-        {props.label}
-      </label>
+      <label class={labelStyles}>{props.label}</label>
       {props.children}
       <Show when={props.error}>
-        <p class="text-xs text-red-600 dark:text-red-400 mt-1">{props.error}</p>
+        <p class={errorTextStyles}>{props.error}</p>
       </Show>
       <Show when={props.helpText && !props.error}>
-        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{props.helpText}</p>
+        <p class={helpTextStyles}>{props.helpText}</p>
       </Show>
     </div>
   )

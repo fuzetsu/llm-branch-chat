@@ -13,9 +13,9 @@ const ChatArea: Component = () => {
       <Show
         when={currentChat()}
         fallback={
-          <div class="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
+          <div class="flex items-center justify-center h-full text-text-muted">
             <div class="text-center">
-              <h2 class="text-xl font-semibold mb-2">Welcome to LLM Chat</h2>
+              <h2 class="text-xl font-semibold mb-2 tracking-tight">Welcome to LLM Chat</h2>
               <p>Select a chat from the sidebar or start a new conversation</p>
             </div>
           </div>
@@ -24,7 +24,7 @@ const ChatArea: Component = () => {
         {(chat) => <MessageList chat={chat()} />}
       </Show>
 
-      <div class="shrink-0 border-t border-gray-200 dark:border-dark-border bg-white dark:bg-dark-surface p-2">
+      <div class="shrink-0 border-t border-border bg-surface p-2">
         <div class="max-w-4xl mx-auto">
           <MessageInput />
         </div>

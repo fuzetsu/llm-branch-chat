@@ -10,10 +10,10 @@ export const StorageInfo: Component<{ sizeInBytes: number }> = (props) => {
   }
 
   return (
-    <div class="flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-300 dark:border-gray-700 select-none">
-      <Icon name="database" class="w-5 h-5 text-blue-500 dark:text-blue-400 shrink-0" />
-      <span class="text-sm font-semibold text-gray-900 dark:text-white">Storage Size:</span>
-      <span class="text-sm text-gray-600 dark:text-gray-300">{formatSize(props.sizeInBytes)}</span>
+    <div class="flex items-center gap-2 px-3 py-1.5 bg-surface-secondary rounded-lg border border-border select-none">
+      <Icon name="database" class="w-5 h-5 text-primary shrink-0" />
+      <span class="text-sm font-semibold text-text">Storage Size:</span>
+      <span class="text-sm text-text-secondary">{formatSize(props.sizeInBytes)}</span>
     </div>
   )
 }

@@ -19,17 +19,17 @@ const Button: Component<ButtonProps> = (props) => {
   const getVariantClasses = () => {
     switch (props.variant) {
       case 'primary':
-        return 'text-white bg-primary hover:bg-blue-600 dark:bg-primary-dark dark:hover:bg-primary-darker'
+        return 'text-white bg-primary hover:bg-primary-hover'
       case 'secondary':
-        return 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'
+        return 'text-text-secondary bg-surface border border-border hover:bg-surface-hover'
       case 'danger':
-        return 'text-white bg-danger hover:bg-red-600'
+        return 'text-white bg-danger hover:bg-danger-hover'
       case 'ghost':
-        return 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+        return 'text-text-secondary hover:bg-surface-hover'
       case 'plain':
-        return 'text-sm text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-primary-dark'
+        return 'text-sm text-text-muted hover:text-primary'
       default:
-        return 'text-white bg-primary hover:bg-blue-600 dark:bg-primary-dark dark:hover:bg-primary-darker'
+        return 'text-white bg-primary hover:bg-primary-hover'
     }
   }
 
@@ -42,14 +42,14 @@ const Button: Component<ButtonProps> = (props) => {
       case 'md':
         return 'px-4 py-2 text-sm'
       case 'lg':
-        return 'px-6 py-3 text-base'
+        return 'px-5 py-2.5 text-base'
       default:
         return 'px-4 py-2 text-sm'
     }
   }
 
   const baseClasses =
-    'font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer'
+    'inline-flex items-center font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-focus-ring focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer'
 
   return (
     <button

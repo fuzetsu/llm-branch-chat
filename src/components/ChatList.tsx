@@ -41,17 +41,17 @@ const ChatList: Component = () => {
         )}
       </For>
       <Show when={activeChats().length === 0 && archivedChats().length === 0}>
-        <div class="text-gray-500 dark:text-gray-400 text-center py-8">
+        <div class="text-text-muted text-center py-8">
           No chats yet. Start a new conversation!
         </div>
       </Show>
 
       <Show when={archivedChats().length > 0}>
-        <div class="mt-6">
+        <div class="mt-4">
           <Button
             onClick={toggleArchivedSection}
             variant="ghost"
-            class="w-full flex items-center justify-between p-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+            class="w-full flex items-center justify-between p-2 text-text-muted hover:text-text"
           >
             <span class="text-sm font-medium">Archived ({archivedChats().length})</span>
             <Icon
@@ -59,7 +59,7 @@ const ChatList: Component = () => {
               size="sm"
               class={classnames(
                 'transform transition-transform',
-                !isArchivedSectionCollapsed() && 'rotate-180',
+                !isArchivedSectionCollapsed() && 'rotate-180'
               )}
             />
           </Button>

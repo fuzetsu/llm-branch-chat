@@ -1,4 +1,5 @@
 import { Component, JSX, Show } from 'solid-js'
+import { cardBaseStyles } from './styles'
 
 interface ItemCardProps {
   title: string
@@ -13,13 +14,13 @@ interface ItemCardProps {
  */
 const ItemCard: Component<ItemCardProps> = (props) => {
   return (
-    <div class="border border-gray-200 dark:border-dark-border rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-colors">
+    <div class={cardBaseStyles}>
       <div class="flex justify-between items-start gap-2 flex-wrap md:flex-nowrap">
         <div class="min-w-0 flex-1">
           <div class="flex items-center gap-2 flex-wrap">
-            <span class="font-medium text-gray-900 dark:text-white">{props.title}</span>
+            <span class="font-medium text-text">{props.title}</span>
             <Show when={props.badge}>
-              <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
                 {props.badge}
               </span>
             </Show>

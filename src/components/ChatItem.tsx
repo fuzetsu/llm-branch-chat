@@ -111,8 +111,8 @@ const ChatItem: Component<ChatItemProps> = (props) => {
         class={classnames(
           'group mb-2 rounded-lg cursor-pointer transition-all duration-200 relative',
           props.isSelected
-            ? 'bg-primary dark:bg-primary-dark text-white shadow-md'
-            : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white hover:shadow-sm',
+            ? 'bg-primary text-white shadow-md'
+            : 'hover:bg-surface-hover text-text hover:shadow-sm'
         )}
         onClick={() => props.onSelect()}
         onDblClick={(e) => e.preventDefault()}
@@ -128,7 +128,7 @@ const ChatItem: Component<ChatItemProps> = (props) => {
                   'font-medium truncate transition-all duration-200',
                   isEditing()
                     ? 'bg-white/10 rounded px-2 py-1 -mx-2 -my-1 ring-1 ring-primary/30'
-                    : 'rounded px-2 py-1 -mx-2 -my-1',
+                    : 'rounded px-2 py-1 -mx-2 -my-1'
                 )}
                 onKeyDown={handleContentKeyDown}
                 onBlur={handleContentBlur}
@@ -136,18 +136,20 @@ const ChatItem: Component<ChatItemProps> = (props) => {
               >
                 {props.chat.title}
               </div>
-              <div class="text-sm opacity-70 mt-1">{formatDate(props.chat.updatedAt)}</div>
+              <div class={classnames('text-sm mt-1', props.isSelected ? 'text-white/70' : 'text-text-muted')}>
+                {formatDate(props.chat.updatedAt)}
+              </div>
             </div>
             <Show when={showActions()}>
               <div
                 class={classnames(
-                  'flex items-center space-x-1 ml-2',
-                  !isMobileBrowser() && 'opacity-0 group-hover:opacity-100 transition-opacity',
+                  'flex items-center gap-1 ml-2',
+                  !isMobileBrowser() && 'opacity-0 group-hover:opacity-100 transition-opacity'
                 )}
               >
                 <IconButton
                   icon="edit"
-                  variant="ghost"
+                  variant={props.isSelected ? 'ghost-light' : 'ghost'}
                   onClick={handleContentEdit}
                   stopPropagation
                   title="Edit title (or double-click)"
@@ -157,7 +159,7 @@ const ChatItem: Component<ChatItemProps> = (props) => {
                   fallback={
                     <IconButton
                       icon="archive"
-                      variant="ghost"
+                      variant={props.isSelected ? 'ghost-light' : 'ghost'}
                       onClick={handleUnarchive}
                       stopPropagation
                       title="Unarchive chat"
@@ -167,7 +169,7 @@ const ChatItem: Component<ChatItemProps> = (props) => {
                 >
                   <IconButton
                     icon="archive"
-                    variant="ghost"
+                    variant={props.isSelected ? 'ghost-light' : 'ghost'}
                     onClick={handleArchive}
                     stopPropagation
                     title="Archive chat"
@@ -175,7 +177,7 @@ const ChatItem: Component<ChatItemProps> = (props) => {
                 </Show>
                 <IconButton
                   icon="delete"
-                  variant="danger"
+                  variant={props.isSelected ? 'danger-light' : 'danger'}
                   onClick={handleDelete}
                   stopPropagation
                   title="Delete chat"

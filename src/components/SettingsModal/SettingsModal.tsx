@@ -61,7 +61,7 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
 
   // Computed values
   const storageSizeInBytes = createMemo(() =>
-    props.isOpen ? new TextEncoder().encode(exportStateToJson(store.state)).length : 0,
+    props.isOpen ? new TextEncoder().encode(exportStateToJson(store.state)).length : 0
   )
 
   const allAvailableModels = createMemo(() => getAllAvailableModels(providersForm.providers))
@@ -184,34 +184,34 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
   // Tab styling
   const tabClass = (tabName: Tab) =>
     classnames(
-      'py-2 px-1 border-b-2 font-medium text-sm cursor-pointer',
+      'py-2 px-1 border-b-2 font-medium text-sm cursor-pointer transition-colors',
       activeTab() === tabName
         ? 'border-primary text-primary'
-        : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300',
+        : 'border-transparent text-text-muted hover:text-text-secondary'
     )
 
   return (
     <Show when={props.isOpen}>
-      <div class="fixed inset-0 z-50 flex items-center justify-center p-4 transition-opacity duration-300">
+      <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
         {/* Backdrop */}
-        <div class="fixed inset-0 bg-gray-500/75 transition-opacity" onClick={handleCancel} />
+        <div class="fixed inset-0 bg-black/50 transition-opacity" onClick={handleCancel} />
 
         {/* Modal */}
-        <div class="relative w-full max-w-2xl max-h-[90vh] overflow-hidden text-left align-middle transition-all transform bg-white dark:bg-dark-surface shadow-xl rounded-2xl border dark:border-dark-border flex flex-col">
+        <div class="relative w-full max-w-2xl max-h-[90vh] overflow-hidden bg-surface shadow-xl rounded-xl border border-border flex flex-col">
           {/* Header */}
-          <div class="flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-dark-border shrink-0">
-            <h3 class="text-lg font-medium leading-4 text-gray-900 dark:text-white">Settings</h3>
+          <div class="flex items-center justify-between px-5 py-3 border-b border-border shrink-0">
+            <h3 class="text-lg font-medium text-text tracking-tight">Settings</h3>
             <button
-              class="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+              class="p-1.5 rounded-md hover:bg-surface-hover transition-colors cursor-pointer text-text-muted hover:text-text"
               onClick={handleCancel}
             >
-              <Icon name="close" class="text-gray-400" />
+              <Icon name="close" size="sm" />
             </button>
           </div>
 
           {/* Tabs */}
-          <div class="border-b border-gray-200 dark:border-dark-border shrink-0">
-            <nav class="flex space-x-8 px-4">
+          <div class="border-b border-border shrink-0">
+            <nav class="flex gap-6 px-5">
               <button class={tabClass('providers')} onClick={() => setActiveTab('providers')}>
                 Providers
               </button>
@@ -228,7 +228,7 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
           </div>
 
           {/* Content */}
-          <div class="flex-1 overflow-y-auto p-4">
+          <div class="flex-1 overflow-y-auto p-5">
             <div class="space-y-4">
               <Show when={activeTab() === 'providers'}>
                 <ProvidersTab
@@ -271,7 +271,7 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
           </div>
 
           {/* Footer */}
-          <div class="flex justify-end space-x-3 px-4 py-2 border-t border-gray-200 dark:border-dark-border shrink-0">
+          <div class="flex justify-end gap-3 px-5 py-3 border-t border-border shrink-0">
             <Button variant="secondary" onClick={handleCancel}>
               Cancel
             </Button>

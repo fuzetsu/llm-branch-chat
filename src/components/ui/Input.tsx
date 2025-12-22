@@ -1,5 +1,6 @@
 import { Component, JSX } from 'solid-js'
 import { classnames } from '../../utils'
+import { inputBaseStyles, inputFullWidth } from './styles'
 
 interface InputProps {
   type?: 'text' | 'password' | 'number' | 'email'
@@ -16,9 +17,6 @@ interface InputProps {
 }
 
 const Input: Component<InputProps> = (props) => {
-  const baseClasses =
-    'w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-dark-surface text-gray-900 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed'
-
   const handleInput: JSX.EventHandlerUnion<HTMLInputElement, InputEvent> = (e) => {
     const value = e.currentTarget.value
     props.onInput?.(value)
@@ -32,9 +30,9 @@ const Input: Component<InputProps> = (props) => {
   return (
     <input
       type={props.type || 'text'}
-      class={classnames(baseClasses, props.class)}
+      class={classnames(inputBaseStyles, inputFullWidth, props.class)}
       placeholder={props.placeholder}
-      value={props.value || ''}
+      value={props.value ?? ''}
       onInput={handleInput}
       onChange={handleChange}
       min={props.min}

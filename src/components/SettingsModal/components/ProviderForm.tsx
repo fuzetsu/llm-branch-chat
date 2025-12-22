@@ -49,7 +49,7 @@ const ProviderForm: Component<ProviderFormProps> = (props) => {
   }
 
   return (
-    <div class="border-gray-200 dark:border-dark-border pt-4">
+    <div class="border-border pt-4">
       <SectionHeader title={props.isEditing ? 'Edit Provider' : 'Add New Provider'} class="mb-4" />
 
       <div class="space-y-4">
@@ -63,7 +63,7 @@ const ProviderForm: Component<ProviderFormProps> = (props) => {
               if (props.errors.name) props.onClearError('name')
             }}
             disabled={props.isEditing}
-            class={props.errors.name ? 'border-red-300 dark:border-red-500' : ''}
+            class={props.errors.name ? 'border-danger' : ''}
           />
         </FormField>
 
@@ -76,7 +76,7 @@ const ProviderForm: Component<ProviderFormProps> = (props) => {
               props.onUpdate('baseUrl', value)
               if (props.errors.baseUrl) props.onClearError('baseUrl')
             }}
-            class={props.errors.baseUrl ? 'border-red-300 dark:border-red-500' : ''}
+            class={props.errors.baseUrl ? 'border-danger' : ''}
           />
         </FormField>
 
@@ -104,7 +104,7 @@ const ProviderForm: Component<ProviderFormProps> = (props) => {
                 if (props.errors.models) props.onClearError('models')
                 if (fetchError()) setFetchError(null)
               }}
-              class={props.errors.models ? 'border-red-300 dark:border-red-500' : ''}
+              class={props.errors.models ? 'border-danger' : ''}
             />
             <Button
               variant="secondary"
@@ -121,12 +121,12 @@ const ProviderForm: Component<ProviderFormProps> = (props) => {
               )}
             </Button>
             <Show when={fetchError()}>
-              <p class="text-sm text-red-600 dark:text-red-400">{fetchError()}</p>
+              <p class="text-sm text-danger">{fetchError()}</p>
             </Show>
           </div>
         </FormField>
 
-        <div class="flex space-x-2">
+        <div class="flex gap-2">
           <Show when={props.isEditing}>
             <Button variant="secondary" onClick={props.onCancelEdit}>
               Cancel Edit

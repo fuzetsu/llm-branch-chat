@@ -3,6 +3,7 @@ import { MessageNode as MessageType, Chat } from '../types/index.js'
 import { useAppStore } from '../store/AppStore'
 import MessageBranching from './MessageBranching'
 import IconButton from './ui/IconButton'
+import Textarea from './ui/Textarea'
 import { relativeTimestamp, throttle, classnames, isMobileBrowser } from '../utils/index.js'
 import { renderMarkdown } from '../utils/markdown.js'
 import Button from './ui/Button.jsx'
@@ -51,7 +52,7 @@ const Message: Component<MessageProps> = (props) => {
           props.message.parentId,
           newContent,
           props.message.role,
-          props.message.model || props.chat.model || store.state.settings.chat.model,
+          props.message.model || props.chat.model || store.state.settings.chat.model
         )
         // If this is a user message, automatically generate assistant response
         if (isUser()) {
@@ -101,7 +102,7 @@ const Message: Component<MessageProps> = (props) => {
   })
 
   const streamingClassName = createMemo(() =>
-    props.isStreaming && store.getStreamingContent().length <= 30 ? 'animate-pulse' : null,
+    props.isStreaming && store.getStreamingContent().length <= 30 ? 'animate-pulse' : null
   )
 
   const fullMessageDate = () => new Date(props.message.timestamp).toLocaleString()
@@ -112,18 +113,15 @@ const Message: Component<MessageProps> = (props) => {
         ref={messageRef}
         class={classnames(
           'relative w-full max-w-2xl px-4 py-3 rounded-lg transition-all duration-300',
-          isUser()
-            ? 'bg-primary dark:bg-primary-dark text-white'
-            : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white',
+          isUser() ? 'bg-message-user text-message-user-text' : 'bg-message-assistant text-message-assistant-text',
           streamingClassName(),
-          isFlashing() &&
-            'ring-4 ring-yellow-400 dark:ring-yellow-500 ring-opacity-100 bg-yellow-100 dark:bg-yellow-900/40',
+          isFlashing() && 'ring-4 ring-accent ring-opacity-100'
         )}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
         <Show when={isHovered() && !isEditing() && !props.isStreaming}>
-          <div class="absolute top-1 right-1 flex items-center space-x-1 bg-white dark:bg-gray-800 rounded shadow-sm border border-gray-200 dark:border-gray-600 px-1">
+          <div class="absolute top-1 right-1 flex items-center gap-1 bg-surface rounded shadow-sm border border-border px-1">
             <IconButton icon="copy" variant="compact" onClick={handleCopy} title="Copy message" />
             <IconButton icon="edit" variant="compact" onClick={startEdit} title="Edit message" />
             <Show when={isAssistant()}>
@@ -152,15 +150,15 @@ const Message: Component<MessageProps> = (props) => {
           }
         >
           <div class="space-y-2">
-            <textarea
-              class="w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize max-w-full min-w-[30vw] min-h-40"
+            <Textarea
+              class="text-sm resize max-w-full min-w-[30vw] min-h-40 text-text"
               value={editContent()}
-              onInput={(e) => setEditContent((e.target as HTMLTextAreaElement).value)}
+              onInput={(value) => setEditContent(value)}
               onKeyDown={handleKeyDown}
               rows={Math.max(2, editContent().split('\n').length)}
               autofocus
             />
-            <div class="flex justify-end space-x-2">
+            <div class="flex justify-end gap-2">
               <Button variant="secondary" size="micro" onClick={cancelEdit}>
                 Cancel
               </Button>
@@ -174,12 +172,7 @@ const Message: Component<MessageProps> = (props) => {
           </div>
         </Show>
 
-        <div
-          class={classnames(
-            'text-xs mt-2',
-            isUser() ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400',
-          )}
-        >
+        <div class="text-xs mt-2 text-text-muted">
           <span title={fullMessageDate()}>{relativeTimestamp(props.message.timestamp)}</span>
           {props.message.model && <span class="ml-2">• {props.message.model}</span>}
           <Show when={props.isStreaming}>

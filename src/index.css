@@ -1,22 +1,154 @@
 @import 'tailwindcss';
 
-@theme {
+/* ===== SEMANTIC COLOR TOKENS =====
+ * These auto-switch based on .dark class on :root
+ * Usage: bg-surface, text-text, border-border, etc.
+ */
+
+:root {
+  /* Background colors */
+  --color-bg: #ffffff;
+  --color-bg-muted: #f9fafb;
+
+  /* Surface colors (cards, modals, inputs) */
+  --color-surface: #ffffff;
+  --color-surface-secondary: #f9fafb;
+  --color-surface-hover: #f3f4f6;
+  --color-surface-active: #e5e7eb;
+
+  /* Text colors */
+  --color-text: #111827;
+  --color-text-secondary: #4b5563;
+  --color-text-muted: #6b7280;
+  --color-text-placeholder: #9ca3af;
+
+  /* Border colors */
+  --color-border: #e5e7eb;
+  --color-border-muted: #f3f4f6;
+
+  /* Brand colors */
   --color-primary: #3b82f6;
-  --color-primary-dark: #6b8e7f;
-  --color-primary-darker: #5a7c6f;
-  --color-user-dark: #6b8e7f;
-  --color-assistant-dark: #2a2f2a;
+  --color-primary-hover: #2563eb;
   --color-secondary: #6b7280;
   --color-accent: #c9a96e;
-  --color-danger: #e07c7c;
-  --color-dark-bg: #1a1d1a;
-  --color-dark-surface: #242724;
-  --color-dark-border: #3a3d3a;
-  --color-dark-hover: #2a2d2a;
+
+  /* Status colors */
+  --color-danger: #dc2626;
+  --color-danger-hover: #b91c1c;
+  --color-success: #16a34a;
+  --color-success-hover: #15803d;
+
+  /* Interactive states */
+  --color-focus-ring: #3b82f6;
+
+  /* Message bubbles */
+  --color-message-user: #eff6ff;
+  --color-message-user-text: #1e40af;
+  --color-message-assistant: #f0f1f3;
+  --color-message-assistant-text: #111827;
+
+  /* Code blocks */
+  --color-code-bg: #f3f4f6;
+  --color-code-text: #1f2937;
+  --color-pre-bg: #1f2937;
+  --color-pre-text: #f9fafb;
 }
 
+.dark {
+  /* Background colors */
+  --color-bg: #1a1d1a;
+  --color-bg-muted: #1f221f;
+
+  /* Surface colors */
+  --color-surface: #242724;
+  --color-surface-secondary: #2a2d2a;
+  --color-surface-hover: #2f322f;
+  --color-surface-active: #3a3d3a;
+
+  /* Text colors */
+  --color-text: #f9fafb;
+  --color-text-secondary: #d1d5db;
+  --color-text-muted: #9ca3af;
+  --color-text-placeholder: #6b7280;
+
+  /* Border colors */
+  --color-border: #3a3d3a;
+  --color-border-muted: #2f322f;
+
+  /* Brand colors (adjusted for dark) */
+  --color-primary: #6b8e7f;
+  --color-primary-hover: #5a7c6f;
+
+  /* Interactive states (match primary in dark mode) */
+  --color-focus-ring: #6b8e7f;
+
+  /* Message bubbles */
+  --color-message-user: #2d3d35;
+  --color-message-user-text: #d1e7dd;
+  --color-message-assistant: #2a2d2a;
+  --color-message-assistant-text: #f9fafb;
+
+  /* Code blocks */
+  --color-code-bg: #2a2d2a;
+  --color-code-text: #e5e7eb;
+  --color-pre-bg: #1a1d1a;
+  --color-pre-text: #f9fafb;
+}
+
+/* Register tokens with Tailwind v4 */
+@theme {
+  /* Background */
+  --color-bg: var(--color-bg);
+  --color-bg-muted: var(--color-bg-muted);
+
+  /* Surface */
+  --color-surface: var(--color-surface);
+  --color-surface-secondary: var(--color-surface-secondary);
+  --color-surface-hover: var(--color-surface-hover);
+  --color-surface-active: var(--color-surface-active);
+
+  /* Text */
+  --color-text: var(--color-text);
+  --color-text-secondary: var(--color-text-secondary);
+  --color-text-muted: var(--color-text-muted);
+  --color-text-placeholder: var(--color-text-placeholder);
+
+  /* Border */
+  --color-border: var(--color-border);
+  --color-border-muted: var(--color-border-muted);
+
+  /* Brand */
+  --color-primary: var(--color-primary);
+  --color-primary-hover: var(--color-primary-hover);
+  --color-secondary: var(--color-secondary);
+  --color-accent: var(--color-accent);
+
+  /* Status */
+  --color-danger: var(--color-danger);
+  --color-danger-hover: var(--color-danger-hover);
+  --color-success: var(--color-success);
+  --color-success-hover: var(--color-success-hover);
+
+  /* Interactive */
+  --color-focus-ring: var(--color-focus-ring);
+
+  /* Message bubbles */
+  --color-message-user: var(--color-message-user);
+  --color-message-user-text: var(--color-message-user-text);
+  --color-message-assistant: var(--color-message-assistant);
+  --color-message-assistant-text: var(--color-message-assistant-text);
+
+  /* Code */
+  --color-code-bg: var(--color-code-bg);
+  --color-code-text: var(--color-code-text);
+  --color-pre-bg: var(--color-pre-bg);
+  --color-pre-text: var(--color-pre-text);
+}
+
+/* Keep dark variant for cases where explicit dark-only override is needed */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Dark mode select arrow fix */
 .dark select {
   appearance: none;
   -webkit-text-fill-color: white;
@@ -24,10 +156,11 @@
   background-repeat: no-repeat;
   background-position: right 4px center;
   background-size: 16px;
-  @apply pr-4;
+  @apply pr-6;
 }
 
-/* Custom prose styles for markdown content */
+/* ===== MARKDOWN CONTENT STYLES ===== */
+
 .message-content h1,
 .message-content h2,
 .message-content h3,
@@ -40,12 +173,15 @@
 .message-content h1 {
   @apply text-xl;
 }
+
 .message-content h2 {
   @apply text-lg;
 }
+
 .message-content h3 {
   @apply text-base font-medium;
 }
+
 .message-content h4,
 .message-content h5,
 .message-content h6 {
@@ -74,11 +210,11 @@
 }
 
 .message-content code {
-  @apply bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-1 py-0.5 rounded text-sm font-mono;
+  @apply bg-code-bg text-code-text px-1 py-0.5 rounded text-sm font-mono;
 }
 
 .message-content pre {
-  @apply bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto my-4;
+  @apply bg-pre-bg text-pre-text p-4 rounded-lg overflow-x-auto my-4;
 }
 
 .message-content pre code {
@@ -86,11 +222,11 @@
 }
 
 .message-content blockquote {
-  @apply border-l-4 border-primary pl-4 my-4 italic text-gray-600 dark:text-gray-400;
+  @apply border-l-4 border-primary pl-4 my-4 italic text-text-muted;
 }
 
 .message-content a {
-  @apply text-primary underline hover:text-blue-600;
+  @apply text-primary underline hover:text-primary-hover;
 }
 
 .message-content table {
@@ -99,11 +235,11 @@
 
 .message-content th,
 .message-content td {
-  @apply border border-gray-300 dark:border-gray-600 px-3 py-2 text-left;
+  @apply border border-border px-3 py-2 text-left;
 }
 
 .message-content th {
-  @apply bg-gray-50 dark:bg-gray-700 font-semibold;
+  @apply bg-surface-secondary font-semibold;
 }
 
 .message-content strong,
@@ -117,5 +253,102 @@
 }
 
 .message-content hr {
-  @apply my-8 border-0 border-t border-gray-300 dark:border-gray-600;
+  @apply my-8 border-0 border-t border-border;
+}
+
+/* ===== FORM ELEMENT CUSTOM STYLES ===== */
+
+/* Custom checkbox styling */
+input[type='checkbox'] {
+  @apply w-4 h-4 rounded cursor-pointer;
+  accent-color: var(--color-primary);
+}
+
+input[type='checkbox']:focus {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+/* Custom range slider styling */
+input[type='range'] {
+  @apply appearance-none bg-transparent cursor-pointer;
+}
+
+input[type='range']::-webkit-slider-runnable-track {
+  @apply h-2 rounded-lg;
+  background: var(--color-surface-active);
+}
+
+input[type='range']::-webkit-slider-thumb {
+  @apply appearance-none w-4 h-4 rounded-full -mt-1;
+  background: var(--color-primary);
+}
+
+input[type='range']::-webkit-slider-thumb:hover {
+  background: var(--color-primary-hover);
+}
+
+input[type='range']::-moz-range-track {
+  @apply h-2 rounded-lg;
+  background: var(--color-surface-active);
+}
+
+input[type='range']::-moz-range-thumb {
+  @apply w-4 h-4 rounded-full border-0;
+  background: var(--color-primary);
+}
+
+input[type='range']::-moz-range-thumb:hover {
+  background: var(--color-primary-hover);
+}
+
+input[type='range']:focus {
+  outline: none;
+}
+
+input[type='range']:focus::-webkit-slider-thumb {
+  box-shadow: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-focus-ring);
+}
+
+input[type='range']:focus::-moz-range-thumb {
+  box-shadow: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-focus-ring);
+}
+
+/* ===== CUSTOM SCROLLBAR STYLES ===== */
+
+/* Thin scrollbar for all scrollable areas */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 4px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
+}
+
+/* Hide scrollbar when not hovering (Mac-like behavior) */
+*::-webkit-scrollbar-thumb {
+  background: transparent;
+}
+
+*:hover::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+}
+
+*:hover::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
 }

@@ -14,7 +14,7 @@ const Layout: Component = () => {
   }
 
   return (
-    <div class="flex h-screen flex-col">
+    <div class="flex h-screen flex-col bg-bg">
       <Header />
 
       <div class="flex flex-1 overflow-hidden">

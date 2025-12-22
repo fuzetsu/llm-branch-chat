@@ -77,7 +77,7 @@ const ProvidersTab: Component<ProvidersTabProps> = (props) => {
       providerForm.baseUrl,
       providerForm.key,
       models,
-      providersList().length === 0,
+      providersList().length === 0
     )
 
     const newProviders = new Map(props.providers)
@@ -179,7 +179,7 @@ const ProvidersTab: Component<ProvidersTabProps> = (props) => {
       <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
         <StorageInfo sizeInBytes={props.storageSizeInBytes} />
 
-        <div class="flex space-x-3 shrink-0">
+        <div class="flex gap-3 shrink-0">
           <Button variant="secondary" size="sm" onClick={props.onImportState}>
             Import State
           </Button>
@@ -193,8 +193,8 @@ const ProvidersTab: Component<ProvidersTabProps> = (props) => {
         <div
           class={`p-3 rounded-md text-sm mb-4 ${
             props.importState?.success
-              ? 'bg-green-50 text-green-800 dark:bg-green-900/20 dark:text-green-200'
-              : 'bg-red-50 text-red-800 dark:bg-red-900/20 dark:text-red-200'
+              ? 'bg-success/10 text-success'
+              : 'bg-danger/10 text-danger'
           }`}
         >
           {props.importState?.message}

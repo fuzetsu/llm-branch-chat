@@ -1,8 +1,11 @@
 import { Component, createEffect, createSignal, Show } from 'solid-js'
 import { useAppStore } from '../store/AppStore'
 import Icon from './ui/Icon'
+import Button from './ui/Button'
 import { isMobileBrowser, touch } from '../utils'
 import { isMessageListScrolledToBottom, scrollMessageListToBottom } from './MessageList'
+import { inputBaseStyles } from './ui/styles'
+import { classnames } from '../utils'
 
 const MessageInput: Component = () => {
   const store = useAppStore()
@@ -71,11 +74,14 @@ const MessageInput: Component = () => {
   })
 
   return (
-    <div class="bg-white dark:bg-dark-surface">
+    <div class="bg-surface">
       <div class="flex gap-2">
         <textarea
           ref={setInput}
-          class="flex-1 resize-none border border-gray-300 dark:border-dark-border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-dark-surface text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 disabled:opacity-50"
+          class={classnames(
+            inputBaseStyles,
+            'flex-1 resize-none rounded-lg px-4 py-2'
+          )}
           placeholder={isStreaming() ? 'Waiting for response...' : 'Type your message...'}
           rows="1"
           value={inputValue()}
@@ -83,10 +89,11 @@ const MessageInput: Component = () => {
           onKeyPress={handleKeyPress}
           disabled={isStreaming()}
         />
-        <button
-          class="px-4 py-2 bg-primary hover:bg-blue-600 dark:bg-primary-dark dark:hover:bg-primary-darker disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors flex items-center space-x-2 cursor-pointer"
+        <Button
+          variant="primary"
           onClick={handleSend}
           disabled={!isStreaming() && !inputValue().trim()}
+          class="flex items-center gap-2"
         >
           <Show when={isStreaming()} fallback={<Icon name="send" size="sm" />}>
             <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
@@ -104,9 +111,9 @@ const MessageInput: Component = () => {
                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
               />
             </svg>
-            <span class="ml-2">Stop</span>
+            <span>Stop</span>
           </Show>
-        </button>
+        </Button>
       </div>
     </div>
   )

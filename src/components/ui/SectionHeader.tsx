@@ -1,4 +1,5 @@
 import { Component } from 'solid-js'
+import { classnames } from '../../utils'
 
 interface SectionHeaderProps {
   title: string
@@ -9,11 +10,7 @@ interface SectionHeaderProps {
  * Consistent section header styling for settings panels and similar UIs.
  */
 const SectionHeader: Component<SectionHeaderProps> = (props) => {
-  return (
-    <h4 class={`text-md font-medium text-gray-900 dark:text-white ${props.class ?? ''}`}>
-      {props.title}
-    </h4>
-  )
+  return <h4 class={classnames('text-md font-medium text-text', props.class)}>{props.title}</h4>
 }
 
 export default SectionHeader

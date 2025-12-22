@@ -108,9 +108,9 @@ const SystemPromptsTab: Component<SystemPromptsTabProps> = (props) => {
   }
 
   return (
-    <div class="space-y-6">
+    <div class="space-y-5">
       {/* System Prompts List */}
-      <div class="space-y-4">
+      <div class="space-y-3">
         <SectionHeader title="System Prompts" />
 
         <Show when={promptsList().length === 0}>
@@ -143,7 +143,7 @@ const SystemPromptsTab: Component<SystemPromptsTabProps> = (props) => {
                 </>
               }
             >
-              <p class="text-sm text-gray-500 dark:text-gray-400 whitespace-pre-wrap line-clamp-3">
+              <p class="text-sm text-text-muted whitespace-pre-wrap line-clamp-3">
                 {prompt.content}
               </p>
             </ItemCard>
@@ -152,7 +152,7 @@ const SystemPromptsTab: Component<SystemPromptsTabProps> = (props) => {
       </div>
 
       {/* System Prompt Form */}
-      <div ref={formSection} class="border-gray-200 dark:border-dark-border">
+      <div ref={formSection} class="border-border">
         <SectionHeader
           title={isEditing() ? 'Edit System Prompt' : 'Add New System Prompt'}
           class="mb-4"
@@ -177,7 +177,7 @@ const SystemPromptsTab: Component<SystemPromptsTabProps> = (props) => {
             />
           </FormField>
 
-          <div class="flex space-x-2">
+          <div class="flex gap-2">
             <Show when={isEditing()}>
               <Button variant="secondary" onClick={resetForm}>
                 Cancel Edit

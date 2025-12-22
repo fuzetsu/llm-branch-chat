@@ -73,7 +73,7 @@ const MessageList: Component<MessageListProps> = (props) => {
 
       {/* Empty state */}
       <Show when={visibleMessages().length === 0 && !store.state.streaming.isStreaming}>
-        <div class="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
+        <div class="flex items-center justify-center h-full text-text-muted">
           <div class="text-center">
             <div class="text-lg mb-2">Start a conversation</div>
             <div class="text-sm">Send a message to get started</div>

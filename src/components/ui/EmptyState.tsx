@@ -11,13 +11,13 @@ interface EmptyStateProps {
  */
 const EmptyState: Component<EmptyStateProps> = (props) => {
   return (
-    <div class="text-center py-8 border border-gray-200 dark:border-dark-border rounded-lg">
-      <p class="text-gray-500 dark:text-gray-400">{props.title}</p>
+    <div class="text-center py-6 border border-border rounded-lg">
+      <p class="text-text-muted">{props.title}</p>
       <Show when={props.description}>
-        <p class="text-sm text-gray-400 dark:text-gray-500 mt-1">{props.description}</p>
+        <p class="text-sm text-text-placeholder mt-1">{props.description}</p>
       </Show>
       <Show when={props.action}>
-        <div class="mt-4">{props.action}</div>
+        <div class="mt-3">{props.action}</div>
       </Show>
     </div>
   )

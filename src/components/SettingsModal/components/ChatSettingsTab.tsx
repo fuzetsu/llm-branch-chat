@@ -22,7 +22,7 @@ interface ChatSettingsTabProps {
 
 const ChatSettingsTab: Component<ChatSettingsTabProps> = (props) => {
   return (
-    <>
+    <div class="space-y-4">
       <FormField label="Default Model">
         <Select
           value={props.form.model}
@@ -90,7 +90,7 @@ const ChatSettingsTab: Component<ChatSettingsTabProps> = (props) => {
           placeholder="Select a model"
         />
       </FormField>
-    </>
+    </div>
   )
 }
 

@@ -2,7 +2,7 @@ import { Component } from 'solid-js'
 import Icon, { IconName } from './Icon'
 import { classnames } from '../../utils'
 
-type IconButtonVariant = 'ghost' | 'danger' | 'success' | 'cancel' | 'compact'
+type IconButtonVariant = 'ghost' | 'ghost-light' | 'danger' | 'danger-light' | 'success' | 'cancel' | 'compact'
 type IconButtonSize = 'sm' | 'md'
 
 interface IconButtonProps {
@@ -20,17 +20,21 @@ const IconButton: Component<IconButtonProps> = (props) => {
   const getVariantClasses = () => {
     switch (props.variant) {
       case 'ghost':
-        return 'p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-500 dark:text-gray-400'
+        return 'p-1.5 rounded-md hover:bg-surface-hover text-text-muted hover:text-text'
+      case 'ghost-light':
+        return 'p-1.5 rounded-md hover:bg-white/20 text-white/70 hover:text-white'
       case 'danger':
-        return 'p-1 rounded hover:bg-red-100 dark:hover:bg-red-900 text-red-500 dark:text-red-400'
+        return 'p-1.5 rounded-md hover:bg-danger/10 text-danger hover:text-danger-hover'
+      case 'danger-light':
+        return 'p-1.5 rounded-md hover:bg-red-500/20 text-red-200 hover:text-red-100'
       case 'success':
-        return 'p-1 text-green-600 hover:text-green-700'
+        return 'p-1.5 text-success hover:text-success-hover'
       case 'cancel':
-        return 'p-1 text-red-600 hover:text-red-700'
+        return 'p-1.5 text-danger hover:text-danger-hover'
       case 'compact':
-        return 'p-1 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+        return 'p-1 text-text-muted hover:text-text'
       default:
-        return 'p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-500 dark:text-gray-400'
+        return 'p-1.5 rounded-md hover:bg-surface-hover text-text-muted hover:text-text'
     }
   }
 

@@ -18,14 +18,14 @@ const Checkbox: Component<CheckboxProps> = (props) => {
   return (
     <label
       class={classnames(
-        'flex items-center text-sm font-medium text-gray-700 dark:text-gray-300',
+        'flex items-center text-sm font-medium text-text-secondary',
         props.disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer',
-        props.class,
+        props.class
       )}
     >
       <input
         type="checkbox"
-        class="rounded border-gray-300 dark:border-gray-600 text-primary focus:ring-primary mr-3"
+        class="mr-3"
         checked={props.checked || false}
         onInput={handleInput}
         disabled={props.disabled}

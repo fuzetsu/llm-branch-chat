@@ -49,22 +49,22 @@ const Header: Component = () => {
   })
 
   const moreActionsButton =
-    'w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-hover transition-colors cursor-pointer'
+    'w-full text-left px-4 py-2 text-sm text-text-secondary hover:bg-surface-hover transition-colors cursor-pointer'
 
   return (
-    <header class="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-dark-surface border-b border-gray-200 dark:border-dark-border shadow-sm">
-      <div class="flex items-center justify-between px-1 py-2">
-        <div class="flex items-center space-x-1 flex-1 min-w-0">
+    <header class="fixed top-0 left-0 right-0 z-50 bg-surface border-b border-border shadow-sm">
+      <div class="flex items-center justify-between px-2 py-2">
+        <div class="flex items-center gap-1 flex-1 min-w-0">
           <Button variant="ghost" class="lg:hidden p-2 shrink-0" onClick={toggleSidebar}>
-            <Icon name="menu" class="text-gray-600 dark:text-gray-300" />
+            <Icon name="menu" class="text-text-muted" />
           </Button>
           <div class="flex items-center flex-1 min-w-0">
-            <h1 class="text-lg font-semibold text-gray-900 dark:text-white truncate lg:pl-4">
+            <h1 class="text-lg font-semibold text-text truncate lg:pl-4 tracking-tight">
               {currentChat()?.title || 'New Chat'}
             </h1>
           </div>
         </div>
-        <div class="flex items-center space-x-2 shrink-0">
+        <div class="flex items-center gap-2 shrink-0">
           {/* Mobile menu button - visible only on small screens */}
           <div class="relative lg:hidden mobile-menu-container shrink-0">
             <Button
@@ -72,12 +72,12 @@ const Header: Component = () => {
               class="p-2"
               onClick={() => setShowMobileMenu(!showMobileMenu())}
             >
-              <Icon name="more-vertical" class="text-gray-600 dark:text-gray-300" />
+              <Icon name="more-vertical" class="text-text-muted" />
             </Button>
 
             {/* Mobile dropdown menu */}
             <Show when={showMobileMenu()}>
-              <div class="absolute right-0 mt-2 w-56 bg-white dark:bg-dark-surface rounded-md shadow-lg py-1 z-50 border border-gray-200 dark:border-dark-border">
+              <div class="absolute right-0 mt-2 w-56 bg-surface rounded-lg shadow-lg py-1 z-50 border border-border">
                 <div class="px-2 py-1">
                   <ModelSelector class="w-full py-1" />
                 </div>
@@ -125,7 +125,7 @@ const Header: Component = () => {
           </div>
 
           {/* Desktop controls - visible on medium screens and up */}
-          <div class="hidden lg:flex items-center space-x-1 shrink-0">
+          <div class="hidden lg:flex items-center gap-1 shrink-0">
             <ModelSelector class="w-50" />
             <SystemPromptSelector class="w-50" />
             <Show when={hasActiveChat()}>

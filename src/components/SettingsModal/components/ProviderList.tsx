@@ -15,7 +15,7 @@ interface ProviderListProps {
 
 const ProviderList: Component<ProviderListProps> = (props) => {
   return (
-    <div class="space-y-4">
+    <div class="space-y-3">
       <SectionHeader title="Configured Providers" />
 
       <Show when={props.providers.length === 0}>
@@ -46,10 +46,8 @@ const ProviderList: Component<ProviderListProps> = (props) => {
               </>
             }
           >
-            <p class="text-sm text-gray-500 dark:text-gray-400">{provider.baseUrl}</p>
-            <p class="text-sm text-gray-500 dark:text-gray-400">
-              {provider.availableModels.length} models
-            </p>
+            <p class="text-sm text-text-muted">{provider.baseUrl}</p>
+            <p class="text-sm text-text-muted">{provider.availableModels.length} models</p>
           </ItemCard>
         )}
       </For>
