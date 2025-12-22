@@ -1,11 +1,10 @@
-import { Component, createMemo, Show, For } from 'solid-js'
+import { Component, Show, For } from 'solid-js'
 import { useAppStore } from '../store/AppStore'
 import Button from './ui/Button'
 import Modal from './ui/Modal'
 import {
   getTokenStats,
   getTokenBreakdown,
-  type TokenStats,
   estimateNewMessageCost,
   countCumulativeInputTokens,
 } from '../utils/tokenCounter'
@@ -25,34 +24,30 @@ const ChatStatsModal: Component<ChatStatsModalProps> = (props) => {
   const currentChat = () => store.getCurrentChat()
   const chatModel = () => currentChat()?.model || store.state.settings.chat.model
 
-  // Note: We don't check props.isOpen here because:
-  // 1. Memos are lazy - they only compute when read
-  // 2. During exit animation, we want to retain the last values
-  // 3. When unmounted, nothing reads these so they won't recompute
-  const stats = createMemo<TokenStats | null>(() => {
+  const stats = () => {
     const chat = currentChat()
     if (!chat) return null
     return getTokenStats(chat.nodes)
-  })
+  }
 
-  const tokenBreakdown = createMemo(() => {
+  const tokenBreakdown = () => {
     const chat = currentChat()
     return chat ? getTokenBreakdown(chat.nodes) : []
-  })
+  }
 
-  const estimatedNewMessageCost = createMemo(() => {
+  const estimatedNewMessageCost = () => {
     const chat = currentChat()
     if (!chat) return 0
     const visibleMessages = store.getVisibleMessages(chat.id)
     return estimateNewMessageCost(visibleMessages, chatModel())
-  })
+  }
 
-  const nextMessageInputTokens = createMemo(() => {
+  const nextMessageInputTokens = () => {
     const chat = currentChat()
     if (!chat) return 0
     const visibleMessages = store.getVisibleMessages(chat.id)
     return countCumulativeInputTokens(visibleMessages)
-  })
+  }
 
   return (
     <Modal

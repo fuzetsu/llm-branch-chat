@@ -1,4 +1,4 @@
-import { Component, createEffect, createMemo, Show, createSignal, untrack } from 'solid-js'
+import { Component, createEffect, Show, createSignal, untrack } from 'solid-js'
 import { createStore, unwrap } from 'solid-js/store'
 import { useAppStore, exportStateToJson, importStateFromJson } from '../../store/AppStore'
 import { downloadJsonFile, createFileInput } from '../../utils/fileUtils'
@@ -59,8 +59,8 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
 
   const storageSizeInBytes = () => new TextEncoder().encode(exportStateToJson(store.state)).length
 
-  const allAvailableModels = createMemo(() => getAllAvailableModels(providersForm.providers))
-  const groupedModels = createMemo(() => getModelsGroupedByProvider(providersForm.providers))
+  const allAvailableModels = () => getAllAvailableModels(providersForm.providers)
+  const groupedModels = () => getModelsGroupedByProvider(providersForm.providers)
 
   createEffect(() => {
     if (props.isOpen) {

@@ -26,7 +26,7 @@ const SystemPromptsTab: Component<SystemPromptsTabProps> = (props) => {
 
   let formSection!: HTMLDivElement
 
-  const promptsList = createMemo(() => Array.from(props.systemPrompts.values()))
+  const promptsList = () => Array.from(props.systemPrompts.values())
 
   const disableSubmit = createMemo(() => !promptForm.title.trim() || !promptForm.content.trim())
 
@@ -113,14 +113,15 @@ const SystemPromptsTab: Component<SystemPromptsTabProps> = (props) => {
       <div class="space-y-3">
         <SectionHeader title="System Prompts" />
 
-        <Show when={promptsList().length === 0}>
-          <EmptyState
-            title="No system prompts configured"
-            description="Add your first system prompt to get started"
-          />
-        </Show>
-
-        <For each={promptsList()}>
+        <For
+          each={promptsList()}
+          fallback={
+            <EmptyState
+              title="No system prompts configured"
+              description="Add your first system prompt to get started"
+            />
+          }
+        >
           {(prompt) => (
             <ItemCard
               title={prompt.title}
