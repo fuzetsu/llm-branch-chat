@@ -8,17 +8,11 @@
  * Provides consistent border, focus, and disabled states.
  */
 export const inputBaseStyles = [
-  // Layout
   'px-3 py-2 rounded-md',
-  // Colors (semantic tokens)
   'bg-surface text-text border border-border',
-  // Placeholder
   'placeholder:text-text-placeholder',
-  // Focus state
   'focus:outline-none focus:ring-2 focus:ring-focus-ring focus:border-transparent',
-  // Disabled state
   'disabled:opacity-50 disabled:cursor-not-allowed',
-  // Transition
   'transition-colors',
 ].join(' ')
 

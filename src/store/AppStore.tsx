@@ -119,8 +119,6 @@ export const AppStoreProvider: ParentComponent = (props) => {
     }
   })
 
-  // ===== SETTINGS OPERATIONS =====
-
   const setCurrentChatId = (id: string | null) => {
     setState('currentChatId', id)
   }
@@ -136,8 +134,6 @@ export const AppStoreProvider: ParentComponent = (props) => {
   const replaceState = (newState: AppStateStore) => {
     setState(newState)
   }
-
-  // ===== STREAMING OPERATIONS =====
 
   const startStreaming = (messageId: string) => {
     setState('streaming', {
@@ -166,8 +162,6 @@ export const AppStoreProvider: ParentComponent = (props) => {
   }
 
   const getStreamingContent = (): string => state.streaming.currentContent
-
-  // ===== CHAT OPERATIONS =====
 
   const addChat = (chat: Chat) => {
     setState('chats', (chats: Map<string, Chat>) => {
@@ -227,8 +221,6 @@ export const AppStoreProvider: ParentComponent = (props) => {
     if (chat) return chat.id
     return createNewChatInternal()
   }
-
-  // ===== MESSAGE OPERATIONS =====
 
   const addMessage = (chatId: string, message: MessageNode, parentId: string | null) => {
     setState('chats', (chats: Map<string, Chat>) => {
@@ -386,8 +378,6 @@ export const AppStoreProvider: ParentComponent = (props) => {
     }
   }
 
-  // ===== HELPERS =====
-
   const convertToApiMessages = (
     messages: MessageNode[],
     chatSystemPromptId: string | null,
@@ -433,8 +423,6 @@ export const AppStoreProvider: ParentComponent = (props) => {
     })
     stopStreaming()
   }
-
-  // ===== HIGH-LEVEL OPERATIONS =====
 
   const sendMessage = async (content: string) => {
     let currentChat = getCurrentChat()
@@ -614,16 +602,12 @@ export const AppStoreProvider: ParentComponent = (props) => {
     }
   }
 
-  // ===== CONTEXT VALUE =====
-
   const storeValue: AppStoreContextType = {
     state,
-    // Settings
     setCurrentChatId,
     updateSettings,
     setUI,
     replaceState,
-    // Chat operations
     addChat,
     updateChat,
     deleteChat,
@@ -632,7 +616,6 @@ export const AppStoreProvider: ParentComponent = (props) => {
     getActiveChats,
     getArchivedChats,
     ensureCurrentChat,
-    // Message operations
     addMessage,
     updateMessage,
     createMessageBranch,
@@ -641,14 +624,12 @@ export const AppStoreProvider: ParentComponent = (props) => {
     getVisibleMessages,
     getBranchInfo,
     setFlashingMessage,
-    // Streaming operations
     startStreaming,
     updateStreamingContent,
     appendStreamingContent,
     stopStreaming,
     cancelStreaming,
     getStreamingContent,
-    // High-level operations
     sendMessage,
     generateAssistantResponse,
     regenerateMessage,

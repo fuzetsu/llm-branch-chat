@@ -32,7 +32,6 @@ const Tooltip: Component<TooltipProps> = (props) => {
     const tooltipHeight = tooltip?.height ?? 24
     const tooltipWidth = tooltip?.width ?? 100
 
-    // Vertical placement
     let placeAbove = props.placement !== 'bottom'
     if (props.placement !== 'top' && props.placement !== 'bottom') {
       // Auto: prefer top, use bottom if insufficient space
@@ -41,7 +40,6 @@ const Tooltip: Component<TooltipProps> = (props) => {
       placeAbove = spaceAbove >= tooltipHeight + GAP || spaceAbove > spaceBelow
     }
 
-    // Horizontal position (centered, clamped to viewport)
     const halfWidth = tooltipWidth / 2
     let x = trigger.left + trigger.width / 2
     x = Math.max(halfWidth + PADDING, Math.min(x, window.innerWidth - halfWidth - PADDING))
@@ -52,7 +50,6 @@ const Tooltip: Component<TooltipProps> = (props) => {
   }
 
   const showTooltip = () => {
-    // Cancel any pending exit
     if (exitTimeoutId) {
       clearTimeout(exitTimeoutId)
       exitTimeoutId = undefined

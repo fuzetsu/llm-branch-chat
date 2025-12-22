@@ -27,10 +27,8 @@ const MessageList: Component<MessageListProps> = (props) => {
 
   const [shouldAutoScroll, setShouldAutoScroll] = createKeyedSignal(true, () => chatId())
 
-  // Get visible messages using store method to handle branching
   const visibleMessages = () => store.getVisibleMessages(props.chat.id)
 
-  // Auto-scroll to bottom when new messages arrive or streaming updates
   let messagesContainer!: HTMLDivElement
   createEffect(() => {
     chatId() // scroll to to bottom when chatId changes
@@ -48,7 +46,6 @@ const MessageList: Component<MessageListProps> = (props) => {
     onCleanup(() => observer.disconnect())
   })
 
-  // Handle scroll to detect if user has scrolled up
   const handleScroll = () => setShouldAutoScroll(isMessageListScrolledToBottom())
 
   return (

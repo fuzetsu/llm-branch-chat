@@ -1,4 +1,3 @@
-// Core message and chat types - Node pool structure
 export interface MessageNode {
   id: string
   role: 'user' | 'assistant' | 'system'
@@ -26,7 +25,6 @@ export interface Chat {
   systemPromptId: string | null
 }
 
-// Settings types
 export interface ProviderConfig {
   name: string
   baseUrl: string
@@ -73,7 +71,6 @@ export interface AppSettings {
   systemPrompts: Map<string, SystemPrompt>
 }
 
-// State types
 export interface AppStateData {
   chats: Map<string, Chat>
   currentChatId: string | null
@@ -81,7 +78,6 @@ export interface AppStateData {
   ui: UISettings
 }
 
-// API types
 export interface StreamCallbacks {
   onStart?: () => void
   onToken: (token: string) => void
@@ -115,7 +111,6 @@ export interface ApiResponse {
   choices: ApiChoice[]
 }
 
-// UI types
 export interface BranchInfo {
   total: number
   current: number
@@ -129,6 +124,5 @@ export interface ConfirmModalOptions {
   onConfirm: () => void
 }
 
-// Utility types
 export type Theme = 'light' | 'dark' | 'auto'
 export type MessageRole = 'user' | 'assistant' | 'system' | 'root'

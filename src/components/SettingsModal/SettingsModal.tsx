@@ -57,25 +57,19 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
     defaultId: null,
   })
 
-  // Computed values
-  const storageSizeInBytes = createMemo(() =>
-    props.isOpen ? new TextEncoder().encode(exportStateToJson(store.state)).length : 0,
-  )
+  const storageSizeInBytes = () => new TextEncoder().encode(exportStateToJson(store.state)).length
 
   const allAvailableModels = createMemo(() => getAllAvailableModels(providersForm.providers))
   const groupedModels = createMemo(() => getModelsGroupedByProvider(providersForm.providers))
 
-  // Load current settings into forms when modal opens
   createEffect(() => {
     if (props.isOpen) {
       const settings = untrack(() => unwrap(store.state.settings))
 
-      // Load providers
       setProvidersForm({
         providers: new Map(settings.api.providers),
       })
 
-      // Load chat settings
       setChatForm({
         model: settings.chat.model,
         temperature: settings.chat.temperature,
@@ -85,23 +79,19 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
         titleModel: settings.chat.titleModel,
       })
 
-      // Load UI settings
       setUiForm({
         theme: settings.ui.theme,
       })
 
-      // Load system prompts
       setSystemPromptsForm({
         prompts: new Map(settings.systemPrompts),
         defaultId: settings.chat.defaultSystemPromptId,
       })
 
-      // Reset import state
       setImportState(null)
     }
   })
 
-  // Import/Export handlers
   const handleExportState = () => {
     try {
       const jsonData = exportStateToJson(store.state, true)
@@ -145,7 +135,6 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
     createFileInput((content) => handleImportState(content), '.json')
   }
 
-  // Save all settings
   const handleSave = () => {
     store.updateSettings({
       api: {
@@ -178,7 +167,6 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
     props.onClose()
   }
 
-  // Tab styling
   const tabClass = (tabName: Tab) =>
     classnames(
       'py-2 px-1 border-b-2 font-medium text-sm cursor-pointer transition-colors',

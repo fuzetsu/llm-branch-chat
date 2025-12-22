@@ -23,7 +23,6 @@ const AnimatedShow: Component<AnimatedShowProps> = (props) => {
   createEffect(() => {
     const shouldShow = props.when
     if (shouldShow) {
-      // Cancel any pending exit
       if (exitTimeout) {
         clearTimeout(exitTimeout)
         exitTimeout = undefined
@@ -31,7 +30,6 @@ const AnimatedShow: Component<AnimatedShowProps> = (props) => {
       setMounted(true)
       setExiting(false)
     } else if (mounted()) {
-      // Start exit animation
       setExiting(true)
       const duration = props.exitDuration ?? 150
       exitTimeout = window.setTimeout(() => {

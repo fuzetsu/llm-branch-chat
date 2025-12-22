@@ -176,7 +176,6 @@ const ChatStatsModal: Component<ChatStatsModalProps> = (props) => {
   )
 }
 
-// Component for summary cards
 const SummaryCard: Component<{
   label: string
   value: number
@@ -192,7 +191,6 @@ const SummaryCard: Component<{
   )
 }
 
-// Component for token breakdown items
 const TokenBreakdownItem: Component<{
   role: string
   messageCount: number
@@ -220,7 +218,6 @@ const TokenBreakdownItem: Component<{
   )
 }
 
-// Component for stat rows
 const StatRow: Component<{
   label: string
   value: string | number
@@ -233,7 +230,6 @@ const StatRow: Component<{
   )
 }
 
-// Component for model breakdown items
 const ModelBreakdownItem: Component<{
   model: string
   messageCount: number

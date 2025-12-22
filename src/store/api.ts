@@ -44,7 +44,6 @@ export function createApiService(providers: Map<string, ProviderConfig>): ApiSer
       throw new Error(`Provider not found: ${providerInfo.providerName}`)
     }
 
-    // Get or create cached connection
     let connection = connectionCache.get(providerInfo.providerName)
     if (!connection) {
       connection = {
