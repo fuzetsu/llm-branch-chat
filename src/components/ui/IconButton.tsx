@@ -2,7 +2,14 @@ import { Component } from 'solid-js'
 import Icon, { IconName } from './Icon'
 import { classnames } from '../../utils'
 
-type IconButtonVariant = 'ghost' | 'ghost-light' | 'danger' | 'danger-light' | 'success' | 'cancel' | 'compact'
+type IconButtonVariant =
+  | 'ghost'
+  | 'ghost-light'
+  | 'danger'
+  | 'danger-light'
+  | 'success'
+  | 'cancel'
+  | 'compact'
 type IconButtonSize = 'sm' | 'md'
 
 interface IconButtonProps {

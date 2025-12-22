@@ -59,7 +59,7 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
 
   // Computed values
   const storageSizeInBytes = createMemo(() =>
-    props.isOpen ? new TextEncoder().encode(exportStateToJson(store.state)).length : 0
+    props.isOpen ? new TextEncoder().encode(exportStateToJson(store.state)).length : 0,
   )
 
   const allAvailableModels = createMemo(() => getAllAvailableModels(providersForm.providers))
@@ -183,7 +183,7 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
       'py-2 px-1 border-b-2 font-medium text-sm cursor-pointer transition-colors',
       activeTab() === tabName
         ? 'border-primary text-primary'
-        : 'border-transparent text-text-muted hover:text-text-secondary'
+        : 'border-transparent text-text-muted hover:text-text-secondary',
     )
 
   return (

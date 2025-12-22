@@ -65,10 +65,7 @@ const ChatStatsModal: Component<ChatStatsModalProps> = (props) => {
         </Button>
       }
     >
-      <Show
-        when={stats()}
-        fallback={<p class="text-text-muted">No chat selected</p>}
-      >
+      <Show when={stats()} fallback={<p class="text-text-muted">No chat selected</p>}>
         {(currentStats) => (
           <div class="space-y-5">
             {/* Summary Section */}
@@ -132,7 +129,10 @@ const ChatStatsModal: Component<ChatStatsModalProps> = (props) => {
             <div>
               <h4 class="text-sm font-medium text-text mb-2">Branch Statistics</h4>
               <div class="grid grid-cols-1 gap-2 text-sm">
-                <StatRow label="Total Branches" value={formatNumber(currentStats().totalBranches)} />
+                <StatRow
+                  label="Total Branches"
+                  value={formatNumber(currentStats().totalBranches)}
+                />
                 <StatRow
                   label="Max Branches per Node"
                   value={formatNumber(currentStats().maxBranchesPerNode)}

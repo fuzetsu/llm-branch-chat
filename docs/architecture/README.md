@@ -4,12 +4,12 @@ This directory contains architecture documentation for deeper understanding of t
 
 ## Quick Reference
 
-| Document | Read when... |
-| -------- | ------------ |
-| [state-management.md](./state-management.md) | Modifying state, adding features |
-| [services.md](./services.md) | Working with API calls, adding providers |
-| [message-model.md](./message-model.md) | Touching message display, editing, or branch navigation |
-| [styling.md](./styling.md) | Working with UI styling, adding components |
+| Document                                     | Read when...                                            |
+| -------------------------------------------- | ------------------------------------------------------- |
+| [state-management.md](./state-management.md) | Modifying state, adding features                        |
+| [services.md](./services.md)                 | Working with API calls, adding providers                |
+| [message-model.md](./message-model.md)       | Touching message display, editing, or branch navigation |
+| [styling.md](./styling.md)                   | Working with UI styling, adding components              |
 
 ## Key Design Decisions
 

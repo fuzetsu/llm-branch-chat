@@ -19,7 +19,7 @@ const Sidebar: Component = () => {
     <aside
       class={classnames(
         'fixed inset-y-0 left-0 z-40 w-80 bg-surface border-r border-border transition-transform duration-300 ease-in-out lg:translate-x-0',
-        store.state.ui.sidebarCollapsed ? '-translate-x-full' : 'translate-x-0'
+        store.state.ui.sidebarCollapsed ? '-translate-x-full' : 'translate-x-0',
       )}
     >
       <div class="flex flex-col h-full pt-15">

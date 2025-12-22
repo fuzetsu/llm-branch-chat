@@ -47,7 +47,7 @@ const Modal: Component<ModalProps> = (props) => {
             'relative w-full max-h-[90vh] overflow-hidden',
             'bg-surface shadow-xl rounded-xl border border-border',
             'flex flex-col',
-            sizeClasses[size()]
+            sizeClasses[size()],
           )}
         >
           {/* Header */}

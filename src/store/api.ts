@@ -31,7 +31,9 @@ export function createApiService(providers: Map<string, ProviderConfig>): ApiSer
   // Cache connections per provider to avoid recreating
   const connectionCache = new Map<string, ProviderConnection>()
 
-  const getConnection = (modelWithPrefix: string): { connection: ProviderConnection; model: string } => {
+  const getConnection = (
+    modelWithPrefix: string,
+  ): { connection: ProviderConnection; model: string } => {
     const providerInfo = getProviderForModel(modelWithPrefix, providers)
     if (!providerInfo) {
       throw new Error(`No provider found for model: ${modelWithPrefix}`)
@@ -226,7 +228,10 @@ export function createApiService(providers: Map<string, ProviderConfig>): ApiSer
       }
     },
 
-    async generateTitle(messages: MessageNode[], titleModelWithPrefix: string): Promise<string | null> {
+    async generateTitle(
+      messages: MessageNode[],
+      titleModelWithPrefix: string,
+    ): Promise<string | null> {
       const { connection, model } = getConnection(titleModelWithPrefix)
       const titlePrompt = buildTitlePrompt(messages)
       const url = buildUrl(connection.baseUrl, false)

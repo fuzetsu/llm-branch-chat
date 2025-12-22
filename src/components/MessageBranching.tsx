@@ -46,7 +46,7 @@ const MessageBranching: Component<MessageBranchingProps> = (props) => {
           <div
             class={classnames(
               'flex items-center gap-2 mt-2 text-xs',
-              props.isUserMessage ? 'text-message-user-text opacity-80' : 'text-text-muted'
+              props.isUserMessage ? 'text-message-user-text opacity-80' : 'text-text-muted',
             )}
           >
             <span>Branch</span>
@@ -66,7 +66,7 @@ const MessageBranching: Component<MessageBranchingProps> = (props) => {
                           : 'bg-primary text-white'
                         : props.isUserMessage
                           ? 'text-message-user-text opacity-80'
-                          : 'text-text-secondary'
+                          : 'text-text-secondary',
                     )}
                     onClick={() => handleBranchSwitch(index)}
                   >

@@ -78,10 +78,7 @@ const MessageInput: Component = () => {
       <div class="flex gap-2">
         <textarea
           ref={setInput}
-          class={classnames(
-            inputBaseStyles,
-            'flex-1 resize-none rounded-lg px-4 py-2'
-          )}
+          class={classnames(inputBaseStyles, 'flex-1 resize-none rounded-lg px-4 py-2')}
           placeholder={isStreaming() ? 'Waiting for response...' : 'Type your message...'}
           rows="1"
           value={inputValue()}

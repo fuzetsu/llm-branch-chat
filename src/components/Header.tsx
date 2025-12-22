@@ -65,7 +65,11 @@ const Header: Component = () => {
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as HTMLElement
       // Don't close if clicking on the menu container or the system prompt indicator
-      if (showMoreMenu() && !target.closest('.more-menu-container') && !target.closest('.system-prompt-indicator')) {
+      if (
+        showMoreMenu() &&
+        !target.closest('.more-menu-container') &&
+        !target.closest('.system-prompt-indicator')
+      ) {
         setShowMoreMenu(false)
       }
     }
@@ -104,7 +108,11 @@ const Header: Component = () => {
             variant="ghost"
             class="hidden lg:flex system-prompt-indicator"
             onClick={() => setShowMoreMenu(!showMoreMenu())}
-            title={hasSystemPrompt() ? `System prompt: ${currentSystemPrompt()!.title}` : 'No system prompt'}
+            title={
+              hasSystemPrompt()
+                ? `System prompt: ${currentSystemPrompt()!.title}`
+                : 'No system prompt'
+            }
           >
             <Icon
               name="file-text"

@@ -41,9 +41,7 @@ const ChatList: Component = () => {
         )}
       </For>
       <Show when={activeChats().length === 0 && archivedChats().length === 0}>
-        <div class="text-text-muted text-center py-8">
-          No chats yet. Start a new conversation!
-        </div>
+        <div class="text-text-muted text-center py-8">No chats yet. Start a new conversation!</div>
       </Show>
 
       <Show when={archivedChats().length > 0}>
@@ -59,7 +57,7 @@ const ChatList: Component = () => {
               size="sm"
               class={classnames(
                 'transform transition-transform',
-                !isArchivedSectionCollapsed() && 'rotate-180'
+                !isArchivedSectionCollapsed() && 'rotate-180',
               )}
             />
           </Button>

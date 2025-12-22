@@ -35,7 +35,7 @@ const Select: Component<SelectProps> = (props) => {
         inputBaseStyles,
         'cursor-pointer',
         props.fullWidth !== false && inputFullWidth,
-        props.class
+        props.class,
       )}
       value={currentValue()}
       onChange={handleChange}

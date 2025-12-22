@@ -20,7 +20,7 @@ const Checkbox: Component<CheckboxProps> = (props) => {
       class={classnames(
         'flex items-center text-sm font-medium text-text-secondary',
         props.disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer',
-        props.class
+        props.class,
       )}
     >
       <input

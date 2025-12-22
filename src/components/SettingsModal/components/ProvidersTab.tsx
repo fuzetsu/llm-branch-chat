@@ -75,7 +75,7 @@ const ProvidersTab: Component<ProvidersTabProps> = (props) => {
       providerForm.name,
       providerForm.baseUrl,
       providerForm.key,
-      models
+      models,
     )
 
     const newProviders = new Map(props.providers)
@@ -171,9 +171,7 @@ const ProvidersTab: Component<ProvidersTabProps> = (props) => {
       <Show when={props.importState}>
         <div
           class={`p-3 rounded-md text-sm mb-4 ${
-            props.importState?.success
-              ? 'bg-success/10 text-success'
-              : 'bg-danger/10 text-danger'
+            props.importState?.success ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'
           }`}
         >
           {props.importState?.message}

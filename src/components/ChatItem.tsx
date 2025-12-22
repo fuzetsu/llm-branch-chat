@@ -112,7 +112,7 @@ const ChatItem: Component<ChatItemProps> = (props) => {
           'group mb-2 rounded-lg cursor-pointer transition-all duration-200 relative',
           props.isSelected
             ? 'bg-primary text-white shadow-md'
-            : 'hover:bg-surface-hover text-text hover:shadow-sm'
+            : 'hover:bg-surface-hover text-text hover:shadow-sm',
         )}
         onClick={() => props.onSelect()}
         onDblClick={(e) => e.preventDefault()}
@@ -128,7 +128,7 @@ const ChatItem: Component<ChatItemProps> = (props) => {
                   'font-medium truncate transition-all duration-200',
                   isEditing()
                     ? 'bg-white/10 rounded px-2 py-1 -mx-2 -my-1 ring-1 ring-primary/30'
-                    : 'rounded px-2 py-1 -mx-2 -my-1'
+                    : 'rounded px-2 py-1 -mx-2 -my-1',
                 )}
                 onKeyDown={handleContentKeyDown}
                 onBlur={handleContentBlur}
@@ -136,7 +136,12 @@ const ChatItem: Component<ChatItemProps> = (props) => {
               >
                 {props.chat.title}
               </div>
-              <div class={classnames('text-sm mt-1', props.isSelected ? 'text-white/70' : 'text-text-muted')}>
+              <div
+                class={classnames(
+                  'text-sm mt-1',
+                  props.isSelected ? 'text-white/70' : 'text-text-muted',
+                )}
+              >
                 {formatDate(props.chat.updatedAt)}
               </div>
             </div>
@@ -144,7 +149,7 @@ const ChatItem: Component<ChatItemProps> = (props) => {
               <div
                 class={classnames(
                   'flex items-center gap-1 ml-2',
-                  !isMobileBrowser() && 'opacity-0 group-hover:opacity-100 transition-opacity'
+                  !isMobileBrowser() && 'opacity-0 group-hover:opacity-100 transition-opacity',
                 )}
               >
                 <IconButton

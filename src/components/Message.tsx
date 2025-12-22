@@ -52,7 +52,7 @@ const Message: Component<MessageProps> = (props) => {
           props.message.parentId,
           newContent,
           props.message.role,
-          props.message.model || props.chat.model || store.state.settings.chat.model
+          props.message.model || props.chat.model || store.state.settings.chat.model,
         )
         // If this is a user message, automatically generate assistant response
         if (isUser()) {
@@ -102,7 +102,7 @@ const Message: Component<MessageProps> = (props) => {
   })
 
   const streamingClassName = createMemo(() =>
-    props.isStreaming && store.getStreamingContent().length <= 30 ? 'animate-pulse' : null
+    props.isStreaming && store.getStreamingContent().length <= 30 ? 'animate-pulse' : null,
   )
 
   const fullMessageDate = () => new Date(props.message.timestamp).toLocaleString()
@@ -113,9 +113,11 @@ const Message: Component<MessageProps> = (props) => {
         ref={messageRef}
         class={classnames(
           'relative w-full max-w-2xl px-4 py-3 rounded-lg transition-all duration-300',
-          isUser() ? 'bg-message-user text-message-user-text' : 'bg-message-assistant text-message-assistant-text',
+          isUser()
+            ? 'bg-message-user text-message-user-text'
+            : 'bg-message-assistant text-message-assistant-text',
           streamingClassName(),
-          isFlashing() && 'ring-4 ring-accent ring-opacity-100'
+          isFlashing() && 'ring-4 ring-accent ring-opacity-100',
         )}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
