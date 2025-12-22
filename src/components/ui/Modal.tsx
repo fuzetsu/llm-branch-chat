@@ -66,7 +66,6 @@ const Modal: Component<ModalProps> = (props) => {
   return (
     <Show when={mounted()}>
       <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
-        {/* Backdrop */}
         <div
           class={classnames(
             'fixed inset-0 bg-black/50',
@@ -75,7 +74,6 @@ const Modal: Component<ModalProps> = (props) => {
           onClick={handleBackdropClick}
         />
 
-        {/* Modal container */}
         <div
           class={classnames(
             'relative w-full max-h-[90vh] overflow-hidden',
@@ -85,7 +83,6 @@ const Modal: Component<ModalProps> = (props) => {
             sizeClasses[size()],
           )}
         >
-          {/* Header */}
           <div class="flex items-center justify-between px-5 py-3 border-b border-border shrink-0">
             <h3 class="text-lg font-medium text-text tracking-tight">{props.title}</h3>
             <button
@@ -96,13 +93,10 @@ const Modal: Component<ModalProps> = (props) => {
             </button>
           </div>
 
-          {/* Header extra (e.g., tabs) */}
           <Show when={props.headerExtra}>{props.headerExtra}</Show>
 
-          {/* Content */}
           <div class="flex-1 overflow-y-auto p-5">{props.children}</div>
 
-          {/* Footer (optional) */}
           <Show when={props.footer}>
             <div class="flex justify-end gap-3 px-5 py-3 border-t border-border shrink-0">
               {props.footer}

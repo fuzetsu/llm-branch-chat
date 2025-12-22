@@ -22,9 +22,6 @@ export const inputBaseStyles = [
   'transition-colors',
 ].join(' ')
 
-/**
- * Full width modifier for inputs.
- */
 export const inputFullWidth = 'w-full'
 
 /**
@@ -36,25 +33,13 @@ export const cardBaseStyles = [
   'transition-colors',
 ].join(' ')
 
-/**
- * Base styles for section containers.
- */
 export const sectionStyles = 'space-y-3'
 
-/**
- * Base styles for form labels.
- */
 export const labelStyles = 'block text-sm font-medium text-text-secondary mb-1.5'
 
-/**
- * Base styles for help/error text below inputs.
- */
 export const helpTextStyles = 'text-xs text-text-muted mt-1'
 export const errorTextStyles = 'text-xs text-danger mt-1'
 
-/**
- * Standard gap sizes for flex/grid layouts.
- */
 export const gaps = {
   xs: 'gap-1',
   sm: 'gap-2',

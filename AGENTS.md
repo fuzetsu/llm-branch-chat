@@ -40,6 +40,21 @@ For deeper understanding, see `docs/architecture/README.md` which indexes topic-
 - PascalCase components, camelCase values, SCREAMING_SNAKE_CASE shared constants.
 - Export shared props and interfaces from `src/types` to keep stores and components aligned.
 
+## Code Comments & Documentation
+
+Comments should explain **why**, not **what**. Add comments for:
+- Complex algorithms or non-obvious design choices
+- Workarounds and their necessity
+- JSDoc for exported utilities with complex behavior
+
+Avoid redundant comments:
+- ❌ Structural labels (`// Header`, `// Backdrop`)
+- ❌ Layout descriptions (`// Left side: controls`)
+- ❌ Restating CSS classes (`// visible on lg+` for `hidden lg:block`)
+- ❌ Self-documenting function names (`/** Debounces a function */` for `debounce()`)
+
+Trust well-named code to be self-documenting. If writing an obvious comment, consider better naming instead.
+
 ## SolidJS Reactivity Tips
 
 - Use `createSignal`/`createStore`; avoid React `useState` habits or mutating props and store slices.

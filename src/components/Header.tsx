@@ -18,7 +18,6 @@ const Header: Component = () => {
 
   const hasActiveChat = createMemo(() => Boolean(store.state.currentChatId))
 
-  // Get current system prompt info
   const currentSystemPromptId = createMemo(() => {
     const chat = store.getCurrentChat()
     return chat?.systemPromptId ?? store.state.settings.chat.defaultSystemPromptId
@@ -85,7 +84,6 @@ const Header: Component = () => {
   return (
     <header class="fixed top-0 left-0 right-0 z-50 bg-surface border-b border-border shadow-sm">
       <div class="flex items-center justify-between px-2 py-2">
-        {/* Left side: hamburger (mobile) + title */}
         <div class="flex items-center gap-1 flex-1 min-w-0">
           <Button variant="ghost" class="lg:hidden p-2 shrink-0" onClick={toggleSidebar}>
             <Icon name="menu" class="text-text-muted" />
@@ -97,14 +95,11 @@ const Header: Component = () => {
           </div>
         </div>
 
-        {/* Right side: controls */}
         <div class="flex items-center gap-1 shrink-0">
-          {/* Model selector - visible on lg+ */}
           <div class="hidden lg:block">
             <ModelSelector class="w-50" />
           </div>
 
-          {/* System prompt indicator - visible on lg+ */}
           <Button
             variant="ghost"
             class="hidden lg:flex system-prompt-indicator"
@@ -121,7 +116,6 @@ const Header: Component = () => {
             />
           </Button>
 
-          {/* Settings + New Chat - visible on md+ */}
           <div class="hidden md:flex items-center gap-1">
             <Button variant="ghost" onClick={handleSettings} tooltip="Settings">
               <Icon name="settings" />
@@ -131,7 +125,6 @@ const Header: Component = () => {
             </Button>
           </div>
 
-          {/* More menu - always visible */}
           <div class="relative more-menu-container">
             <Button
               variant="ghost"
@@ -148,7 +141,6 @@ const Header: Component = () => {
               exitClass="animate-fade-out-slide-up"
             >
               <div class="absolute right-0 mt-2 w-56 bg-surface rounded-lg shadow-lg py-1 z-50 border border-border">
-                {/* Model selector - in menu on < lg */}
                 <div class="lg:hidden">
                   <div class="px-4 py-1.5 text-xs font-medium text-text-muted uppercase tracking-wide">
                     Model
@@ -158,7 +150,6 @@ const Header: Component = () => {
                   </div>
                 </div>
 
-                {/* System Prompt selector - always in menu (indicator on desktop opens this) */}
                 <div>
                   <div class="px-4 py-1.5 text-xs font-medium text-text-muted uppercase tracking-wide">
                     System Prompt
@@ -168,7 +159,6 @@ const Header: Component = () => {
                   </div>
                 </div>
 
-                {/* Stats + Copy - when chat active */}
                 <Show when={hasActiveChat()}>
                   <div class="border-t border-border my-1" />
                   <button class={menuItemClass} onClick={handleStats}>
@@ -181,7 +171,6 @@ const Header: Component = () => {
                   </button>
                 </Show>
 
-                {/* Settings + New Chat - in menu on < md */}
                 <div class="md:hidden">
                   <div class="border-t border-border my-1" />
                   <button class={menuItemClass} onClick={handleSettings}>

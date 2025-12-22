@@ -11,23 +11,14 @@ export function generateId(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2)
 }
 
-/**
- * Generates a unique chat identifier
- */
 export function generateChatId(): string {
   return generateId()
 }
 
-/**
- * Generates a unique message identifier
- */
 export function generateMessageId(): string {
   return generateId()
 }
 
-/**
- * Generates a unique system prompt identifier
- */
 export function generateSystemPromptId(): string {
   return generateId()
 }
@@ -71,9 +62,6 @@ export function querySelectorAll<T extends HTMLElement>(selector: string): NodeL
   return document.querySelectorAll(selector) as NodeListOf<T>
 }
 
-/**
- * Debounces a function call
- */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function debounce<T extends (...args: any[]) => void>(
   func: T,
@@ -92,9 +80,6 @@ export function debounce<T extends (...args: any[]) => void>(
   }
 }
 
-/**
- * Throttles a function call
- */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function throttle<T extends (...args: any[]) => void>(
   func: T,
@@ -120,16 +105,10 @@ export function throttle<T extends (...args: any[]) => void>(
   }
 }
 
-/**
- * Creates a delay promise
- */
 export function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-/**
- * Validates if a string is a valid URL
- */
 export function isValidUrl(string: string): boolean {
   try {
     new URL(string)
@@ -139,9 +118,6 @@ export function isValidUrl(string: string): boolean {
   }
 }
 
-/**
- * Truncates text to a specified length with ellipsis
- */
 export function truncateText(text: string, maxLength: number): string {
   if (text.length <= maxLength) {
     return text
