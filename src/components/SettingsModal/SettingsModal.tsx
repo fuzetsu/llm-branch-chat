@@ -2,7 +2,7 @@ import { Component, createEffect, createMemo, Show, createSignal, untrack } from
 import { createStore, unwrap } from 'solid-js/store'
 import { useAppStore, exportStateToJson, importStateFromJson } from '../../store/AppStore'
 import { downloadJsonFile, createFileInput } from '../../utils/fileUtils'
-import { getAllAvailableModels } from '../../utils/providerUtils'
+import { getAllAvailableModels, getModelsGroupedByProvider } from '../../utils/providerUtils'
 import { classnames } from '../../utils'
 import type { ProviderConfig, SystemPrompt } from '../../types'
 import Icon from '../ui/Icon'
@@ -63,6 +63,7 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
   )
 
   const allAvailableModels = createMemo(() => getAllAvailableModels(providersForm.providers))
+  const groupedModels = createMemo(() => getModelsGroupedByProvider(providersForm.providers))
 
   // Load current settings into forms when modal opens
   createEffect(() => {
@@ -242,7 +243,7 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
               <Show when={activeTab() === 'chat'}>
                 <ChatSettingsTab
                   form={chatForm}
-                  availableModels={allAvailableModels()}
+                  groupedModels={groupedModels()}
                   onUpdate={(key, value) => setChatForm(key, value)}
                 />
               </Show>

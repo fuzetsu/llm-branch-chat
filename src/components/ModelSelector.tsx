@@ -1,6 +1,6 @@
 import { Component } from 'solid-js'
 import { useAppStore } from '../store/AppStore'
-import { getAllAvailableModels } from '../utils/providerUtils'
+import { getModelsGroupedByProvider } from '../utils/providerUtils'
 import Select from './ui/Select'
 import { classnames } from '../utils'
 
@@ -26,12 +26,7 @@ const ModelSelector: Component<ModelSelectorProps> = (props) => {
       class={classnames(props.class, 'truncate')}
       value={currentModel()}
       onChange={handleModelChange}
-      options={() =>
-        getAllAvailableModels(store.state.settings.api.providers).map((model) => ({
-          value: model,
-          label: model,
-        }))
-      }
+      optionGroups={() => getModelsGroupedByProvider(store.state.settings.api.providers)}
     />
   )
 }

@@ -2,6 +2,7 @@ import { Component } from 'solid-js'
 import FormField from '../../ui/FormField'
 import Input from '../../ui/Input'
 import Select from '../../ui/Select'
+import type { SelectOptionGroup } from '../../ui/Select'
 import Checkbox from '../../ui/Checkbox'
 import Slider from '../../ui/Slider'
 
@@ -16,7 +17,7 @@ export interface ChatSettingsForm {
 
 interface ChatSettingsTabProps {
   form: ChatSettingsForm
-  availableModels: string[]
+  groupedModels: SelectOptionGroup[]
   onUpdate: <K extends keyof ChatSettingsForm>(key: K, value: ChatSettingsForm[K]) => void
 }
 
@@ -27,12 +28,7 @@ const ChatSettingsTab: Component<ChatSettingsTabProps> = (props) => {
         <Select
           value={props.form.model}
           onChange={(value) => props.onUpdate('model', value)}
-          options={() =>
-            props.availableModels.map((model) => ({
-              value: model,
-              label: model,
-            }))
-          }
+          optionGroups={props.groupedModels}
           placeholder="Select a model"
         />
       </FormField>
@@ -81,12 +77,7 @@ const ChatSettingsTab: Component<ChatSettingsTabProps> = (props) => {
         <Select
           value={props.form.titleModel}
           onChange={(value) => props.onUpdate('titleModel', value)}
-          options={() =>
-            props.availableModels.map((model) => ({
-              value: model,
-              label: model,
-            }))
-          }
+          optionGroups={props.groupedModels}
           placeholder="Select a model"
         />
       </FormField>

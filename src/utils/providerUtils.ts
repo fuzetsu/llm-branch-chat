@@ -79,6 +79,31 @@ export function getAllAvailableModels(providers: Map<string, ProviderConfig>): s
   return allModels
 }
 
+export interface ModelOptionGroup {
+  label: string
+  options: { value: string; label: string }[]
+}
+
+export function getModelsGroupedByProvider(
+  providers: Map<string, ProviderConfig>,
+): ModelOptionGroup[] {
+  const groups: ModelOptionGroup[] = []
+
+  for (const [providerName, provider] of providers.entries()) {
+    if (provider.availableModels.length > 0) {
+      groups.push({
+        label: providerName,
+        options: provider.availableModels.map((model) => ({
+          value: `${providerName}: ${model}`,
+          label: model,
+        })),
+      })
+    }
+  }
+
+  return groups
+}
+
 export function getProviderForModel(
   modelWithPrefix: string,
   providers: Map<string, ProviderConfig>,
