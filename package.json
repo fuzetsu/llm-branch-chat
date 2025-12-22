@@ -11,6 +11,13 @@
     "lint": "eslint src --ext .ts,.tsx",
     "format": "prettier --write ."
   },
+  "prettier": {
+    "semi": false,
+    "singleQuote": true,
+    "arrowParens": "always",
+    "trailingComma": "all",
+    "printWidth": 100
+  },
   "devDependencies": {
     "@types/marked": "^5.0.2",
     "@types/node": "^24.0.7",
