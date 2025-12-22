@@ -31,13 +31,17 @@ interface ProviderFormProps {
 
 const ProviderForm: Component<ProviderFormProps> = (props) => {
   const [isFetchingModels, setIsFetchingModels] = createSignal(false)
+  const [fetchError, setFetchError] = createSignal<string | null>(null)
 
   const handleFetchModels = async () => {
     setIsFetchingModels(true)
+    setFetchError(null)
     try {
       const models = await fetchModelsFromProvider(props.form.baseUrl, props.form.key)
       props.onUpdate('availableModels', models.join('\n'))
     } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to fetch models'
+      setFetchError(message)
       console.error('Failed to fetch models:', error)
     } finally {
       setIsFetchingModels(false)
@@ -98,6 +102,7 @@ const ProviderForm: Component<ProviderFormProps> = (props) => {
               onInput={(value) => {
                 props.onUpdate('availableModels', value)
                 if (props.errors.models) props.onClearError('models')
+                if (fetchError()) setFetchError(null)
               }}
               class={props.errors.models ? 'border-red-300 dark:border-red-500' : ''}
             />
@@ -115,6 +120,9 @@ const ProviderForm: Component<ProviderFormProps> = (props) => {
                 'Fetch Models Automatically'
               )}
             </Button>
+            <Show when={fetchError()}>
+              <p class="text-sm text-red-600 dark:text-red-400">{fetchError()}</p>
+            </Show>
           </div>
         </FormField>
 
