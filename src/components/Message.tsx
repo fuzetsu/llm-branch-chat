@@ -124,7 +124,7 @@ const Message: Component<MessageProps> = (props) => {
         onMouseLeave={() => setIsHovered(false)}
       >
         <Show when={isHovered() && !isEditing() && !props.isStreaming}>
-          <div class="absolute top-1 right-1 flex items-center gap-1 bg-surface rounded shadow-sm border border-border px-1">
+          <div class="absolute top-1 right-1 flex items-center gap-1 bg-surface rounded shadow-sm border border-border px-1 animate-fade-in">
             <IconButton icon="copy" variant="compact" onClick={handleCopy} tooltip="Copy message" />
             <IconButton icon="edit" variant="compact" onClick={startEdit} tooltip="Edit message" />
             <Show when={isAssistant()}>

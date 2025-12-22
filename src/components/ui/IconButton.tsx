@@ -58,7 +58,7 @@ const IconButton: Component<IconButtonProps> = (props) => {
   }
 
   const baseClasses =
-    'transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed'
+    'transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed active:scale-90'
 
   const iconSize = () => {
     if (props.variant === 'compact') return 'sm'

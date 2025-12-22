@@ -60,7 +60,7 @@ const MessageBranching: Component<MessageBranchingProps> = (props) => {
                       onMouseEnter={() => changeHover(index)}
                       onMouseLeave={() => setHoverIndex(-1)}
                       class={classnames(
-                        'px-2 py-1 rounded text-xs transition-colors cursor-pointer',
+                        'px-2 py-1 rounded text-xs transition-all cursor-pointer active:scale-90',
                         isSelected(index)
                           ? props.isUserMessage
                             ? 'bg-surface text-text'

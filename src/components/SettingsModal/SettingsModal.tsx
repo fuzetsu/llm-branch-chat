@@ -5,7 +5,7 @@ import { downloadJsonFile, createFileInput } from '../../utils/fileUtils'
 import { getAllAvailableModels, getModelsGroupedByProvider } from '../../utils/providerUtils'
 import { classnames } from '../../utils'
 import type { ProviderConfig, SystemPrompt } from '../../types'
-import Icon from '../ui/Icon'
+import Modal from '../ui/Modal'
 import Button from '../ui/Button'
 import ProvidersTab from './components/ProvidersTab'
 import ChatSettingsTab, { type ChatSettingsForm } from './components/ChatSettingsTab'
@@ -187,97 +187,84 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
         : 'border-transparent text-text-muted hover:text-text-secondary',
     )
 
+  const tabs = (
+    <div class="border-b border-border shrink-0">
+      <nav class="flex gap-6 px-5">
+        <button class={tabClass('providers')} onClick={() => setActiveTab('providers')}>
+          Providers
+        </button>
+        <button class={tabClass('chat')} onClick={() => setActiveTab('chat')}>
+          Chat
+        </button>
+        <button class={tabClass('ui')} onClick={() => setActiveTab('ui')}>
+          UI
+        </button>
+        <button class={tabClass('system')} onClick={() => setActiveTab('system')}>
+          System
+        </button>
+      </nav>
+    </div>
+  )
+
+  const footer = (
+    <>
+      <Button variant="secondary" onClick={handleCancel}>
+        Cancel
+      </Button>
+      <Button variant="primary" onClick={handleSave}>
+        Save Settings
+      </Button>
+    </>
+  )
+
   return (
-    <Show when={props.isOpen}>
-      <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
-        {/* Backdrop */}
-        <div class="fixed inset-0 bg-black/50 transition-opacity" onClick={handleCancel} />
+    <Modal
+      isOpen={props.isOpen}
+      onClose={handleCancel}
+      title="Settings"
+      size="xl"
+      headerExtra={tabs}
+      footer={footer}
+    >
+      <div class="space-y-4">
+        <Show when={activeTab() === 'providers'}>
+          <ProvidersTab
+            providers={providersForm.providers}
+            storageSizeInBytes={storageSizeInBytes()}
+            importState={importState()}
+            onUpdateProviders={(providers) => {
+              setProvidersForm({ providers })
+            }}
+            onExportState={handleExportState}
+            onImportState={triggerFileImport}
+          />
+        </Show>
 
-        {/* Modal */}
-        <div class="relative w-full max-w-2xl max-h-[90vh] overflow-hidden bg-surface shadow-xl rounded-xl border border-border flex flex-col">
-          {/* Header */}
-          <div class="flex items-center justify-between px-5 py-3 border-b border-border shrink-0">
-            <h3 class="text-lg font-medium text-text tracking-tight">Settings</h3>
-            <button
-              class="p-1.5 rounded-md hover:bg-surface-hover transition-colors cursor-pointer text-text-muted hover:text-text"
-              onClick={handleCancel}
-            >
-              <Icon name="close" size="sm" />
-            </button>
-          </div>
+        <Show when={activeTab() === 'chat'}>
+          <ChatSettingsTab
+            form={chatForm}
+            groupedModels={groupedModels()}
+            onUpdate={(key, value) => setChatForm(key, value)}
+          />
+        </Show>
 
-          {/* Tabs */}
-          <div class="border-b border-border shrink-0">
-            <nav class="flex gap-6 px-5">
-              <button class={tabClass('providers')} onClick={() => setActiveTab('providers')}>
-                Providers
-              </button>
-              <button class={tabClass('chat')} onClick={() => setActiveTab('chat')}>
-                Chat
-              </button>
-              <button class={tabClass('ui')} onClick={() => setActiveTab('ui')}>
-                UI
-              </button>
-              <button class={tabClass('system')} onClick={() => setActiveTab('system')}>
-                System
-              </button>
-            </nav>
-          </div>
+        <Show when={activeTab() === 'ui'}>
+          <UISettingsTab
+            form={uiForm}
+            onUpdate={(key, value) => setUiForm(key, value as ThemeOption)}
+          />
+        </Show>
 
-          {/* Content */}
-          <div class="flex-1 overflow-y-auto p-5">
-            <div class="space-y-4">
-              <Show when={activeTab() === 'providers'}>
-                <ProvidersTab
-                  providers={providersForm.providers}
-                  storageSizeInBytes={storageSizeInBytes()}
-                  importState={importState()}
-                  onUpdateProviders={(providers) => {
-                    setProvidersForm({ providers })
-                  }}
-                  onExportState={handleExportState}
-                  onImportState={triggerFileImport}
-                />
-              </Show>
-
-              <Show when={activeTab() === 'chat'}>
-                <ChatSettingsTab
-                  form={chatForm}
-                  groupedModels={groupedModels()}
-                  onUpdate={(key, value) => setChatForm(key, value)}
-                />
-              </Show>
-
-              <Show when={activeTab() === 'ui'}>
-                <UISettingsTab
-                  form={uiForm}
-                  onUpdate={(key, value) => setUiForm(key, value as ThemeOption)}
-                />
-              </Show>
-
-              <Show when={activeTab() === 'system'}>
-                <SystemPromptsTab
-                  systemPrompts={systemPromptsForm.prompts}
-                  defaultSystemPromptId={systemPromptsForm.defaultId}
-                  onUpdatePrompts={(prompts) => setSystemPromptsForm('prompts', prompts)}
-                  onUpdateDefaultId={(id) => setSystemPromptsForm('defaultId', id)}
-                />
-              </Show>
-            </div>
-          </div>
-
-          {/* Footer */}
-          <div class="flex justify-end gap-3 px-5 py-3 border-t border-border shrink-0">
-            <Button variant="secondary" onClick={handleCancel}>
-              Cancel
-            </Button>
-            <Button variant="primary" onClick={handleSave}>
-              Save Settings
-            </Button>
-          </div>
-        </div>
+        <Show when={activeTab() === 'system'}>
+          <SystemPromptsTab
+            systemPrompts={systemPromptsForm.prompts}
+            defaultSystemPromptId={systemPromptsForm.defaultId}
+            onUpdatePrompts={(prompts) => setSystemPromptsForm('prompts', prompts)}
+            onUpdateDefaultId={(id) => setSystemPromptsForm('defaultId', id)}
+          />
+        </Show>
       </div>
-    </Show>
+    </Modal>
   )
 }
 

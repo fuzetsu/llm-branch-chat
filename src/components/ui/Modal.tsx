@@ -11,6 +11,8 @@ interface ModalProps {
   size?: ModalSize
   children: JSX.Element
   footer?: JSX.Element
+  /** Content rendered between header and main content (e.g., tabs) */
+  headerExtra?: JSX.Element
   /** Whether clicking backdrop closes modal (default: true) */
   closeOnBackdrop?: boolean
 }
@@ -26,27 +28,27 @@ const Modal: Component<ModalProps> = (props) => {
   const size = () => props.size ?? 'md'
   const closeOnBackdrop = () => props.closeOnBackdrop !== false
 
-  const handleBackdropClick = (e: MouseEvent) => {
-    if (e.target === e.currentTarget && closeOnBackdrop()) {
+  const handleBackdropClick = () => {
+    if (closeOnBackdrop()) {
       props.onClose()
     }
   }
 
   return (
     <Show when={props.isOpen}>
-      <div
-        class="fixed inset-0 z-50 flex items-center justify-center p-4"
-        onClick={handleBackdropClick}
-      >
+      <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
         {/* Backdrop */}
-        <div class="fixed inset-0 bg-black/50 transition-opacity" />
+        <div
+          class="fixed inset-0 bg-black/50 animate-fade-in"
+          onClick={handleBackdropClick}
+        />
 
         {/* Modal container */}
         <div
           class={classnames(
             'relative w-full max-h-[90vh] overflow-hidden',
             'bg-surface shadow-xl rounded-xl border border-border',
-            'flex flex-col',
+            'flex flex-col animate-fade-in-scale',
             sizeClasses[size()],
           )}
         >
@@ -60,6 +62,9 @@ const Modal: Component<ModalProps> = (props) => {
               <Icon name="close" size="sm" />
             </button>
           </div>
+
+          {/* Header extra (e.g., tabs) */}
+          <Show when={props.headerExtra}>{props.headerExtra}</Show>
 
           {/* Content */}
           <div class="flex-1 overflow-y-auto p-5">{props.children}</div>

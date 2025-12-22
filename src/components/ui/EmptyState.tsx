@@ -11,7 +11,7 @@ interface EmptyStateProps {
  */
 const EmptyState: Component<EmptyStateProps> = (props) => {
   return (
-    <div class="text-center py-6 border border-border rounded-lg">
+    <div class="text-center py-6 border border-border rounded-lg animate-fade-in">
       <p class="text-text-muted">{props.title}</p>
       <Show when={props.description}>
         <p class="text-sm text-text-placeholder mt-1">{props.description}</p>

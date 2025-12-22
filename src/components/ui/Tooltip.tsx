@@ -97,7 +97,7 @@ const Tooltip: Component<TooltipProps> = (props) => {
         <Portal>
           <div
             ref={tooltipRef}
-            class="fixed z-[9999] px-2 py-1 text-xs text-white bg-gray-900 rounded shadow-lg whitespace-nowrap pointer-events-none"
+            class="fixed z-[9999] px-2 py-1 text-xs text-white bg-gray-900 rounded shadow-lg whitespace-nowrap pointer-events-none animate-fade-in"
             style={tooltipStyle()}
           >
             {props.content}

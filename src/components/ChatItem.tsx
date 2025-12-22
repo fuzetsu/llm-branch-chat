@@ -147,7 +147,7 @@ const ChatItem: Component<ChatItemProps> = (props) => {
             <Show when={showActions()}>
               <div
                 class={classnames(
-                  'flex items-center gap-1 ml-2',
+                  'flex items-center gap-1 ml-2 animate-fade-in',
                   !isMobileBrowser() && 'opacity-0 group-hover:opacity-100 transition-opacity',
                 )}
               >

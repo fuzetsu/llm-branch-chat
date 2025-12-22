@@ -142,7 +142,7 @@ const Header: Component = () => {
             </Button>
 
             <Show when={showMoreMenu()}>
-              <div class="absolute right-0 mt-2 w-56 bg-surface rounded-lg shadow-lg py-1 z-50 border border-border">
+              <div class="absolute right-0 mt-2 w-56 bg-surface rounded-lg shadow-lg py-1 z-50 border border-border animate-fade-in-slide-down">
                 {/* Model selector - in menu on < lg */}
                 <div class="lg:hidden">
                   <div class="px-4 py-1.5 text-xs font-medium text-text-muted uppercase tracking-wide">

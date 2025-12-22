@@ -63,7 +63,7 @@ const ChatList: Component = () => {
           </Button>
 
           <Show when={!isArchivedSectionCollapsed()}>
-            <div ref={archivedSectionRef} class="mt-2">
+            <div ref={archivedSectionRef} class="mt-2 animate-fade-in">
               <For each={archivedChats()}>
                 {(chat) => (
                   <div data-selected={store.state.currentChatId === chat.id}>

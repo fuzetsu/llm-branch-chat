@@ -50,7 +50,7 @@ const Button: Component<ButtonProps> = (props) => {
   }
 
   const baseClasses =
-    'inline-flex items-center font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-focus-ring focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer'
+    'inline-flex items-center font-medium rounded-md transition-all focus:outline-none focus:ring-2 focus:ring-focus-ring focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer active:scale-[0.97]'
 
   const button = (
     <button
