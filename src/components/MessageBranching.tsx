@@ -3,6 +3,7 @@ import { Chat } from '../types/index.js'
 import { useAppStore } from '../store/AppStore'
 import { block, classnames, debounce } from '../utils'
 import { countDescendants, getRootChildren } from '../utils/messageTree.js'
+import Tooltip from './ui/Tooltip'
 
 interface MessageBranchingProps {
   messageId: string
@@ -53,25 +54,26 @@ const MessageBranching: Component<MessageBranchingProps> = (props) => {
             <div class="flex flex-wrap items-center gap-1">
               <Index each={Array(info().total)}>
                 {(_, index) => (
-                  <button
-                    disabled={isSelected(index)}
-                    title={getBranchCount(index)}
-                    onMouseEnter={() => changeHover(index)}
-                    onMouseLeave={() => setHoverIndex(-1)}
-                    class={classnames(
-                      'px-2 py-1 rounded text-xs transition-colors cursor-pointer',
-                      isSelected(index)
-                        ? props.isUserMessage
-                          ? 'bg-surface text-text'
-                          : 'bg-primary text-white'
-                        : props.isUserMessage
-                          ? 'text-message-user-text opacity-80'
-                          : 'text-text-secondary',
-                    )}
-                    onClick={() => handleBranchSwitch(index)}
-                  >
-                    {index + 1}
-                  </button>
+                  <Tooltip content={getBranchCount(index)} placement="bottom">
+                    <button
+                      disabled={isSelected(index)}
+                      onMouseEnter={() => changeHover(index)}
+                      onMouseLeave={() => setHoverIndex(-1)}
+                      class={classnames(
+                        'px-2 py-1 rounded text-xs transition-colors cursor-pointer',
+                        isSelected(index)
+                          ? props.isUserMessage
+                            ? 'bg-surface text-text'
+                            : 'bg-primary text-white'
+                          : props.isUserMessage
+                            ? 'text-message-user-text opacity-80'
+                            : 'text-text-secondary',
+                      )}
+                      onClick={() => handleBranchSwitch(index)}
+                    >
+                      {index + 1}
+                    </button>
+                  </Tooltip>
                 )}
               </Index>
             </div>

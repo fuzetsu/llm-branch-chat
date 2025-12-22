@@ -4,6 +4,7 @@ import { useAppStore } from '../store/AppStore'
 import MessageBranching from './MessageBranching'
 import IconButton from './ui/IconButton'
 import Textarea from './ui/Textarea'
+import Tooltip from './ui/Tooltip'
 import { relativeTimestamp, throttle, classnames, isMobileBrowser } from '../utils/index.js'
 import { renderMarkdown } from '../utils/markdown.js'
 import Button from './ui/Button.jsx'
@@ -124,14 +125,14 @@ const Message: Component<MessageProps> = (props) => {
       >
         <Show when={isHovered() && !isEditing() && !props.isStreaming}>
           <div class="absolute top-1 right-1 flex items-center gap-1 bg-surface rounded shadow-sm border border-border px-1">
-            <IconButton icon="copy" variant="compact" onClick={handleCopy} title="Copy message" />
-            <IconButton icon="edit" variant="compact" onClick={startEdit} title="Edit message" />
+            <IconButton icon="copy" variant="compact" onClick={handleCopy} tooltip="Copy message" />
+            <IconButton icon="edit" variant="compact" onClick={startEdit} tooltip="Edit message" />
             <Show when={isAssistant()}>
               <IconButton
                 icon="regenerate"
                 variant="compact"
                 onClick={handleRegenerate}
-                title="Regenerate response"
+                tooltip="Regenerate response"
               />
             </Show>
           </div>
@@ -175,7 +176,9 @@ const Message: Component<MessageProps> = (props) => {
         </Show>
 
         <div class="text-xs mt-2 text-text-muted">
-          <span title={fullMessageDate()}>{relativeTimestamp(props.message.timestamp)}</span>
+          <Tooltip content={fullMessageDate()}>
+            <span>{relativeTimestamp(props.message.timestamp)}</span>
+          </Tooltip>
           {props.message.model && <span class="ml-2">• {props.message.model}</span>}
           <Show when={props.isStreaming}>
             <span class="ml-2 animate-pulse">• generating...</span>

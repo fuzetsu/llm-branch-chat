@@ -108,7 +108,7 @@ const Header: Component = () => {
             variant="ghost"
             class="hidden lg:flex system-prompt-indicator"
             onClick={() => setShowMoreMenu(!showMoreMenu())}
-            title={
+            tooltip={
               hasSystemPrompt()
                 ? `System prompt: ${currentSystemPrompt()!.title}`
                 : 'No system prompt'
@@ -122,10 +122,10 @@ const Header: Component = () => {
 
           {/* Settings + New Chat - visible on md+ */}
           <div class="hidden md:flex items-center gap-1">
-            <Button variant="ghost" onClick={handleSettings} title="Settings">
+            <Button variant="ghost" onClick={handleSettings} tooltip="Settings">
               <Icon name="settings" />
             </Button>
-            <Button variant="ghost" onClick={handleNewChat} title="New chat">
+            <Button variant="ghost" onClick={handleNewChat} tooltip="New chat">
               <Icon name="plus" />
             </Button>
           </div>
@@ -136,7 +136,7 @@ const Header: Component = () => {
               variant="ghost"
               class="p-2"
               onClick={() => setShowMoreMenu(!showMoreMenu())}
-              title="More actions"
+              tooltip="More actions"
             >
               <Icon name="more-vertical" class="text-text-muted" />
             </Button>

@@ -132,7 +132,6 @@ const ChatItem: Component<ChatItemProps> = (props) => {
                 )}
                 onKeyDown={handleContentKeyDown}
                 onBlur={handleContentBlur}
-                title="Double-click to edit"
               >
                 {props.chat.title}
               </div>
@@ -157,7 +156,7 @@ const ChatItem: Component<ChatItemProps> = (props) => {
                   variant={props.isSelected ? 'ghost-light' : 'ghost'}
                   onClick={handleContentEdit}
                   stopPropagation
-                  title="Edit title (or double-click)"
+                  tooltip="Edit title"
                 />
                 <Show
                   when={!props.isArchived}
@@ -167,7 +166,7 @@ const ChatItem: Component<ChatItemProps> = (props) => {
                       variant={props.isSelected ? 'ghost-light' : 'ghost'}
                       onClick={handleUnarchive}
                       stopPropagation
-                      title="Unarchive chat"
+                      tooltip="Unarchive chat"
                       class="transform rotate-180"
                     />
                   }
@@ -177,7 +176,7 @@ const ChatItem: Component<ChatItemProps> = (props) => {
                     variant={props.isSelected ? 'ghost-light' : 'ghost'}
                     onClick={handleArchive}
                     stopPropagation
-                    title="Archive chat"
+                    tooltip="Archive chat"
                   />
                 </Show>
                 <IconButton
@@ -185,7 +184,7 @@ const ChatItem: Component<ChatItemProps> = (props) => {
                   variant={props.isSelected ? 'danger-light' : 'danger'}
                   onClick={handleDelete}
                   stopPropagation
-                  title="Delete chat"
+                  tooltip="Delete chat"
                 />
               </div>
             </Show>

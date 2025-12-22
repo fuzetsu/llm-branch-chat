@@ -1,5 +1,6 @@
-import { Component, JSX } from 'solid-js'
+import { Component, JSX, Show } from 'solid-js'
 import { classnames } from '../../utils'
+import Tooltip from './Tooltip'
 
 type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost' | 'plain'
 type ButtonSize = 'micro' | 'sm' | 'md' | 'lg'
@@ -8,7 +9,7 @@ interface ButtonProps {
   variant?: ButtonVariant
   size?: ButtonSize
   onClick?: () => void
-  title?: string
+  tooltip?: string
   disabled?: boolean
   class?: string
   children: JSX.Element
@@ -51,16 +52,21 @@ const Button: Component<ButtonProps> = (props) => {
   const baseClasses =
     'inline-flex items-center font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-focus-ring focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer'
 
-  return (
+  const button = (
     <button
       type={props.type || 'button'}
       class={classnames(baseClasses, getVariantClasses(), getSizeClasses(), props.class)}
       onClick={() => props.onClick?.()}
       disabled={props.disabled}
-      title={props.title}
     >
       {props.children}
     </button>
+  )
+
+  return (
+    <Show when={props.tooltip} fallback={button}>
+      <Tooltip content={props.tooltip!}>{button}</Tooltip>
+    </Show>
   )
 }
 

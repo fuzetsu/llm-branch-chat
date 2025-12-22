@@ -1,6 +1,7 @@
-import { Component } from 'solid-js'
+import { Component, Show } from 'solid-js'
 import Icon, { IconName } from './Icon'
 import { classnames } from '../../utils'
+import Tooltip from './Tooltip'
 
 type IconButtonVariant =
   | 'ghost'
@@ -19,7 +20,7 @@ interface IconButtonProps {
   onClick?: () => void
   disabled?: boolean
   class?: string
-  title?: string
+  tooltip?: string
   stopPropagation?: boolean
 }
 
@@ -71,16 +72,21 @@ const IconButton: Component<IconButtonProps> = (props) => {
     props.onClick?.()
   }
 
-  return (
+  const button = (
     <button
       type="button"
       class={classnames(baseClasses, getVariantClasses(), getSizeClasses(), props.class)}
       onClick={handleClick}
       disabled={props.disabled}
-      title={props.title}
     >
       <Icon name={props.icon} size={iconSize()} />
     </button>
+  )
+
+  return (
+    <Show when={props.tooltip} fallback={button}>
+      <Tooltip content={props.tooltip!}>{button}</Tooltip>
+    </Show>
   )
 }
 
