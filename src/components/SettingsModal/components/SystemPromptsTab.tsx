@@ -1,17 +1,20 @@
 import { Component, createMemo, For, Show, createSignal } from 'solid-js'
 import { createStore } from 'solid-js/store'
-import type { SystemPrompt } from '../types/index.js'
-import { generateSystemPromptId } from '../utils/index.js'
-import Button from './ui/Button'
-import Input from './ui/Input'
-import Textarea from './ui/Textarea'
-import FormField from './ui/FormField'
+import type { SystemPrompt } from '../../../types'
+import { generateSystemPromptId } from '../../../utils'
+import Button from '../../ui/Button'
+import Input from '../../ui/Input'
+import Textarea from '../../ui/Textarea'
+import FormField from '../../ui/FormField'
+import ItemCard from '../../ui/ItemCard'
+import EmptyState from '../../ui/EmptyState'
+import SectionHeader from '../../ui/SectionHeader'
 
 interface SystemPromptsTabProps {
   systemPrompts: Map<string, SystemPrompt>
   defaultSystemPromptId: string | null
-  onUpdateSystemPrompts: (prompts: Map<string, SystemPrompt>) => void
-  onUpdateDefaultSystemPromptId: (id: string | null) => void
+  onUpdatePrompts: (prompts: Map<string, SystemPrompt>) => void
+  onUpdateDefaultId: (id: string | null) => void
 }
 
 const SystemPromptsTab: Component<SystemPromptsTabProps> = (props) => {
@@ -27,6 +30,13 @@ const SystemPromptsTab: Component<SystemPromptsTabProps> = (props) => {
 
   const disableSubmit = createMemo(() => !promptForm.title.trim() || !promptForm.content.trim())
 
+  const isEditing = () => editingPromptId() !== null
+
+  const resetForm = () => {
+    setEditingPromptId(null)
+    setPromptForm({ title: '', content: '' })
+  }
+
   const handleAddPrompt = () => {
     if (disableSubmit()) return
 
@@ -40,10 +50,8 @@ const SystemPromptsTab: Component<SystemPromptsTabProps> = (props) => {
     const newPrompts = new Map(props.systemPrompts)
     newPrompts.set(newPromptId, newPrompt)
 
-    props.onUpdateSystemPrompts(newPrompts)
-
-    // Reset form
-    setPromptForm({ title: '', content: '' })
+    props.onUpdatePrompts(newPrompts)
+    resetForm()
   }
 
   const handleEditPrompt = (promptId: string) => {
@@ -71,11 +79,8 @@ const SystemPromptsTab: Component<SystemPromptsTabProps> = (props) => {
     const newPrompts = new Map(props.systemPrompts)
     newPrompts.set(promptId, updatedPrompt)
 
-    props.onUpdateSystemPrompts(newPrompts)
-
-    // Reset form
-    setEditingPromptId(null)
-    setPromptForm({ title: '', content: '' })
+    props.onUpdatePrompts(newPrompts)
+    resetForm()
   }
 
   const handleDeletePrompt = (promptId: string) => {
@@ -88,55 +93,40 @@ const SystemPromptsTab: Component<SystemPromptsTabProps> = (props) => {
 
     // If deleting the default prompt, clear the default
     if (promptId === props.defaultSystemPromptId) {
-      props.onUpdateDefaultSystemPromptId(null)
+      props.onUpdateDefaultId(null)
     }
 
-    props.onUpdateSystemPrompts(newPrompts)
+    props.onUpdatePrompts(newPrompts)
   }
 
   const handleSetDefaultPrompt = (promptId: string) => {
     if (promptId === props.defaultSystemPromptId) {
-      props.onUpdateDefaultSystemPromptId(null)
+      props.onUpdateDefaultId(null)
     } else {
-      props.onUpdateDefaultSystemPromptId(promptId)
+      props.onUpdateDefaultId(promptId)
     }
   }
-
-  const isEditing = () => editingPromptId() !== null
 
   return (
     <div class="space-y-6">
       {/* System Prompts List */}
       <div class="space-y-4">
-        <h4 class="text-md font-medium text-gray-900 dark:text-white">System Prompts</h4>
+        <SectionHeader title="System Prompts" />
 
         <Show when={promptsList().length === 0}>
-          <div class="text-center py-8 border border-gray-200 dark:border-dark-border rounded-lg">
-            <p class="text-gray-500 dark:text-gray-400">No system prompts configured</p>
-            <p class="text-sm text-gray-400 dark:text-gray-500 mt-1">
-              Add your first system prompt to get started
-            </p>
-          </div>
+          <EmptyState
+            title="No system prompts configured"
+            description="Add your first system prompt to get started"
+          />
         </Show>
 
         <For each={promptsList()}>
           {(prompt) => (
-            <div class="border border-gray-200 dark:border-dark-border rounded-lg p-2 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-colors">
-              <div class="flex justify-between items-center flex-wrap md:flex-nowrap gap-2">
-                <div>
-                  <div class="flex items-center gap-2">
-                    <span class="font-medium text-gray-900 dark:text-white">{prompt.title}</span>
-                    <Show when={props.defaultSystemPromptId === prompt.id}>
-                      <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
-                        Default
-                      </span>
-                    </Show>
-                  </div>
-                  <p class="text-sm text-gray-500 dark:text-gray-400 mt-2 whitespace-pre-wrap line-clamp-3">
-                    {prompt.content}
-                  </p>
-                </div>
-                <div class="flex gap-2">
+            <ItemCard
+              title={prompt.title}
+              badge={props.defaultSystemPromptId === prompt.id ? 'Default' : undefined}
+              actions={
+                <>
                   <Button
                     variant="secondary"
                     size="sm"
@@ -150,18 +140,23 @@ const SystemPromptsTab: Component<SystemPromptsTabProps> = (props) => {
                   <Button variant="danger" size="sm" onClick={() => handleDeletePrompt(prompt.id)}>
                     Delete
                   </Button>
-                </div>
-              </div>
-            </div>
+                </>
+              }
+            >
+              <p class="text-sm text-gray-500 dark:text-gray-400 whitespace-pre-wrap line-clamp-3">
+                {prompt.content}
+              </p>
+            </ItemCard>
           )}
         </For>
       </div>
 
       {/* System Prompt Form */}
       <div ref={formSection} class="border-gray-200 dark:border-dark-border">
-        <h4 class="text-md font-medium text-gray-900 dark:text-white mb-4">
-          {isEditing() ? 'Edit System Prompt' : 'Add New System Prompt'}
-        </h4>
+        <SectionHeader
+          title={isEditing() ? 'Edit System Prompt' : 'Add New System Prompt'}
+          class="mb-4"
+        />
 
         <div class="space-y-4">
           <FormField label="Prompt Title">
@@ -184,13 +179,7 @@ const SystemPromptsTab: Component<SystemPromptsTabProps> = (props) => {
 
           <div class="flex space-x-2">
             <Show when={isEditing()}>
-              <Button
-                variant="secondary"
-                onClick={() => {
-                  setEditingPromptId(null)
-                  setPromptForm({ title: '', content: '' })
-                }}
-              >
+              <Button variant="secondary" onClick={resetForm}>
                 Cancel Edit
               </Button>
               <Button variant="primary" disabled={disableSubmit()} onClick={handleUpdatePrompt}>
@@ -210,4 +199,3 @@ const SystemPromptsTab: Component<SystemPromptsTabProps> = (props) => {
 }
 
 export default SystemPromptsTab
-

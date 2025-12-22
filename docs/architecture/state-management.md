@@ -16,13 +16,13 @@ Components read state, call operations
 
 ```typescript
 {
-  chats: Map<string, Chat>        // All conversations keyed by ID
-  currentChatId: string | null    // Active chat selection
-  settings: AppSettings           // API config, UI prefs, defaults
+  chats: Map<string, Chat> // All conversations keyed by ID
+  currentChatId: string | null // Active chat selection
+  settings: AppSettings // API config, UI prefs, defaults
   streaming: {
-    isStreaming: boolean          // Lock for concurrent requests
-    currentMessageId: string      // Message being streamed into
-    currentContent: string        // Accumulated stream content
+    isStreaming: boolean // Lock for concurrent requests
+    currentMessageId: string // Message being streamed into
+    currentContent: string // Accumulated stream content
   }
 }
 ```

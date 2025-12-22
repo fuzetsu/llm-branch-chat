@@ -2,12 +2,12 @@
 
 ## Service Responsibilities
 
-| Service | Purpose |
-|---------|---------|
-| **ApiService** | Low-level HTTP/streaming to a single provider endpoint |
+| Service                | Purpose                                                      |
+| ---------------------- | ------------------------------------------------------------ |
+| **ApiService**         | Low-level HTTP/streaming to a single provider endpoint       |
 | **ProviderApiService** | Routes requests to correct provider based on model selection |
-| **MessageService** | Orchestrates message creation, streaming, and error handling |
-| **TitleService** | Auto-generates chat titles after N messages |
+| **MessageService**     | Orchestrates message creation, streaming, and error handling |
+| **TitleService**       | Auto-generates chat titles after N messages                  |
 
 ## Provider Abstraction
 

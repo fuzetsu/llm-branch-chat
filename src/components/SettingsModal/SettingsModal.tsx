@@ -1,0 +1,288 @@
+import { Component, createEffect, createMemo, Show, createSignal, untrack } from 'solid-js'
+import { createStore, unwrap } from 'solid-js/store'
+import { useAppStore, exportStateToJson, importStateFromJson } from '../../store/AppStore'
+import { downloadJsonFile, createFileInput } from '../../utils/fileUtils'
+import { getAllAvailableModels } from '../../utils/providerUtils'
+import { classnames } from '../../utils'
+import type { ProviderConfig, SystemPrompt } from '../../types'
+import Icon from '../ui/Icon'
+import Button from '../ui/Button'
+import ProvidersTab from './components/ProvidersTab'
+import ChatSettingsTab, { type ChatSettingsForm } from './components/ChatSettingsTab'
+import UISettingsTab, { type UISettingsForm, type ThemeOption } from './components/UISettingsTab'
+import SystemPromptsTab from './components/SystemPromptsTab'
+
+interface SettingsModalProps {
+  isOpen: boolean
+  onClose: () => void
+}
+
+type Tab = 'providers' | 'chat' | 'ui' | 'system'
+
+const SettingsModal: Component<SettingsModalProps> = (props) => {
+  const store = useAppStore()
+  const [activeTab, setActiveTab] = createSignal<Tab>('providers')
+
+  // Import/export state feedback
+  const [importState, setImportState] = createSignal<{
+    success: boolean
+    message: string
+  } | null>(null)
+
+  // Form state for all settings - kept local until save
+  const [providersForm, setProvidersForm] = createStore<{
+    providers: Map<string, ProviderConfig>
+    defaultProvider: string
+  }>({
+    providers: new Map(),
+    defaultProvider: '',
+  })
+
+  const [chatForm, setChatForm] = createStore<ChatSettingsForm>({
+    model: '',
+    temperature: 0.7,
+    maxTokens: 2048,
+    autoGenerateTitle: true,
+    titleGenerationTrigger: 2,
+    titleModel: '',
+  })
+
+  const [uiForm, setUiForm] = createStore<UISettingsForm>({
+    theme: 'auto',
+  })
+
+  const [systemPromptsForm, setSystemPromptsForm] = createStore<{
+    prompts: Map<string, SystemPrompt>
+    defaultId: string | null
+  }>({
+    prompts: new Map(),
+    defaultId: null,
+  })
+
+  // Computed values
+  const storageSizeInBytes = createMemo(() =>
+    props.isOpen ? new TextEncoder().encode(exportStateToJson(store.state)).length : 0,
+  )
+
+  const allAvailableModels = createMemo(() => getAllAvailableModels(providersForm.providers))
+
+  // Load current settings into forms when modal opens
+  createEffect(() => {
+    if (props.isOpen) {
+      const settings = untrack(() => unwrap(store.state.settings))
+
+      // Load providers
+      setProvidersForm({
+        providers: new Map(settings.api.providers),
+        defaultProvider: settings.api.defaultProvider,
+      })
+
+      // Load chat settings
+      setChatForm({
+        model: settings.chat.model,
+        temperature: settings.chat.temperature,
+        maxTokens: settings.chat.maxTokens,
+        autoGenerateTitle: settings.chat.autoGenerateTitle,
+        titleGenerationTrigger: settings.chat.titleGenerationTrigger,
+        titleModel: settings.chat.titleModel,
+      })
+
+      // Load UI settings
+      setUiForm({
+        theme: settings.ui.theme,
+      })
+
+      // Load system prompts
+      setSystemPromptsForm({
+        prompts: new Map(settings.systemPrompts),
+        defaultId: settings.chat.defaultSystemPromptId,
+      })
+
+      // Reset import state
+      setImportState(null)
+    }
+  })
+
+  // Import/Export handlers
+  const handleExportState = () => {
+    try {
+      const jsonData = exportStateToJson(store.state, true)
+      const filename = `llm-chat-state-export-${new Date().toISOString().split('T')[0]}.json`
+      downloadJsonFile(jsonData, filename)
+    } catch (error) {
+      console.error('Failed to export state:', error)
+      setImportState({
+        success: false,
+        message: 'Failed to export state. Please try again.',
+      })
+    }
+  }
+
+  const handleImportState = (content: string) => {
+    setImportState(null)
+
+    try {
+      if (!content.trim()) {
+        throw new Error('Empty file')
+      }
+
+      const newState = importStateFromJson(content)
+      store.replaceState(newState)
+
+      setImportState({
+        success: true,
+        message: 'State imported successfully!',
+      })
+      setTimeout(() => setImportState(null), 3000)
+    } catch (error) {
+      console.error('Failed to import state:', error)
+      setImportState({
+        success: false,
+        message: error instanceof Error ? error.message : 'Failed to import state',
+      })
+    }
+  }
+
+  const triggerFileImport = () => {
+    createFileInput((content) => handleImportState(content), '.json')
+  }
+
+  // Save all settings
+  const handleSave = () => {
+    store.updateSettings({
+      api: {
+        providers: providersForm.providers,
+        defaultProvider: providersForm.defaultProvider,
+      },
+      chat: {
+        model: chatForm.model,
+        availableModels: allAvailableModels(),
+        temperature: chatForm.temperature,
+        maxTokens: chatForm.maxTokens,
+        autoGenerateTitle: chatForm.autoGenerateTitle,
+        titleGenerationTrigger: chatForm.titleGenerationTrigger,
+        titleModel: chatForm.titleModel,
+        defaultSystemPromptId: systemPromptsForm.defaultId,
+      },
+      ui: {
+        theme: uiForm.theme,
+        sidebarCollapsed: store.state.settings.ui.sidebarCollapsed,
+        archivedSectionCollapsed: store.state.settings.ui.archivedSectionCollapsed,
+        isGenerating: store.state.settings.ui.isGenerating,
+        editTextareaSize: store.state.settings.ui.editTextareaSize,
+      },
+      systemPrompts: systemPromptsForm.prompts,
+    })
+
+    props.onClose()
+  }
+
+  const handleCancel = () => {
+    props.onClose()
+  }
+
+  // Tab styling
+  const tabClass = (tabName: Tab) =>
+    classnames(
+      'py-2 px-1 border-b-2 font-medium text-sm cursor-pointer',
+      activeTab() === tabName
+        ? 'border-primary text-primary'
+        : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300',
+    )
+
+  return (
+    <Show when={props.isOpen}>
+      <div class="fixed inset-0 z-50 flex items-center justify-center p-4 transition-opacity duration-300">
+        {/* Backdrop */}
+        <div class="fixed inset-0 bg-gray-500/75 transition-opacity" onClick={handleCancel} />
+
+        {/* Modal */}
+        <div class="relative w-full max-w-2xl max-h-[90vh] overflow-hidden text-left align-middle transition-all transform bg-white dark:bg-dark-surface shadow-xl rounded-2xl border dark:border-dark-border flex flex-col">
+          {/* Header */}
+          <div class="flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-dark-border shrink-0">
+            <h3 class="text-lg font-medium leading-4 text-gray-900 dark:text-white">Settings</h3>
+            <button
+              class="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+              onClick={handleCancel}
+            >
+              <Icon name="close" class="text-gray-400" />
+            </button>
+          </div>
+
+          {/* Tabs */}
+          <div class="border-b border-gray-200 dark:border-dark-border shrink-0">
+            <nav class="flex space-x-8 px-4">
+              <button class={tabClass('providers')} onClick={() => setActiveTab('providers')}>
+                Providers
+              </button>
+              <button class={tabClass('chat')} onClick={() => setActiveTab('chat')}>
+                Chat
+              </button>
+              <button class={tabClass('ui')} onClick={() => setActiveTab('ui')}>
+                UI
+              </button>
+              <button class={tabClass('system')} onClick={() => setActiveTab('system')}>
+                System
+              </button>
+            </nav>
+          </div>
+
+          {/* Content */}
+          <div class="flex-1 overflow-y-auto p-4">
+            <div class="space-y-4">
+              <Show when={activeTab() === 'providers'}>
+                <ProvidersTab
+                  providers={providersForm.providers}
+                  defaultProvider={providersForm.defaultProvider}
+                  storageSizeInBytes={storageSizeInBytes()}
+                  importState={importState()}
+                  onUpdateProviders={(providers, defaultProvider) => {
+                    setProvidersForm({ providers, defaultProvider })
+                  }}
+                  onExportState={handleExportState}
+                  onImportState={triggerFileImport}
+                />
+              </Show>
+
+              <Show when={activeTab() === 'chat'}>
+                <ChatSettingsTab
+                  form={chatForm}
+                  availableModels={allAvailableModels()}
+                  onUpdate={(key, value) => setChatForm(key, value)}
+                />
+              </Show>
+
+              <Show when={activeTab() === 'ui'}>
+                <UISettingsTab
+                  form={uiForm}
+                  onUpdate={(key, value) => setUiForm(key, value as ThemeOption)}
+                />
+              </Show>
+
+              <Show when={activeTab() === 'system'}>
+                <SystemPromptsTab
+                  systemPrompts={systemPromptsForm.prompts}
+                  defaultSystemPromptId={systemPromptsForm.defaultId}
+                  onUpdatePrompts={(prompts) => setSystemPromptsForm('prompts', prompts)}
+                  onUpdateDefaultId={(id) => setSystemPromptsForm('defaultId', id)}
+                />
+              </Show>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div class="flex justify-end space-x-3 px-4 py-2 border-t border-gray-200 dark:border-dark-border shrink-0">
+            <Button variant="secondary" onClick={handleCancel}>
+              Cancel
+            </Button>
+            <Button variant="primary" onClick={handleSave}>
+              Save Settings
+            </Button>
+          </div>
+        </div>
+      </div>
+    </Show>
+  )
+}
+
+export default SettingsModal

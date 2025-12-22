@@ -60,12 +60,12 @@ This gives linear conversation path through the branching structure.
 
 ## Common Operations
 
-| Operation | What happens |
-|-----------|--------------|
-| **Add message** | Create node, append ID to parent's childIds |
-| **Edit message** | Update node content in place |
-| **Regenerate** | Create new sibling node, switch active branch to it |
-| **Switch branch** | Update activeBranches[parentId] to new index |
+| Operation         | What happens                                                |
+| ----------------- | ----------------------------------------------------------- |
+| **Add message**   | Create node, append ID to parent's childIds                 |
+| **Edit message**  | Update node content in place                                |
+| **Regenerate**    | Create new sibling node, switch active branch to it         |
+| **Switch branch** | Update activeBranches[parentId] to new index                |
 | **Delete branch** | Remove node ID from parent's childIds, clean up descendants |
 
 ## Branch Navigation UI

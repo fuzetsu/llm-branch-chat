@@ -22,7 +22,12 @@ export function createMessageNode(
   }
 }
 
-export function createEmptyChat(id: string, title: string, model: string, systemPromptId: string | null = null) {
+export function createEmptyChat(
+  id: string,
+  title: string,
+  model: string,
+  systemPromptId: string | null = null,
+) {
   const rootNodeId = generateMessageId()
   return {
     id,
