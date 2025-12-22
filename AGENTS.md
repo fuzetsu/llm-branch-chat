@@ -46,6 +46,7 @@ For deeper understanding, see `docs/architecture/README.md` which indexes topic-
 - Keep derived values in `createMemo` or inline functions; never destructure signals outside their reactive scope.
 - Run side effects inside `createEffect`, pair cleanup with `onCleanup`, and keep async calls out of render paths.
 - Prefer `<For>` with stable keys over `.map`, and `<Show>` for conditionals instead of ternaries so Solid tracks nodes precisely.
+- Native `<select>` elements need explicit `selected` attributes on `<option>` elements when options can change; relying solely on the select's `value` prop can cause visual glitches when the options array reference changes.
 
 ## Testing Guidelines
 
