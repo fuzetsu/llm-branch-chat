@@ -401,6 +401,38 @@ input[type='range']:focus::-moz-range-thumb {
   }
 }
 
+/* Exit animations */
+@keyframes fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-out-scale {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
+@keyframes fade-out-slide-up {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
 /* Animation utility classes */
 .animate-fade-in {
   animation: fade-in 150ms ease-out;
@@ -417,4 +449,16 @@ input[type='range']:focus::-moz-range-thumb {
 .animate-slide-down {
   animation: slide-down 200ms ease-out;
   overflow: hidden;
+}
+
+.animate-fade-out {
+  animation: fade-out 150ms ease-out forwards;
+}
+
+.animate-fade-out-scale {
+  animation: fade-out-scale 150ms ease-out forwards;
+}
+
+.animate-fade-out-slide-up {
+  animation: fade-out-slide-up 150ms ease-out forwards;
 }

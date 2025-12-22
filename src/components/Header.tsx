@@ -4,6 +4,7 @@ import Icon from './ui/Icon'
 import SettingsModal from './SettingsModal'
 import ChatStatsModal from './ChatStatsModal'
 import Button from './ui/Button'
+import AnimatedShow from './ui/AnimatedShow'
 import ModelSelector from './ModelSelector'
 import SystemPromptSelector from './SystemPromptSelector'
 import { classnames } from '../utils'
@@ -141,8 +142,12 @@ const Header: Component = () => {
               <Icon name="more-vertical" class="text-text-muted" />
             </Button>
 
-            <Show when={showMoreMenu()}>
-              <div class="absolute right-0 mt-2 w-56 bg-surface rounded-lg shadow-lg py-1 z-50 border border-border animate-fade-in-slide-down">
+            <AnimatedShow
+              when={showMoreMenu()}
+              enterClass="animate-fade-in-slide-down"
+              exitClass="animate-fade-out-slide-up"
+            >
+              <div class="absolute right-0 mt-2 w-56 bg-surface rounded-lg shadow-lg py-1 z-50 border border-border">
                 {/* Model selector - in menu on < lg */}
                 <div class="lg:hidden">
                   <div class="px-4 py-1.5 text-xs font-medium text-text-muted uppercase tracking-wide">
@@ -189,7 +194,7 @@ const Header: Component = () => {
                   </button>
                 </div>
               </div>
-            </Show>
+            </AnimatedShow>
           </div>
         </div>
       </div>

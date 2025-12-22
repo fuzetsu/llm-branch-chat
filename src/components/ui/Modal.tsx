@@ -1,4 +1,4 @@
-import { Component, JSX, Show } from 'solid-js'
+import { Component, JSX, Show, createSignal, createEffect, onCleanup } from 'solid-js'
 import { classnames } from '../../utils'
 import Icon from './Icon'
 
@@ -24,9 +24,38 @@ const sizeClasses: Record<ModalSize, string> = {
   xl: 'max-w-2xl',
 }
 
+const EXIT_DURATION = 150
+
 const Modal: Component<ModalProps> = (props) => {
   const size = () => props.size ?? 'md'
   const closeOnBackdrop = () => props.closeOnBackdrop !== false
+
+  const [mounted, setMounted] = createSignal(false)
+  const [exiting, setExiting] = createSignal(false)
+  let exitTimeout: number | undefined
+
+  createEffect(() => {
+    const isOpen = props.isOpen
+    if (isOpen) {
+      if (exitTimeout) {
+        clearTimeout(exitTimeout)
+        exitTimeout = undefined
+      }
+      setMounted(true)
+      setExiting(false)
+    } else if (mounted()) {
+      setExiting(true)
+      exitTimeout = window.setTimeout(() => {
+        setMounted(false)
+        setExiting(false)
+        exitTimeout = undefined
+      }, EXIT_DURATION)
+    }
+  })
+
+  onCleanup(() => {
+    if (exitTimeout) clearTimeout(exitTimeout)
+  })
 
   const handleBackdropClick = () => {
     if (closeOnBackdrop()) {
@@ -35,11 +64,14 @@ const Modal: Component<ModalProps> = (props) => {
   }
 
   return (
-    <Show when={props.isOpen}>
+    <Show when={mounted()}>
       <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
         {/* Backdrop */}
         <div
-          class="fixed inset-0 bg-black/50 animate-fade-in"
+          class={classnames(
+            'fixed inset-0 bg-black/50',
+            exiting() ? 'animate-fade-out' : 'animate-fade-in',
+          )}
           onClick={handleBackdropClick}
         />
 
@@ -48,7 +80,8 @@ const Modal: Component<ModalProps> = (props) => {
           class={classnames(
             'relative w-full max-h-[90vh] overflow-hidden',
             'bg-surface shadow-xl rounded-xl border border-border',
-            'flex flex-col animate-fade-in-scale',
+            'flex flex-col',
+            exiting() ? 'animate-fade-out-scale' : 'animate-fade-in-scale',
             sizeClasses[size()],
           )}
         >

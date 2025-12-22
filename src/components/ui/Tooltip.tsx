@@ -1,5 +1,6 @@
 import { Component, JSX, createSignal, Show, onCleanup, onMount } from 'solid-js'
 import { Portal } from 'solid-js/web'
+import { classnames } from '../../utils'
 
 type TooltipPlacement = 'top' | 'bottom' | 'auto'
 
@@ -11,11 +12,15 @@ interface TooltipProps {
 
 const PADDING = 8
 const GAP = 6
+const EXIT_DURATION = 100
 
 const Tooltip: Component<TooltipProps> = (props) => {
   const [visible, setVisible] = createSignal(false)
+  const [mounted, setMounted] = createSignal(false)
+  const [exiting, setExiting] = createSignal(false)
   const [coords, setCoords] = createSignal({ x: 0, y: 0, placeAbove: true })
   let timeoutId: number | undefined
+  let exitTimeoutId: number | undefined
   let containerRef: HTMLDivElement | undefined
   let tooltipRef: HTMLDivElement | undefined
 
@@ -47,8 +52,15 @@ const Tooltip: Component<TooltipProps> = (props) => {
   }
 
   const showTooltip = () => {
+    // Cancel any pending exit
+    if (exitTimeoutId) {
+      clearTimeout(exitTimeoutId)
+      exitTimeoutId = undefined
+    }
     timeoutId = window.setTimeout(() => {
       setVisible(true)
+      setMounted(true)
+      setExiting(false)
       requestAnimationFrame(calculatePosition)
     }, 150)
   }
@@ -57,11 +69,22 @@ const Tooltip: Component<TooltipProps> = (props) => {
     if (timeoutId) clearTimeout(timeoutId)
     timeoutId = undefined
     setVisible(false)
+
+    if (mounted()) {
+      setExiting(true)
+      exitTimeoutId = window.setTimeout(() => {
+        setMounted(false)
+        setExiting(false)
+        exitTimeoutId = undefined
+      }, EXIT_DURATION)
+    }
   }
 
   const handleTouchStart = () => {
     if (!visible()) {
       setVisible(true)
+      setMounted(true)
+      setExiting(false)
       requestAnimationFrame(calculatePosition)
       setTimeout(hideTooltip, 1500)
     }
@@ -69,6 +92,7 @@ const Tooltip: Component<TooltipProps> = (props) => {
 
   onCleanup(() => {
     if (timeoutId) clearTimeout(timeoutId)
+    if (exitTimeoutId) clearTimeout(exitTimeoutId)
   })
 
   onMount(() => {
@@ -93,11 +117,14 @@ const Tooltip: Component<TooltipProps> = (props) => {
       onTouchStart={handleTouchStart}
     >
       {props.children}
-      <Show when={props.content && visible()}>
+      <Show when={props.content && mounted()}>
         <Portal>
           <div
             ref={tooltipRef}
-            class="fixed z-[9999] px-2 py-1 text-xs text-white bg-gray-900 rounded shadow-lg whitespace-nowrap pointer-events-none animate-fade-in"
+            class={classnames(
+              'fixed z-[9999] px-2 py-1 text-xs text-white bg-gray-900 rounded shadow-lg whitespace-nowrap pointer-events-none',
+              exiting() ? 'animate-fade-out' : 'animate-fade-in',
+            )}
             style={tooltipStyle()}
           >
             {props.content}

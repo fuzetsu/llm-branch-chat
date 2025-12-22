@@ -25,30 +25,31 @@ const ChatStatsModal: Component<ChatStatsModalProps> = (props) => {
   const currentChat = () => store.getCurrentChat()
   const chatModel = () => currentChat()?.model || store.state.settings.chat.model
 
+  // Note: We don't check props.isOpen here because:
+  // 1. Memos are lazy - they only compute when read
+  // 2. During exit animation, we want to retain the last values
+  // 3. When unmounted, nothing reads these so they won't recompute
   const stats = createMemo<TokenStats | null>(() => {
     const chat = currentChat()
-    if (!chat || !props.isOpen) return null
-
+    if (!chat) return null
     return getTokenStats(chat.nodes)
   })
 
   const tokenBreakdown = createMemo(() => {
     const chat = currentChat()
-    return chat && props.isOpen ? getTokenBreakdown(chat.nodes) : []
+    return chat ? getTokenBreakdown(chat.nodes) : []
   })
 
   const estimatedNewMessageCost = createMemo(() => {
     const chat = currentChat()
-    if (!chat || !props.isOpen) return 0
-
+    if (!chat) return 0
     const visibleMessages = store.getVisibleMessages(chat.id)
     return estimateNewMessageCost(visibleMessages, chatModel())
   })
 
   const nextMessageInputTokens = createMemo(() => {
     const chat = currentChat()
-    if (!chat || !props.isOpen) return 0
-
+    if (!chat) return 0
     const visibleMessages = store.getVisibleMessages(chat.id)
     return countCumulativeInputTokens(visibleMessages)
   })
