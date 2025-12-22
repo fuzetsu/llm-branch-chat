@@ -14,8 +14,7 @@
     index.ts          # Re-exports main component
   ```
   This pattern is recursive—subcomponents can have their own `components/` folder if needed.
-- `src/store` keeps reactive state modules (`AppStore*`, `*Operations.ts`) covering chat, streaming, and branching flows.
-- `src/services` wraps provider APIs, title generation, persistence, and other cross-cutting logic.
+- `src/store` contains the main store (`AppStore.tsx`) with all state and operations, plus the API layer (`api.ts`).
 - `src/utils` and `src/types` house helpers and contracts; extend them before adding ad-hoc files.
 
 ## Architecture Reference

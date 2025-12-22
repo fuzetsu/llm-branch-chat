@@ -1,78 +1,19 @@
-# Services Layer
+# API Layer
 
-## Service Responsibilities
+## Overview
 
-| Service                | Purpose                                                      |
-| ---------------------- | ------------------------------------------------------------ |
-| **ApiService**         | Low-level HTTP/streaming to a single provider endpoint       |
-| **ProviderApiService** | Routes requests to correct provider based on model selection |
-| **MessageService**     | Orchestrates message creation, streaming, and error handling |
-| **TitleService**       | Auto-generates chat titles after N messages                  |
+The API layer (`src/store/api.ts`) handles all LLM provider communication. It abstracts away provider differences - all providers use OpenAI-compatible chat completion format.
 
-## Provider Abstraction
+## Provider Support
 
-All providers use OpenAI-compatible chat completion format:
+Model strings are prefixed with provider name (e.g., "Pollinations: openai-fast"). The API layer parses this to route requests to the correct endpoint.
 
-```
-User selects "ProviderName: model-id"
-    ↓
-ProviderApiService parses → { provider, modelName }
-    ↓
-Looks up provider config (baseUrl, apiKey, etc.)
-    ↓
-ApiService instance for that provider handles request
-```
+To add a new provider: add it to the settings UI and ensure it speaks OpenAI-compatible format.
 
-To add a new provider: add to settings UI, ensure it speaks OpenAI format.
+## Streaming
 
-## Streaming Pipeline
+Responses stream via Server-Sent Events (SSE). The API layer handles line buffering, chunk parsing, and timeout detection (8 seconds of no data triggers completion).
 
-```
-MessageService.sendMessage()
-    ↓
-Create placeholder assistant message (empty content)
-    ↓
-StreamingOperations.startStreaming(messageId)
-    ↓
-ApiService.streamResponse() → SSE stream
-    ↓
-Parse "data: {...}" lines, extract delta content
-    ↓
-StreamingOperations.updateStreamingContent(accumulated)
-    ↓
-On complete/error: finalize message, stop streaming
-```
+## Reactivity
 
-## Streaming Details
-
-- **Protocol**: Server-Sent Events (SSE) with `text/event-stream`
-- **Parsing**: Line-buffered, handles partial chunks
-- **Timeout**: 8 seconds of no data triggers abort
-- **End signal**: `data: [DONE]` or stream close
-- **Error recovery**: Errors written to message content for user visibility
-
-## Request Flow
-
-```typescript
-// Simplified flow
-async sendMessage(chatId, content) {
-  // 1. Add user message to store
-  addMessage(chatId, { role: 'user', content })
-
-  // 2. Create empty assistant message
-  const assistantId = addMessage(chatId, { role: 'assistant', content: '' })
-
-  // 3. Build conversation history
-  const messages = getVisibleMessages(chat)
-
-  // 4. Stream response into assistant message
-  await streamToMessage(assistantId, messages)
-}
-```
-
-## Adding New Services
-
-1. Create service file in `src/services/`
-2. Use factory pattern: `createXxxService(dependencies)`
-3. Wire into `AppStoreOperations` if it needs store access
-4. Keep services stateless; state belongs in the store
+The API service instance is created via `createMemo` so it automatically recreates when provider settings change - no stale configuration issues.

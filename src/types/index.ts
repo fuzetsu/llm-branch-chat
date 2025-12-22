@@ -81,49 +81,6 @@ export interface AppStateData {
   ui: UISettings
 }
 
-export interface SerializableProviderConfig {
-  name: string
-  baseUrl: string
-  key: string | undefined
-  availableModels: string[]
-}
-
-export interface SerializableApiSettings {
-  providers: Array<[string, SerializableProviderConfig]>
-}
-
-export interface SerializableAppState {
-  chats: Array<[string, SerializableChat]>
-  currentChatId: string | null
-  settings: {
-    api: SerializableApiSettings
-    chat: ChatSettings
-    ui: UISettings
-    systemPrompts: Array<[string, SerializableSystemPrompt]>
-  }
-  ui: UISettings
-}
-
-export interface SerializableSystemPrompt {
-  id: string
-  title: string
-  content: string
-}
-
-export interface SerializableChat {
-  id: string
-  title: string
-  nodes: Array<[string, MessageNode]> // Serialized node pool
-  rootNodeId: string
-  activeBranches: Array<[string, number]> // Serialized active branches
-  createdAt: number
-  updatedAt: number
-  isGeneratingTitle: boolean
-  isArchived: boolean
-  model: string
-  systemPromptId: string | null
-}
-
 // API types
 export interface StreamCallbacks {
   onStart?: () => void

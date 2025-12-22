@@ -4,72 +4,74 @@ import {
   useContext,
   ParentComponent,
   createSignal,
+  createMemo,
   untrack,
 } from 'solid-js'
-import { createStore, SetStoreFunction } from 'solid-js/store'
-import type {
-  AppSettings,
-  Chat,
-  UISettings,
-  SerializableAppState,
-  SerializableChat,
-  SerializableApiSettings,
-  SerializableSystemPrompt,
-  ProviderConfig,
-  SystemPrompt,
-} from '../types/index.js'
-import { createAppStoreOperations, type AppStoreOperations } from './AppStoreOperations'
-import { STREAM_END } from '../services/MessageService.js'
+import { createStore } from 'solid-js/store'
+import type { AppSettings, Chat, UISettings, MessageNode, ApiMessage } from '../types/index.js'
+import { createApiService } from './api.js'
+import {
+  type AppStateStore,
+  loadStateFromStorage,
+  saveStateToStorage,
+  exportStateToJson,
+  importStateFromJson,
+} from '../utils/persistence.js'
+import { generateChatId } from '../utils/index.js'
+import {
+  createEmptyChat,
+  createMessageNode,
+  addNodeToPool,
+  updateNodeInPool,
+  getVisibleMessages as getVisibleMessagesFromTree,
+  findNodeById,
+  switchToBranch,
+  getBranchInfo as getBranchInfoFromTree,
+  getRootChildren,
+} from '../utils/messageTree.js'
 
-interface AppStateStore {
-  chats: Map<string, Chat>
-  currentChatId: string | null
-  settings: AppSettings
-  ui: UISettings
-  streaming: {
-    isStreaming: boolean
-    currentMessageId: string | null
-    currentContent: string
-  }
-  flashingMessageId: string | null
-}
+// Sentinel value for graceful stream end
+export const STREAM_END = 'stream-end'
 
-// Pick specific operations from the composed module
-type BaseOperations = Pick<
-  AppStoreOperations,
-  | 'addChat'
-  | 'updateChat'
-  | 'deleteChat'
-  | 'addMessage'
-  | 'updateMessage'
-  | 'createMessageBranch'
-  | 'switchMessageBranch'
-  | 'getVisibleMessages'
-  | 'getBranchInfo'
-  | 'startStreaming'
-  | 'updateStreamingContent'
-  | 'appendStreamingContent'
-  | 'stopStreaming'
-  | 'getStreamingContent'
-  | 'ensureCurrentChat'
-  | 'cancelStreaming'
->
-
-interface AppStoreContextType extends BaseOperations {
+interface AppStoreContextType {
   state: AppStateStore
+  // Settings
   setCurrentChatId: (id: string | null) => void
   updateSettings: (settings: Partial<AppSettings>) => void
   setUI: (ui: Partial<UISettings>) => void
   replaceState: (newState: AppStateStore) => void
-  // Chat operations with wrapped signatures
+  // Chat operations
+  addChat: (chat: Chat) => void
+  updateChat: (chatId: string, updates: Partial<Chat>) => void
+  deleteChat: (chatId: string) => void
   createNewChat: () => void
   getCurrentChat: () => Chat | null
   getActiveChats: () => Chat[]
   getArchivedChats: () => Chat[]
-  // Message flash operations
-  setFlashingMessage: (messageId: string | null) => void
+  ensureCurrentChat: () => string
+  // Message operations
+  addMessage: (chatId: string, message: MessageNode, parentId: string | null) => void
+  updateMessage: (chatId: string, messageId: string, updates: Partial<MessageNode>) => void
+  createMessageBranch: (
+    chatId: string,
+    parentId: string | null,
+    content: string,
+    role: 'user' | 'assistant' | 'system',
+    model: string,
+  ) => string
+  switchMessageBranch: (chatId: string, messageId: string, branchIndex: number) => void
   switchMessageBranchWithFlash: (chatId: string, messageId: string, branchIndex: number) => void
-  // Simplified high-level operations
+  getVisibleMessages: (chatId: string) => MessageNode[]
+  getBranchInfo: (chatId: string, messageId: string) => { total: number; current: number } | null
+  setFlashingMessage: (messageId: string | null) => void
+  // Streaming operations
+  startStreaming: (messageId: string) => void
+  updateStreamingContent: (content: string) => void
+  appendStreamingContent: (content: string) => void
+  stopStreaming: () => void
+  cancelStreaming: () => void
+  getStreamingContent: () => string
+  // High-level operations
   sendMessage: (content: string) => Promise<void>
   generateAssistantResponse: () => Promise<void>
   regenerateMessage: (chatId: string, messageId: string) => Promise<void>
@@ -78,190 +80,15 @@ interface AppStoreContextType extends BaseOperations {
 
 const AppStoreContext = createContext<AppStoreContextType>()
 
-const STORAGE_KEY = 'llm-chat-state-tree-v1'
-
-function createDefaultSettings(): AppSettings {
-  const availableModels = ['openai', 'openai-fast', 'bidara', 'chickytutor', 'midijourney']
-  const defaultProvider: ProviderConfig = {
-    name: 'Pollinations',
-    baseUrl: 'https://text.pollinations.ai/openai',
-    key: 'dummy',
-    availableModels,
-  }
-
-  const defaultModel = 'Pollinations: openai-fast'
-
-  return {
-    api: {
-      providers: new Map([['Pollinations', defaultProvider]]),
-    },
-    chat: {
-      model: defaultModel,
-      temperature: 0.7,
-      maxTokens: 2048,
-      availableModels,
-      autoGenerateTitle: true,
-      titleGenerationTrigger: 2,
-      titleModel: defaultModel,
-      defaultSystemPromptId: null,
-    },
-    ui: {
-      sidebarCollapsed: false,
-      archivedSectionCollapsed: true,
-      theme: 'dark' as const,
-      isGenerating: false,
-      editTextareaSize: {
-        width: '100%',
-        height: '120px',
-      },
-    },
-    systemPrompts: new Map(),
-  }
-}
-
-function createDefaultUISettings(): UISettings {
-  return {
-    sidebarCollapsed: false,
-    archivedSectionCollapsed: true,
-    theme: 'dark' as const,
-    isGenerating: false,
-    editTextareaSize: {
-      width: '100%',
-      height: '120px',
-    },
-  }
-}
-
-function createDefaultStreamingState() {
-  return {
-    isStreaming: false,
-    currentMessageId: null,
-    currentContent: '',
-  }
-}
-
-function createDefaultState() {
-  return {
-    chats: new Map(),
-    currentChatId: null,
-    settings: createDefaultSettings(),
-    ui: createDefaultUISettings(),
-    streaming: createDefaultStreamingState(),
-    flashingMessageId: null,
-  }
-}
-
-function serializeChat(chat: Chat): SerializableChat {
-  return {
-    ...chat,
-    nodes: Array.from(chat.nodes.entries()),
-    activeBranches: Array.from(chat.activeBranches.entries()),
-  }
-}
-
-function serializeApiSettings(api: AppSettings['api']): SerializableApiSettings {
-  return {
-    providers: Array.from(api.providers.entries()),
-  }
-}
-
-function deserializeChat(chat: SerializableChat, settings: AppSettings): Chat {
-  return {
-    ...chat,
-    nodes: new Map(chat.nodes || []),
-    activeBranches: new Map(chat.activeBranches || []),
-    model: chat.model || settings.chat.model,
-    systemPromptId: chat.systemPromptId || null,
-  }
-}
-
-function deserializeApiSettings(serialized: SerializableApiSettings): AppSettings['api'] {
-  return {
-    providers: new Map(serialized.providers || []),
-  }
-}
-
-function serializeSystemPrompts(
-  systemPrompts: Map<string, SystemPrompt>,
-): Array<[string, SerializableSystemPrompt]> {
-  return Array.from(systemPrompts.entries())
-}
-
-export function exportStateToJson(state: AppStateStore, pretty = false): string {
-  const stateToExport: SerializableAppState = {
-    chats: Array.from(state.chats.entries()).map(([id, chat]) => [id, serializeChat(chat)]),
-    currentChatId: state.currentChatId,
-    settings: {
-      api: serializeApiSettings(state.settings.api),
-      chat: state.settings.chat,
-      ui: state.settings.ui,
-      systemPrompts: serializeSystemPrompts(state.settings.systemPrompts),
-    },
-    ui: state.ui,
-  }
-  return pretty ? JSON.stringify(stateToExport, null, 2) : JSON.stringify(stateToExport)
-}
-
-export function importStateFromJson(jsonString: string): AppStateStore {
-  try {
-    const state: SerializableAppState = JSON.parse(jsonString)
-    const defaultSettings = createDefaultSettings()
-
-    const settings: AppSettings = {
-      api: deserializeApiSettings(state.settings.api),
-      chat: { ...defaultSettings.chat, ...(state.settings?.chat || {}) },
-      ui: { ...defaultSettings.ui, ...(state.settings?.ui || {}) },
-      systemPrompts: new Map(state.settings?.systemPrompts || []),
-    }
-
-    return {
-      chats: new Map(
-        (state.chats || []).map(([id, chat]) => [id, deserializeChat(chat, settings)]),
-      ),
-      currentChatId: state.currentChatId,
-      settings,
-      ui: { ...createDefaultUISettings(), ...state.ui },
-      streaming: createDefaultStreamingState(),
-      flashingMessageId: null,
-    }
-  } catch (error) {
-    console.error('Failed to import state:', error)
-    throw new Error('Invalid JSON data or corrupted state file')
-  }
-}
-
-function loadStateFromStorage(): AppStateStore {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY)
-    if (!saved) return createDefaultState()
-    return importStateFromJson(saved)
-  } catch (error) {
-    console.error('Failed to load state:', error)
-    return createDefaultState()
-  }
-}
-
-function saveStateToStorage(state: AppStateStore) {
-  try {
-    localStorage.setItem(STORAGE_KEY, exportStateToJson(state))
-  } catch (error) {
-    console.error('Failed to save state:', error)
-  }
-}
-
-// Export types for operation modules
-export type AppStoreState = AppStateStore
-export type AppStoreSetState = SetStoreFunction<AppStateStore>
-export type AppStoreGetState = () => AppStateStore
-
-export interface AppStoreOperationsDeps {
-  setState: AppStoreSetState
-  getState: AppStoreGetState
-}
+// Re-export persistence functions for external use
+export { exportStateToJson, importStateFromJson }
 
 export const AppStoreProvider: ParentComponent = (props) => {
   const initialState = loadStateFromStorage()
   const [state, setState] = createStore<AppStateStore>(initialState)
+
+  // Reactive API service - automatically recreates when providers change
+  const apiService = createMemo(() => createApiService(state.settings.api.providers))
 
   // Save to localStorage whenever state changes
   createEffect(() => {
@@ -282,6 +109,18 @@ export const AppStoreProvider: ParentComponent = (props) => {
     }
   })
 
+  // Abort controller for streaming - resets when streaming stops
+  const newAbort = () => new AbortController()
+  const [abortController, setAbortController] = createSignal(newAbort())
+  createEffect(() => {
+    if (!state.streaming.isStreaming) {
+      untrack(abortController).abort(STREAM_END)
+      setAbortController(newAbort())
+    }
+  })
+
+  // ===== SETTINGS OPERATIONS =====
+
   const setCurrentChatId = (id: string | null) => {
     setState('currentChatId', id)
   }
@@ -294,30 +133,358 @@ export const AppStoreProvider: ParentComponent = (props) => {
     setState('ui', (ui) => ({ ...ui, ...newUI }))
   }
 
-  // Initialize composed operations
-  const operations = createAppStoreOperations({ setState, getState: () => state })
+  const replaceState = (newState: AppStateStore) => {
+    setState(newState)
+  }
 
-  const newAbort = () => new AbortController()
-  const [abortController, setAbortController] = createSignal(newAbort())
-  createEffect(() => {
-    if (!state.streaming.isStreaming) {
-      untrack(abortController).abort(STREAM_END)
-      setAbortController(newAbort())
+  // ===== STREAMING OPERATIONS =====
+
+  const startStreaming = (messageId: string) => {
+    setState('streaming', {
+      isStreaming: true,
+      currentMessageId: messageId,
+      currentContent: '',
+    })
+  }
+
+  const updateStreamingContent = (content: string) => {
+    setState('streaming', 'currentContent', content)
+  }
+
+  const appendStreamingContent = (content: string) => {
+    setState('streaming', 'currentContent', (prev: string) => prev + content)
+  }
+
+  const cancelStreaming = () => setState('streaming', { isStreaming: false })
+
+  const stopStreaming = () => {
+    setState('streaming', {
+      isStreaming: false,
+      currentMessageId: null,
+      currentContent: '',
+    })
+  }
+
+  const getStreamingContent = (): string => state.streaming.currentContent
+
+  // ===== CHAT OPERATIONS =====
+
+  const addChat = (chat: Chat) => {
+    setState('chats', (chats: Map<string, Chat>) => {
+      const newChats = new Map(chats)
+      newChats.set(chat.id, chat)
+      return newChats
+    })
+  }
+
+  const updateChat = (chatId: string, updates: Partial<Chat>) => {
+    setState('chats', (chats: Map<string, Chat>) => {
+      const newChats = new Map(chats)
+      const existingChat = newChats.get(chatId)
+      if (existingChat) {
+        newChats.set(chatId, { ...existingChat, ...updates })
+      }
+      return newChats
+    })
+  }
+
+  const deleteChat = (chatId: string) => {
+    setState('chats', (chats: Map<string, Chat>) => {
+      const newChats = new Map(chats)
+      newChats.delete(chatId)
+      return newChats
+    })
+  }
+
+  const getCurrentChat = (): Chat | null => {
+    return state.currentChatId ? (state.chats.get(state.currentChatId) ?? null) : null
+  }
+
+  const getActiveChats = (): Chat[] => {
+    return Array.from(state.chats.values())
+      .filter((chat) => !chat.isArchived)
+      .sort((a, b) => b.updatedAt - a.updatedAt)
+  }
+
+  const getArchivedChats = (): Chat[] => {
+    return Array.from(state.chats.values())
+      .filter((chat) => chat.isArchived)
+      .sort((a, b) => b.updatedAt - a.updatedAt)
+  }
+
+  const createNewChatInternal = (): string => {
+    const chatId = generateChatId()
+    const newChat = createEmptyChat(chatId, 'New Chat', state.settings.chat.model, null)
+    addChat(newChat)
+    setCurrentChatId(chatId)
+    return chatId
+  }
+
+  const createNewChat = () => setCurrentChatId(null)
+
+  const ensureCurrentChat = (): string => {
+    const chat = getCurrentChat()
+    if (chat) return chat.id
+    return createNewChatInternal()
+  }
+
+  // ===== MESSAGE OPERATIONS =====
+
+  const addMessage = (chatId: string, message: MessageNode, parentId: string | null) => {
+    setState('chats', (chats: Map<string, Chat>) => {
+      const newChats = new Map(chats)
+      const chat = newChats.get(chatId)
+      if (chat) {
+        const { nodes: newNodes, activeBranches: newBranches } = addNodeToPool(
+          chat.nodes,
+          chat.activeBranches,
+          chat.rootNodeId,
+          message,
+          parentId,
+        )
+
+        newChats.set(chatId, {
+          ...chat,
+          nodes: newNodes,
+          activeBranches: newBranches,
+          updatedAt: Date.now(),
+        })
+      }
+      return newChats
+    })
+  }
+
+  const updateMessage = (chatId: string, messageId: string, updates: Partial<MessageNode>) => {
+    setState('chats', (chats: Map<string, Chat>) => {
+      const newChats = new Map(chats)
+      const chat = newChats.get(chatId)
+      if (chat) {
+        const node = findNodeById(chat.nodes, messageId)
+        if (node) {
+          const newNodes = updateNodeInPool(chat.nodes, messageId, updates)
+          newChats.set(chatId, {
+            ...chat,
+            nodes: newNodes,
+            updatedAt: Date.now(),
+          })
+          return newChats
+        }
+      }
+      return chats
+    })
+  }
+
+  const createMessageBranch = (
+    chatId: string,
+    parentId: string | null,
+    content: string,
+    role: 'user' | 'assistant' | 'system',
+    model: string,
+  ): string => {
+    const chat = state.chats.get(chatId)
+    if (!chat) throw new Error('createMessageBranch: chat not found')
+
+    let branchIndex = 0
+    if (parentId === null) {
+      branchIndex = Array.from(chat.nodes.values()).filter((node) => node.parentId === null).length
+    } else {
+      const parent = chat.nodes.get(parentId)
+      branchIndex = parent?.childIds.length || 0
     }
-  })
 
-  // High-level operations with business logic
+    const newMessage = createMessageNode(role, content, model, parentId, branchIndex)
+
+    setState('chats', (chats: Map<string, Chat>) => {
+      const newChats = new Map(chats)
+      const { nodes: newNodes, activeBranches: newBranches } = addNodeToPool(
+        chat.nodes,
+        chat.activeBranches,
+        chat.rootNodeId,
+        newMessage,
+        parentId,
+      )
+      newChats.set(chatId, {
+        ...chat,
+        nodes: newNodes,
+        activeBranches: newBranches,
+        updatedAt: Date.now(),
+      })
+      return newChats
+    })
+
+    return newMessage.id
+  }
+
+  const switchMessageBranch = (chatId: string, messageId: string, branchIndex: number) => {
+    setState('chats', (chats: Map<string, Chat>) => {
+      const newChats = new Map(chats)
+      const chat = newChats.get(chatId)
+      if (chat) {
+        const newBranches = switchToBranch(
+          chat.activeBranches,
+          chat.nodes,
+          chat.rootNodeId,
+          messageId,
+          branchIndex,
+        )
+        newChats.set(chatId, {
+          ...chat,
+          activeBranches: newBranches,
+        })
+        return newChats
+      }
+      return chats
+    })
+  }
+
+  const getVisibleMessages = (chatId: string): MessageNode[] => {
+    const chat = state.chats.get(chatId)
+    if (!chat) return []
+    return getVisibleMessagesFromTree(chat.nodes, chat.rootNodeId, chat.activeBranches)
+  }
+
+  const getBranchInfo = (
+    chatId: string,
+    messageId: string,
+  ): { total: number; current: number } | null => {
+    const chat = state.chats.get(chatId)
+    if (!chat) return null
+    return getBranchInfoFromTree(chat.nodes, chat.rootNodeId, messageId)
+  }
+
+  const setFlashingMessage = (messageId: string | null) => {
+    setState('flashingMessageId', messageId)
+  }
+
+  const switchMessageBranchWithFlash = (
+    chatId: string,
+    messageId: string,
+    branchIndex: number,
+  ): void => {
+    const chat = state.chats.get(chatId)
+    if (!chat) return
+
+    const targetNode = chat.nodes.get(messageId)
+    if (!targetNode) return
+
+    let siblings: string[]
+    if (targetNode.parentId === null) {
+      siblings = getRootChildren(chat.nodes).map((n: MessageNode) => n.id)
+    } else {
+      const parent = chat.nodes.get(targetNode.parentId)
+      siblings = parent?.childIds || []
+    }
+
+    const targetMessageId = siblings[branchIndex]
+
+    switchMessageBranch(chatId, messageId, branchIndex)
+
+    // Flash the target message
+    if (targetMessageId) {
+      setFlashingMessage(targetMessageId)
+      setTimeout(() => setFlashingMessage(null), 1000)
+    }
+  }
+
+  // ===== HELPERS =====
+
+  const convertToApiMessages = (
+    messages: MessageNode[],
+    chatSystemPromptId: string | null,
+  ): ApiMessage[] => {
+    const apiMessages: ApiMessage[] = []
+
+    // Determine which system prompt to use: chat-specific or default
+    const systemPromptId = chatSystemPromptId || state.settings.chat.defaultSystemPromptId
+
+    // Add system prompt if specified and exists
+    if (systemPromptId) {
+      const systemPrompt = state.settings.systemPrompts.get(systemPromptId)
+      if (systemPrompt) {
+        apiMessages.push({
+          role: 'system',
+          content: systemPrompt.content,
+        })
+      }
+    }
+
+    // Add conversation messages
+    return apiMessages.concat(messages.map((msg) => ({ role: msg.role, content: msg.content })))
+  }
+
+  const endStream = (chatId: string, messageId: string) => {
+    const finalContent = getStreamingContent()
+    stopStreaming()
+    updateMessage(chatId, messageId, {
+      content: finalContent,
+      timestamp: Date.now(),
+    })
+  }
+
+  const handleStreamError = (chatId: string, messageId: string, error: unknown) => {
+    if (error instanceof Error && error.message === STREAM_END) {
+      endStream(chatId, messageId)
+      return
+    }
+    console.error('Streaming error:', error)
+    updateMessage(chatId, messageId, {
+      content: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      timestamp: Date.now(),
+    })
+    stopStreaming()
+  }
+
+  // ===== HIGH-LEVEL OPERATIONS =====
+
   const sendMessage = async (content: string) => {
-    const currentChat = operations.getCurrentChat()
+    let currentChat = getCurrentChat()
     if (!currentChat) {
-      operations.createNewChat()
-      return sendMessage(content)
+      createNewChatInternal()
+      currentChat = getCurrentChat()
+      if (!currentChat) return
     }
 
-    await operations.sendMessage(content, currentChat, state.settings, abortController().signal)
+    const visibleMessages = getVisibleMessages(currentChat.id)
+    const lastMessage = visibleMessages.at(-1)
+    const parentId = lastMessage?.id || null
+
+    // Add user message
+    const userMessage = createMessageNode('user', content.trim(), 'user', parentId)
+    addMessage(currentChat.id, userMessage, parentId)
+    visibleMessages.push(userMessage)
+
+    // Create assistant message placeholder
+    const assistantMessage = createMessageNode(
+      'assistant',
+      '',
+      currentChat.model || state.settings.chat.model,
+      userMessage.id,
+    )
+
+    addMessage(currentChat.id, assistantMessage, userMessage.id)
+    startStreaming(assistantMessage.id)
+
+    try {
+      const apiMessages = convertToApiMessages(visibleMessages, currentChat.systemPromptId)
+
+      await apiService().streamResponse(
+        apiMessages,
+        assistantMessage.model || state.settings.chat.model,
+        {
+          onToken: (token: string) => appendStreamingContent(token),
+          onComplete: () => endStream(currentChat!.id, assistantMessage.id),
+          onError: (error: Error) => handleStreamError(currentChat!.id, assistantMessage.id, error),
+        },
+        state.settings.chat.temperature,
+        state.settings.chat.maxTokens,
+        abortController().signal,
+      )
+    } catch (error) {
+      handleStreamError(currentChat.id, assistantMessage.id, error)
+    }
 
     // Auto-generate title if this is the first exchange
-    const messageCount = operations.getVisibleMessages(currentChat.id).length
+    const messageCount = getVisibleMessages(currentChat.id).length
     if (
       messageCount === state.settings.chat.titleGenerationTrigger &&
       state.settings.chat.autoGenerateTitle
@@ -326,83 +493,162 @@ export const AppStoreProvider: ParentComponent = (props) => {
     }
   }
 
+  const generateAssistantResponse = async () => {
+    const currentChat = getCurrentChat()
+    if (!currentChat) return
+
+    const visibleMessages = getVisibleMessages(currentChat.id)
+    const lastMessage = visibleMessages.at(-1)
+
+    // Only generate if the last message is from the user
+    if (!lastMessage || lastMessage.role !== 'user') return
+
+    // Create assistant message placeholder
+    const assistantMessage = createMessageNode(
+      'assistant',
+      '',
+      currentChat.model || state.settings.chat.model,
+      lastMessage.id,
+    )
+
+    addMessage(currentChat.id, assistantMessage, lastMessage.id)
+    startStreaming(assistantMessage.id)
+
+    try {
+      const apiMessages = convertToApiMessages(visibleMessages, currentChat.systemPromptId)
+
+      await apiService().streamResponse(
+        apiMessages,
+        assistantMessage.model || state.settings.chat.model,
+        {
+          onToken: (token: string) => appendStreamingContent(token),
+          onComplete: () => endStream(currentChat.id, assistantMessage.id),
+          onError: (error: Error) => handleStreamError(currentChat.id, assistantMessage.id, error),
+        },
+        state.settings.chat.temperature,
+        state.settings.chat.maxTokens,
+        abortController().signal,
+      )
+    } catch (error) {
+      handleStreamError(currentChat.id, assistantMessage.id, error)
+    }
+  }
+
   const regenerateMessage = async (chatId: string, messageId: string) => {
     const chat = state.chats.get(chatId)
     if (!chat) return
 
-    await operations.regenerateMessage(
-      chatId,
-      messageId,
-      chat,
-      state.settings,
-      abortController().signal,
-    )
-  }
+    const message = findNodeById(chat.nodes, messageId)
+    if (!message || message.role !== 'assistant') return
 
-  const generateAssistantResponse = async () => {
-    const currentChat = operations.getCurrentChat()
-    if (!currentChat) return
+    // Get conversation history up to this message
+    const visibleMessages = getVisibleMessages(chatId)
+    const messageIndex = visibleMessages.findIndex((m) => m.id === messageId)
+    if (messageIndex === -1) return
 
-    await operations.generateAssistantResponse(
-      currentChat,
-      state.settings,
-      abortController().signal,
-    )
+    const conversationHistory = visibleMessages.slice(0, messageIndex)
+
+    try {
+      // Create new branch (sibling) for regenerated content
+      const newBranchMessage = createMessageNode(
+        'assistant',
+        '',
+        chat.model || state.settings.chat.model,
+        message.parentId,
+      )
+
+      // Add the new branch as a sibling
+      if (message.parentId) {
+        addMessage(chatId, newBranchMessage, message.parentId)
+      }
+
+      startStreaming(newBranchMessage.id)
+
+      const apiMessages = convertToApiMessages(conversationHistory, chat.systemPromptId)
+
+      await apiService().streamResponse(
+        apiMessages,
+        newBranchMessage.model || state.settings.chat.model,
+        {
+          onToken: (token: string) => appendStreamingContent(token),
+          onComplete: () => endStream(chatId, newBranchMessage.id),
+          onError: (error: Error) => handleStreamError(chatId, newBranchMessage.id, error),
+        },
+        state.settings.chat.temperature,
+        state.settings.chat.maxTokens,
+        abortController().signal,
+        true, // Enable entropy to prevent API caching
+      )
+    } catch (error) {
+      console.error('Failed to regenerate message:', error)
+      stopStreaming()
+    }
   }
 
   const generateChatTitle = async (chatId: string) => {
     const chat = state.chats.get(chatId)
     if (!chat) return
 
-    await operations.generateChatTitle(chatId, chat, state.settings.chat.titleModel)
+    const visibleMessages = getVisibleMessages(chatId)
+    if (visibleMessages.length < 2 || chat.isGeneratingTitle) return
+
+    try {
+      updateChat(chatId, { isGeneratingTitle: true })
+
+      const title = await apiService().generateTitle(
+        visibleMessages,
+        state.settings.chat.titleModel,
+      )
+
+      if (title) {
+        updateChat(chatId, {
+          title,
+          isGeneratingTitle: false,
+        })
+      } else {
+        updateChat(chatId, { isGeneratingTitle: false })
+      }
+    } catch (error) {
+      console.error('Title generation failed:', error)
+      updateChat(chatId, { isGeneratingTitle: false })
+    }
   }
 
-  // Simplified operation wrappers
-  const createNewChat = () => setCurrentChatId(null)
-
-  // Message flash operations
-  const setFlashingMessage = (messageId: string | null) => {
-    setState('flashingMessageId', messageId)
-  }
-
-  const replaceState = (newState: AppStateStore) => {
-    setState(newState)
-  }
+  // ===== CONTEXT VALUE =====
 
   const storeValue: AppStoreContextType = {
     state,
+    // Settings
     setCurrentChatId,
     updateSettings,
     setUI,
     replaceState,
     // Chat operations
-    addChat: operations.addChat,
-    updateChat: operations.updateChat,
-    deleteChat: operations.deleteChat,
+    addChat,
+    updateChat,
+    deleteChat,
     createNewChat,
-    getCurrentChat: operations.getCurrentChat,
-    getActiveChats: operations.getActiveChats,
-    getArchivedChats: operations.getArchivedChats,
-    ensureCurrentChat: operations.ensureCurrentChat,
-    // Message flash operations
-    setFlashingMessage,
+    getCurrentChat,
+    getActiveChats,
+    getArchivedChats,
+    ensureCurrentChat,
     // Message operations
-    addMessage: operations.addMessage,
-    updateMessage: operations.updateMessage,
-    createMessageBranch: operations.createMessageBranch,
-    switchMessageBranch: operations.switchMessageBranch,
-    switchMessageBranchWithFlash: (chatId: string, messageId: string, branchIndex: number) =>
-      operations.switchMessageBranchWithFlash(chatId, messageId, branchIndex, setFlashingMessage),
-    getVisibleMessages: operations.getVisibleMessages,
-    getBranchInfo: operations.getBranchInfo,
+    addMessage,
+    updateMessage,
+    createMessageBranch,
+    switchMessageBranch,
+    switchMessageBranchWithFlash,
+    getVisibleMessages,
+    getBranchInfo,
+    setFlashingMessage,
     // Streaming operations
-    startStreaming: operations.startStreaming,
-    updateStreamingContent: operations.updateStreamingContent,
-    appendStreamingContent: operations.appendStreamingContent,
-    stopStreaming: operations.stopStreaming,
-    cancelStreaming: operations.cancelStreaming,
-    getStreamingContent: operations.getStreamingContent,
-    // High-level operations with business logic
+    startStreaming,
+    updateStreamingContent,
+    appendStreamingContent,
+    stopStreaming,
+    cancelStreaming,
+    getStreamingContent,
+    // High-level operations
     sendMessage,
     generateAssistantResponse,
     regenerateMessage,

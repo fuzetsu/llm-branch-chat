@@ -3,16 +3,59 @@ import type {
   ApiRequestBody,
   ApiResponse,
   MessageNode,
+  ProviderConfig,
   StreamCallbacks,
 } from '../types/index.js'
+import { getProviderForModel } from '../utils/providerUtils.js'
 
-export interface ApiServiceDeps {
+export interface ApiService {
+  streamResponse(
+    messages: ApiMessage[],
+    model: string,
+    callbacks: StreamCallbacks,
+    temperature: number,
+    maxTokens: number,
+    signal: AbortSignal,
+    entropy?: boolean,
+  ): Promise<void>
+
+  generateTitle(messages: MessageNode[], titleModel: string): Promise<string | null>
+}
+
+interface ProviderConnection {
   baseUrl: string
   apiKey: string | undefined
 }
 
-export const createApiService = ({ baseUrl, apiKey }: ApiServiceDeps) => {
-  const buildUrl = (entropy: boolean): string => {
+export function createApiService(providers: Map<string, ProviderConfig>): ApiService {
+  // Cache connections per provider to avoid recreating
+  const connectionCache = new Map<string, ProviderConnection>()
+
+  const getConnection = (modelWithPrefix: string): { connection: ProviderConnection; model: string } => {
+    const providerInfo = getProviderForModel(modelWithPrefix, providers)
+    if (!providerInfo) {
+      throw new Error(`No provider found for model: ${modelWithPrefix}`)
+    }
+
+    const provider = providers.get(providerInfo.providerName)
+    if (!provider) {
+      throw new Error(`Provider not found: ${providerInfo.providerName}`)
+    }
+
+    // Get or create cached connection
+    let connection = connectionCache.get(providerInfo.providerName)
+    if (!connection) {
+      connection = {
+        baseUrl: provider.baseUrl,
+        apiKey: provider.key,
+      }
+      connectionCache.set(providerInfo.providerName, connection)
+    }
+
+    return { connection, model: providerInfo.modelName }
+  }
+
+  const buildUrl = (baseUrl: string, entropy: boolean): string => {
     const url = new URL(baseUrl + '/chat/completions')
     if (!entropy) return url.toString()
 
@@ -27,19 +70,19 @@ export const createApiService = ({ baseUrl, apiKey }: ApiServiceDeps) => {
     model: string,
     temperature: number,
     maxTokens: number,
-  ): ApiRequestBody => {
-    return {
-      messages,
-      model,
-      stream: true,
-      temperature,
-      max_tokens: maxTokens,
-    }
-  }
+    stream: boolean,
+  ): ApiRequestBody => ({
+    messages,
+    model,
+    stream,
+    temperature,
+    max_tokens: maxTokens,
+  })
 
   const makeRequest = async (
     url: string,
     body: ApiRequestBody,
+    apiKey: string | undefined,
     signal: AbortSignal | null = null,
   ): Promise<Response> => {
     return fetch(url, {
@@ -61,7 +104,6 @@ export const createApiService = ({ baseUrl, apiKey }: ApiServiceDeps) => {
     const data = line.slice(DATA_PREFIX.length).trim()
 
     if (data === '[DONE]') {
-      // Don't call onComplete here - let the stream reader handle it
       return false
     }
 
@@ -93,11 +135,10 @@ export const createApiService = ({ baseUrl, apiKey }: ApiServiceDeps) => {
     let buffer = ''
     let lastTokenTime = Date.now()
     let hasReceivedTokens = false
-    const TIMEOUT_MS = 8000 // 8 seconds after last token
+    const TIMEOUT_MS = 8000
 
     try {
       while (true) {
-        // Create a timeout promise that rejects after TIMEOUT_MS
         const timeoutPromise = new Promise<never>((_, reject) => {
           setTimeout(() => {
             if (hasReceivedTokens && Date.now() - lastTokenTime > TIMEOUT_MS) {
@@ -106,10 +147,8 @@ export const createApiService = ({ baseUrl, apiKey }: ApiServiceDeps) => {
           }, TIMEOUT_MS)
         })
 
-        // Race between reading and timeout
         const result = await Promise.race([reader.read(), timeoutPromise]).catch((error) => {
           if (error.message === 'STREAM_TIMEOUT') {
-            // Treat timeout as completion
             return { done: true, value: undefined }
           }
           throw error
@@ -161,20 +200,21 @@ export const createApiService = ({ baseUrl, apiKey }: ApiServiceDeps) => {
   return {
     async streamResponse(
       messages: ApiMessage[],
-      model: string,
+      modelWithPrefix: string,
       callbacks: StreamCallbacks,
       temperature: number,
       maxTokens: number,
       signal: AbortSignal,
       entropy = false,
     ): Promise<void> {
+      const { connection, model } = getConnection(modelWithPrefix)
+
       try {
         callbacks.onStart?.()
 
-        const url = buildUrl(entropy)
-        const requestBody = buildRequestBody(messages, model, temperature, maxTokens)
-
-        const response = await makeRequest(url, requestBody, signal)
+        const url = buildUrl(connection.baseUrl, entropy)
+        const requestBody = buildRequestBody(messages, model, temperature, maxTokens, true)
+        const response = await makeRequest(url, requestBody, connection.apiKey, signal)
 
         if (!response.ok) {
           throw new Error(`API Error: ${response.status} ${response.statusText}`)
@@ -186,19 +226,17 @@ export const createApiService = ({ baseUrl, apiKey }: ApiServiceDeps) => {
       }
     },
 
-    async generateTitle(messages: MessageNode[], titleModel: string): Promise<string | null> {
+    async generateTitle(messages: MessageNode[], titleModelWithPrefix: string): Promise<string | null> {
+      const { connection, model } = getConnection(titleModelWithPrefix)
       const titlePrompt = buildTitlePrompt(messages)
-
-      const url = buildUrl(false)
+      const url = buildUrl(connection.baseUrl, false)
 
       try {
-        const response = await makeRequest(url, {
-          messages: titlePrompt,
-          model: titleModel,
-          stream: false,
-          temperature: 0.3,
-          max_tokens: 20,
-        })
+        const response = await makeRequest(
+          url,
+          buildRequestBody(titlePrompt, model, 0.3, 20, false),
+          connection.apiKey,
+        )
 
         if (!response.ok) {
           const errorText = await response.text()
