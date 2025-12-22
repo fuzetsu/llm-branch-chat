@@ -1,7 +1,5 @@
 # LLM Branch Chat
 
-> ⚠️ **WARNING**: This is mostly vibe-coded AI slop right now.
-
 A SolidJS-based chat application with LLM integration and message branching capabilities.
 
 ## Features
