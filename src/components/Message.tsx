@@ -1,12 +1,12 @@
 import { Component, createEffect, createMemo, createSignal, onCleanup, Show } from 'solid-js'
-import { MessageNode as MessageType, Chat } from '../types/index.js'
+import { MessageNode as MessageType, Chat } from '../types'
 import { useAppStore } from '../store/AppStore'
 import MessageBranching from './MessageBranching'
 import IconButton from './ui/IconButton'
 import Textarea from './ui/Textarea'
 import Tooltip from './ui/Tooltip'
-import { relativeTimestamp, throttle, classnames, isMobileBrowser } from '../utils/index.js'
-import { renderMarkdown } from '../utils/markdown.js'
+import { relativeTimestamp, throttle, classnames, isMobileBrowser } from '../utils'
+import { renderMarkdown } from '../utils/markdown'
 import Button from './ui/Button.jsx'
 
 interface MessageProps {

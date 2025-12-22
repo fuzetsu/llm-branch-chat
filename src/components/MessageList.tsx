@@ -1,9 +1,9 @@
 import { Component, For, createEffect, Show, onCleanup, createMemo } from 'solid-js'
-import { Chat } from '../types/index.js'
+import { Chat } from '../types'
 import { useAppStore } from '../store/AppStore'
 import Message from './Message'
-import { querySelector, throttle } from '../utils/index.js'
-import { createKeyedSignal } from '../utils/keyedSignal.js'
+import { querySelector, throttle } from '../utils'
+import { createKeyedSignal } from '../utils/keyedSignal'
 
 interface MessageListProps {
   chat: Chat

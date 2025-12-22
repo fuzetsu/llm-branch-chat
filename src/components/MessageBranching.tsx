@@ -1,8 +1,8 @@
 import { Component, Show, Index, createSignal } from 'solid-js'
-import { Chat } from '../types/index.js'
+import { Chat } from '../types'
 import { useAppStore } from '../store/AppStore'
 import { block, classnames, debounce } from '../utils'
-import { countDescendants, getRootChildren } from '../utils/messageTree.js'
+import { countDescendants, getRootChildren } from '../utils/messageTree'
 import Tooltip from './ui/Tooltip'
 
 interface MessageBranchingProps {

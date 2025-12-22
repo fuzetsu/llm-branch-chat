@@ -5,7 +5,7 @@ import type {
   ProviderConfig,
   SystemPrompt,
   UISettings,
-} from '../types/index.js'
+} from '../types'
 
 const STORAGE_KEY = 'llm-chat-state-tree-v1'
 

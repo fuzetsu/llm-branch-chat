@@ -1,5 +1,5 @@
-import type { MessageNode } from '../types/index.js'
-import { getRootChildren } from './messageTree.js'
+import type { MessageNode } from '../types'
+import { getRootChildren } from './messageTree'
 
 const ESTIMATED_CHARS_PER_TOKEN = 4
 

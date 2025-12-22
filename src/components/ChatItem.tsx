@@ -1,6 +1,6 @@
 import { Component, createSignal, Show } from 'solid-js'
 import { useAppStore } from '../store/AppStore'
-import type { Chat } from '../types/index.js'
+import type { Chat } from '../types'
 import IconButton from './ui/IconButton'
 import ConfirmModal from './ConfirmModal'
 import { classnames, isMobileBrowser } from '../utils'

@@ -1,4 +1,4 @@
-import type { ProviderConfig } from '../types/index.js'
+import type { ProviderConfig } from '../types'
 
 export function validateProviderName(
   name: string,

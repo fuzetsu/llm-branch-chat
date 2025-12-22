@@ -5,8 +5,8 @@ import type {
   MessageNode,
   ProviderConfig,
   StreamCallbacks,
-} from '../types/index.js'
-import { getProviderForModel } from '../utils/providerUtils.js'
+} from '../types'
+import { getProviderForModel } from '../utils/providerUtils'
 
 export interface ApiService {
   streamResponse(

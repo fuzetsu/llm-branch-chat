@@ -8,16 +8,16 @@ import {
   untrack,
 } from 'solid-js'
 import { createStore } from 'solid-js/store'
-import type { AppSettings, Chat, UISettings, MessageNode, ApiMessage } from '../types/index.js'
-import { createApiService } from './api.js'
+import type { AppSettings, Chat, UISettings, MessageNode, ApiMessage } from '../types'
+import { createApiService } from './api'
 import {
   type AppStateStore,
   loadStateFromStorage,
   saveStateToStorage,
   exportStateToJson,
   importStateFromJson,
-} from '../utils/persistence.js'
-import { generateChatId } from '../utils/index.js'
+} from '../utils/persistence'
+import { generateChatId } from '../utils'
 import {
   createEmptyChat,
   createMessageNode,
@@ -28,7 +28,7 @@ import {
   switchToBranch,
   getBranchInfo as getBranchInfoFromTree,
   getRootChildren,
-} from '../utils/messageTree.js'
+} from '../utils/messageTree'
 
 // Sentinel value for graceful stream end
 export const STREAM_END = 'stream-end'

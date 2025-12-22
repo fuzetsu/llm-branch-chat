@@ -1,5 +1,5 @@
-import type { MessageNode, MessageRole } from '../types/index.js'
-import { generateMessageId } from './index.js'
+import type { MessageNode, MessageRole } from '../types'
+import { generateMessageId } from './index'
 
 export function createMessageNode(
   role: Exclude<MessageRole, 'root'>,
