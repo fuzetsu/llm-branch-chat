@@ -1,11 +1,11 @@
-import { Component, createSignal, Show, createEffect, onCleanup, createMemo } from 'solid-js'
+import { Component, createSignal, Show, createMemo } from 'solid-js'
 import { useAppStore } from '../store/AppStore'
 import { useToast } from './ToastProvider'
 import Icon from './ui/Icon'
 import SettingsModal from './SettingsModal'
 import ChatStatsModal from './ChatStatsModal'
 import Button from './ui/Button'
-import AnimatedShow from './ui/AnimatedShow'
+import Popover from './ui/Popover'
 import ModelSelector from './ModelSelector'
 import SystemPromptSelector from './SystemPromptSelector'
 import { classnames } from '../utils'
@@ -65,24 +65,6 @@ const Header: Component = () => {
     setShowMoreMenu(false)
   }
 
-  // Close more menu when clicking outside
-  createEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      const target = e.target as HTMLElement
-      // Don't close if clicking on the menu container or the system prompt indicator
-      if (
-        showMoreMenu() &&
-        !target.closest('.more-menu-container') &&
-        !target.closest('.system-prompt-indicator')
-      ) {
-        setShowMoreMenu(false)
-      }
-    }
-
-    document.addEventListener('click', handleClickOutside)
-    onCleanup(() => document.removeEventListener('click', handleClickOutside))
-  })
-
   const menuItemClass =
     'w-full text-left px-4 py-2 text-sm text-text-secondary hover:bg-surface-hover transition-colors cursor-pointer flex items-center gap-2'
 
@@ -130,22 +112,23 @@ const Header: Component = () => {
             </Button>
           </div>
 
-          <div class="relative more-menu-container">
-            <Button
-              variant="ghost"
-              class="p-2"
-              onClick={() => setShowMoreMenu(!showMoreMenu())}
-              tooltip="More actions"
-            >
-              <Icon name="more-vertical" class="text-text-muted" />
-            </Button>
-
-            <AnimatedShow
-              when={showMoreMenu()}
-              enterClass="animate-fade-in-slide-down"
-              exitClass="animate-fade-out-slide-up"
-            >
-              <div class="absolute right-0 mt-2 w-56 bg-surface rounded-lg shadow-lg py-1 z-50 border border-border">
+          <Popover
+            trigger={
+              <Button
+                variant="ghost"
+                class="p-2"
+                onClick={() => setShowMoreMenu(!showMoreMenu())}
+                tooltip="More actions"
+              >
+                <Icon name="more-vertical" class="text-text-muted" />
+              </Button>
+            }
+            isOpen={showMoreMenu()}
+            onClose={() => setShowMoreMenu(false)}
+            placement="bottom-right"
+            class="py-1 w-56"
+          >
+            <div>
                 <div class="lg:hidden">
                   <div class="px-4 py-1.5 text-xs font-medium text-text-muted uppercase tracking-wide">
                     Model
@@ -187,9 +170,8 @@ const Header: Component = () => {
                     New Chat
                   </button>
                 </div>
-              </div>
-            </AnimatedShow>
-          </div>
+            </div>
+          </Popover>
         </div>
       </div>
       <SettingsModal isOpen={showSettings()} onClose={() => setShowSettings(false)} />

@@ -7,6 +7,8 @@ interface ModelSelectorProps {
   class?: string
 }
 
+const NO_PROMPT = '__none__'
+
 const SystemPromptSelector: Component<ModelSelectorProps> = (props) => {
   const store = useAppStore()
 
@@ -15,17 +17,19 @@ const SystemPromptSelector: Component<ModelSelectorProps> = (props) => {
 
   const handlePromptChange = (selectedPrompt: string) => {
     const chatId = store.ensureCurrentChat()
-    store.updateChat(chatId, { systemPromptId: selectedPrompt || null })
+    store.updateChat(chatId, {
+      systemPromptId: !selectedPrompt || selectedPrompt === NO_PROMPT ? null : selectedPrompt,
+    })
   }
 
   return (
     <Select
       class={classnames(props.class, 'truncate')}
       fullWidth={false}
-      value={currentPrompt() || ''}
+      value={currentPrompt() || NO_PROMPT}
       onChange={handlePromptChange}
       options={() => [
-        { value: '', label: 'None (use default)' },
+        { value: NO_PROMPT, label: 'None (use default)' },
         ...Array.from(store.state.settings.systemPrompts.values()).map((prompt) => ({
           value: prompt.id,
           label: prompt.title,

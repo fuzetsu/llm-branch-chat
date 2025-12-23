@@ -3,6 +3,7 @@ import { classnames } from '../../utils'
 import { inputBaseStyles, inputFullWidth } from './styles'
 
 interface InputProps {
+  id?: string
   type?: 'text' | 'password' | 'number' | 'email'
   placeholder?: string
   value?: string | number
@@ -29,6 +30,7 @@ const Input: Component<InputProps> = (props) => {
 
   return (
     <input
+      id={props.id}
       type={props.type || 'text'}
       class={classnames(inputBaseStyles, inputFullWidth, props.class)}
       placeholder={props.placeholder}

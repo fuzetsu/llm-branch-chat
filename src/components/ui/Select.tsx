@@ -1,6 +1,17 @@
-import { Component, For, JSX, Show } from 'solid-js'
-import { classnames } from '../../utils'
-import { inputBaseStyles, inputFullWidth } from './styles'
+import {
+  Component,
+  For,
+  Show,
+  createSignal,
+  createMemo,
+  createEffect,
+  createUniqueId,
+} from 'solid-js'
+import { classnames, getElementById, isMobileBrowser } from '../../utils'
+import { inputBaseStyles } from './styles'
+import Popover from './Popover'
+import Icon from './Icon'
+import Input from './Input'
 
 export interface SelectOption {
   value: string
@@ -21,64 +32,220 @@ interface SelectProps {
   class?: string | undefined
   disabled?: boolean
   fullWidth?: boolean
+  /** Hide the search input (default: false, search shown) */
+  hideSearch?: boolean
 }
 
 const Select: Component<SelectProps> = (props) => {
-  const handleChange: JSX.EventHandlerUnion<HTMLSelectElement, Event> = (e) => {
-    const value = e.currentTarget.value
-    props.onChange?.(value)
-  }
+  const [isOpen, setIsOpen] = createSignal(false)
+  const [searchQuery, setSearchQuery] = createSignal('')
+  const [lockedWidth, setLockedWidth] = createSignal<number | null>(null)
 
-  const getOptions = () =>
-    typeof props.options === 'function' ? props.options() : props.options
+  const searchId = createUniqueId()
+  const popoverId = createUniqueId()
+
+  const getOptions = () => (typeof props.options === 'function' ? props.options() : props.options)
 
   const getOptionGroups = () =>
     typeof props.optionGroups === 'function' ? props.optionGroups() : props.optionGroups
 
   const currentValue = () => props.value || ''
 
-  return (
-    <select
+  const selectedLabel = createMemo(() => {
+    const value = currentValue()
+    if (!value) return null
+
+    const flatOptions = getOptions()
+    if (flatOptions) {
+      const option = flatOptions.find((opt) => opt.value === value)
+      if (option) return option.label
+    }
+
+    const groups = getOptionGroups()
+    if (groups) {
+      for (const group of groups) {
+        const option = group.options.find((opt) => opt.value === value)
+        if (option) return option.label
+      }
+    }
+
+    return null
+  })
+
+  const filteredOptions = createMemo(() => {
+    const options = getOptions()
+    if (!options) return null
+
+    const query = searchQuery().toLowerCase()
+    if (!query) return options
+
+    return options.filter((opt) => opt.label.toLowerCase().includes(query))
+  })
+
+  const filteredGroups = createMemo(() => {
+    const groups = getOptionGroups()
+    if (!groups) return null
+
+    const query = searchQuery().toLowerCase()
+    if (!query) return groups
+
+    return groups
+      .map((group) => ({
+        ...group,
+        options: group.options.filter((opt) => opt.label.toLowerCase().includes(query)),
+      }))
+      .filter((group) => group.options.length > 0)
+  })
+
+  const hasOptions = createMemo(
+    () => (filteredOptions()?.length ?? 0) > 0 || (filteredGroups()?.length ?? 0) > 0,
+  )
+
+  const handleSelect = (value: string) => {
+    props.onChange?.(value)
+    setIsOpen(false)
+    setSearchQuery('')
+  }
+
+  const handleToggle = () => {
+    if (props.disabled) return
+    setIsOpen(!isOpen())
+  }
+
+  const handleClose = () => {
+    setIsOpen(false)
+    setSearchQuery('')
+    setLockedWidth(null)
+  }
+
+  createEffect(() => {
+    if (isOpen() && !props.hideSearch && !isMobileBrowser()) {
+      // Small delay to ensure popover is mounted and positioned
+      setTimeout(() => getElementById(searchId)?.focus(), 100)
+    }
+  })
+
+  createEffect(() => {
+    if (isOpen() && !lockedWidth()) {
+      // Lock width on first open to prevent jumping during search
+      setTimeout(() => {
+        const popover = document.getElementById(popoverId)
+        if (popover) {
+          setLockedWidth(popover.offsetWidth)
+        }
+      }, 50)
+    }
+  })
+
+  const optionButtonClass = (optionValue: string) =>
+    classnames(
+      'block w-full text-left px-3 py-2 text-sm transition-colors cursor-pointer',
+      currentValue() === optionValue
+        ? 'bg-surface-active text-primary font-medium'
+        : 'text-text hover:bg-surface-hover',
+    )
+
+  const trigger = (
+    <button
+      type="button"
       class={classnames(
         inputBaseStyles,
-        'cursor-pointer',
-        props.fullWidth !== false && inputFullWidth,
+        'cursor-pointer flex items-center justify-between gap-2 w-full',
+        props.disabled && 'opacity-50 cursor-not-allowed',
         props.class,
       )}
-      value={currentValue()}
-      onChange={handleChange}
+      onClick={handleToggle}
       disabled={props.disabled}
     >
-      <option disabled value="__placeholder__" selected={currentValue() === '__placeholder__'}>
-        {props.placeholder || 'Select an option'}
-      </option>
-      <Show
-        when={getOptionGroups()}
-        fallback={
-          <For each={getOptions()}>
-            {(option) => (
-              <option value={option.value} selected={option.value === currentValue()}>
-                {option.label}
-              </option>
-            )}
-          </For>
-        }
+      <span class={classnames('truncate min-w-0', !selectedLabel() && 'text-text-muted')}>
+        {selectedLabel() || props.placeholder || 'Select an option'}
+      </span>
+      <Icon
+        name="chevron"
+        size="sm"
+        class={classnames(
+          'text-text-muted transition-transform shrink-0',
+          isOpen() && 'rotate-180',
+        )}
+      />
+    </button>
+  )
+
+  return (
+    <Popover
+      trigger={trigger}
+      isOpen={isOpen()}
+      onClose={handleClose}
+      placement="auto"
+      class="py-1 min-w-50 max-w-100"
+    >
+      <div
+        id={popoverId}
+        class="flex flex-col"
+        style={lockedWidth() ? { width: `${lockedWidth()}px` } : undefined}
       >
-        <For each={getOptionGroups()}>
-          {(group) => (
-            <optgroup label={group.label}>
-              <For each={group.options}>
-                {(option) => (
-                  <option value={option.value} selected={option.value === currentValue()}>
-                    {option.label}
-                  </option>
+        <Show when={!props.hideSearch}>
+          <div class="px-2 py-1">
+            <Input
+              id={searchId}
+              type="text"
+              placeholder="Search..."
+              value={searchQuery()}
+              onInput={setSearchQuery}
+              class="text-sm"
+            />
+          </div>
+          <div class="border-t border-border my-1" />
+        </Show>
+
+        <div class="max-h-80 overflow-y-auto">
+          <Show
+            when={hasOptions()}
+            fallback={
+              <div class="px-3 py-2 text-sm text-text-muted text-center">
+                {searchQuery() ? 'No results found' : 'No options available'}
+              </div>
+            }
+          >
+            <Show
+              when={getOptionGroups()}
+              fallback={
+                <For each={filteredOptions()}>
+                  {(option) => (
+                    <button
+                      class={optionButtonClass(option.value)}
+                      onClick={() => handleSelect(option.value)}
+                    >
+                      {option.label}
+                    </button>
+                  )}
+                </For>
+              }
+            >
+              <For each={filteredGroups()}>
+                {(group) => (
+                  <>
+                    <div class="px-3 py-2 text-xs font-medium text-text-muted uppercase tracking-wide">
+                      {group.label}
+                    </div>
+                    <For each={group.options}>
+                      {(option) => (
+                        <button
+                          class={optionButtonClass(option.value)}
+                          onClick={() => handleSelect(option.value)}
+                        >
+                          {option.label}
+                        </button>
+                      )}
+                    </For>
+                  </>
                 )}
               </For>
-            </optgroup>
-          )}
-        </For>
-      </Show>
-    </select>
+            </Show>
+          </Show>
+        </div>
+      </div>
+    </Popover>
   )
 }
 
