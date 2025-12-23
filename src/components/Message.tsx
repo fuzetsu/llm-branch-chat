@@ -180,27 +180,29 @@ const Message: Component<MessageProps> = (props) => {
           </div>
         </Show>
 
-        <div class="flex gap-1 text-xs text-text-muted">
-          <Tooltip content={fullMessageDate()}>
-            {relativeTimestamp(props.message.timestamp)}
-          </Tooltip>
-          <Show when={props.message.model}>
-            <span>•</span>
-            <span>{props.message.model}</span>
-          </Show>
-          <Show when={props.isStreaming}>
-            <span>•</span>
-            <span class="animate-pulse">generating…</span>
+        <div class="flex items-center justify-between gap-2 flex-wrap">
+          <div class="flex gap-1 text-xs text-text-muted whitespace-nowrap shrink-0">
+            <Tooltip content={fullMessageDate()}>
+              {relativeTimestamp(props.message.timestamp)}
+            </Tooltip>
+            <Show when={props.message.model}>
+              <span>•</span>
+              <span>{props.message.model}</span>
+            </Show>
+            <Show when={props.isStreaming}>
+              <span>•</span>
+              <span class="animate-pulse">generating…</span>
+            </Show>
+          </div>
+
+          <Show when={!isEditing() && !props.isStreaming}>
+            <MessageBranching
+              messageId={props.message.id}
+              chat={props.chat}
+              isUserMessage={isUser()}
+            />
           </Show>
         </div>
-
-        <Show when={!isEditing() && !props.isStreaming}>
-          <MessageBranching
-            messageId={props.message.id}
-            chat={props.chat}
-            isUserMessage={isUser()}
-          />
-        </Show>
       </div>
     </div>
   )

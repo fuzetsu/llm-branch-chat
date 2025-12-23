@@ -65,7 +65,7 @@ const Button: Component<ButtonProps> = (props) => {
 
   return (
     <Show when={props.tooltip} fallback={button}>
-      <Tooltip content={props.tooltip!}>{button}</Tooltip>
+      <Tooltip content={props.tooltip ?? ''}>{button}</Tooltip>
     </Show>
   )
 }

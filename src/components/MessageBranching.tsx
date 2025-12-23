@@ -3,6 +3,7 @@ import { Chat } from '../types'
 import { useAppStore } from '../store/AppStore'
 import { block, classnames, debounce } from '../utils'
 import { countDescendants, getRootChildren } from '../utils/messageTree'
+import Button from './ui/Button'
 import Tooltip from './ui/Tooltip'
 
 interface MessageBranchingProps {
@@ -23,9 +24,11 @@ const MessageBranching: Component<MessageBranchingProps> = (props) => {
     store.switchMessageBranchWithFlash(props.chat.id, props.messageId, branchIndex)
 
   const [hoverIndex, setHoverIndex] = createSignal(-1)
-  const changeHover = debounce(setHoverIndex, 500)
-  const getBranchCount = (index: number) => {
+  const changeHover = debounce(setHoverIndex, 300)
+
+  const getBranchTooltip = (index: number) => {
     if (hoverIndex() !== index) return ''
+
     const { nodes } = props.chat
     const message = nodes.get(props.messageId)
     const parentId = message?.parentId
@@ -36,7 +39,13 @@ const MessageBranching: Component<MessageBranchingProps> = (props) => {
       }
       return getRootChildren(nodes)[index]?.id
     })
-    return branchId ? String(countDescendants(nodes, branchId)) : ''
+
+    if (!branchId) return 'Switch to this branch'
+
+    const count = countDescendants(nodes, branchId)
+    if (count === 0) return 'Empty branch'
+    if (count === 1) return '1 message in this branch'
+    return `${count} messages in this branch`
   }
 
   return (
@@ -50,30 +59,31 @@ const MessageBranching: Component<MessageBranchingProps> = (props) => {
               props.isUserMessage ? 'text-message-user-text opacity-80' : 'text-text-muted',
             )}
           >
-            <span>Branch</span>
+            <span class="shrink-0">Branch</span>
             <div class="flex flex-wrap items-center gap-1">
               <Index each={Array(info().total)}>
                 {(_, index) => (
-                  <Tooltip content={getBranchCount(index)} placement="bottom">
-                    <button
-                      disabled={isSelected(index)}
-                      onMouseEnter={() => changeHover(index)}
-                      onMouseLeave={() => setHoverIndex(-1)}
-                      class={classnames(
-                        'px-2 py-1 rounded text-xs transition-all cursor-pointer active:scale-90',
-                        isSelected(index)
-                          ? props.isUserMessage
-                            ? 'bg-surface text-text'
-                            : 'bg-primary text-white'
-                          : props.isUserMessage
-                            ? 'text-message-user-text opacity-80'
-                            : 'text-text-secondary',
-                      )}
-                      onClick={() => handleBranchSwitch(index)}
-                    >
-                      {index + 1}
-                    </button>
-                  </Tooltip>
+                  <div
+                    onMouseEnter={() => changeHover(index)}
+                    onMouseLeave={() => setHoverIndex(-1)}
+                  >
+                    <Tooltip content={getBranchTooltip(index)}>
+                      <Button
+                        variant={isSelected(index) ? 'primary' : 'ghost'}
+                        size="micro"
+                        disabled={isSelected(index)}
+                        onClick={() => handleBranchSwitch(index)}
+                        class={classnames(
+                          'px-1.5! py-0.5! min-w-6 justify-center',
+                          props.isUserMessage &&
+                            !isSelected(index) &&
+                            'text-message-user-text! opacity-80',
+                        )}
+                      >
+                        {index + 1}
+                      </Button>
+                    </Tooltip>
+                  </div>
                 )}
               </Index>
             </div>

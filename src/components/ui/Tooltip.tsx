@@ -114,19 +114,21 @@ const Tooltip: Component<TooltipProps> = (props) => {
       onTouchStart={handleTouchStart}
     >
       {props.children}
-      <Show when={props.content && mounted()}>
-        <Portal>
-          <div
-            ref={tooltipRef}
-            class={classnames(
-              'fixed z-9999 px-2 py-1 text-xs text-white bg-gray-900 rounded shadow-lg whitespace-nowrap pointer-events-none',
-              exiting() ? 'animate-fade-out' : 'animate-fade-in',
-            )}
-            style={tooltipStyle()}
-          >
-            {props.content}
-          </div>
-        </Portal>
+      <Show when={mounted() && props.content}>
+        {(content) => (
+          <Portal>
+            <div
+              ref={tooltipRef}
+              class={classnames(
+                'fixed z-9999 px-2 py-1 text-xs text-white bg-gray-900 rounded shadow-lg whitespace-nowrap pointer-events-none',
+                exiting() ? 'animate-fade-out' : 'animate-fade-in',
+              )}
+              style={tooltipStyle()}
+            >
+              {content()}
+            </div>
+          </Portal>
+        )}
       </Show>
     </div>
   )
