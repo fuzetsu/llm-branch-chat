@@ -124,10 +124,10 @@ const Popover: Component<PopoverProps> = (props) => {
 
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as HTMLElement
+      if (triggerRef?.contains(target)) return
 
-      if (triggerRef?.contains(target) || target.closest('.popover-container')) {
-        return
-      }
+      const closestPopover = target.closest('.popover-container')
+      if (closestPopover && triggerRef && !closestPopover.contains(triggerRef)) return
 
       props.onClose()
     }
@@ -179,8 +179,8 @@ const Popover: Component<PopoverProps> = (props) => {
 
   const animationClass = () =>
     exiting()
-      ? props.exitClass ?? 'animate-fade-out-slide-up'
-      : props.enterClass ?? 'animate-fade-in-slide-down'
+      ? (props.exitClass ?? 'animate-fade-out-slide-up')
+      : (props.enterClass ?? 'animate-fade-in-slide-down')
 
   return (
     <>
