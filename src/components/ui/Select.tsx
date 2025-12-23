@@ -6,6 +6,7 @@ import {
   createMemo,
   createEffect,
   createUniqueId,
+  onCleanup,
 } from 'solid-js'
 import { classnames, getElementById, isMobileBrowser } from '../../utils'
 import { inputBaseStyles } from './styles'
@@ -121,7 +122,22 @@ const Select: Component<SelectProps> = (props) => {
   createEffect(() => {
     if (isOpen() && !props.hideSearch && !isMobileBrowser()) {
       // Small delay to ensure popover is mounted and positioned
-      setTimeout(() => getElementById(searchId)?.focus(), 100)
+      const id = setTimeout(() => getElementById(searchId)?.focus(), 100)
+      onCleanup(() => clearTimeout(id))
+    }
+  })
+
+  createEffect(() => {
+    if (isOpen()) {
+      // automatically scroll selected option into view
+      const id = setTimeout(
+        () =>
+          getElementById(popoverId).querySelector('[data-selected=true]')?.scrollIntoView({
+            block: 'center',
+          }),
+        100,
+      )
+      onCleanup(() => clearTimeout(id))
     }
   })
 
@@ -231,6 +247,7 @@ const Select: Component<SelectProps> = (props) => {
                     <For each={group.options}>
                       {(option) => (
                         <button
+                          data-selected={option.value === currentValue()}
                           class={optionButtonClass(option.value)}
                           onClick={() => handleSelect(option.value)}
                         >
