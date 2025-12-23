@@ -79,6 +79,12 @@
   --color-primary: #6b8e7f;
   --color-primary-hover: #5a7c6f;
 
+  /* Status colors (muted for dark mode) */
+  --color-danger: #b85c5c;
+  --color-danger-hover: #a54949;
+  --color-success: #5a8f6a;
+  --color-success-hover: #4d7c5e;
+
   /* Interactive states (match primary in dark mode) */
   --color-focus-ring: #6b8e7f;
 
