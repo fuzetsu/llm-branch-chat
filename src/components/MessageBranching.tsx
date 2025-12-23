@@ -46,7 +46,7 @@ const MessageBranching: Component<MessageBranchingProps> = (props) => {
         return (
           <div
             class={classnames(
-              'flex items-center gap-2 mt-2 text-xs',
+              'flex items-center gap-2 text-xs',
               props.isUserMessage ? 'text-message-user-text opacity-80' : 'text-text-muted',
             )}
           >

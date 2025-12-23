@@ -118,6 +118,7 @@ const Message: Component<MessageProps> = (props) => {
         ref={messageRef}
         class={classnames(
           'relative w-full max-w-2xl px-4 py-3 rounded-lg transition-all duration-300',
+          'flex flex-col gap-2',
           isUser()
             ? 'bg-message-user text-message-user-text'
             : 'bg-message-assistant text-message-assistant-text',
@@ -156,7 +157,7 @@ const Message: Component<MessageProps> = (props) => {
             </div>
           }
         >
-          <div class="space-y-2">
+          <div class="flex flex-col gap-2">
             <Textarea
               class="text-sm resize max-w-full min-w-[30vw] min-h-40 text-text"
               value={editContent()}
@@ -179,13 +180,17 @@ const Message: Component<MessageProps> = (props) => {
           </div>
         </Show>
 
-        <div class="text-xs mt-2 text-text-muted">
+        <div class="flex gap-1 text-xs text-text-muted">
           <Tooltip content={fullMessageDate()}>
-            <span>{relativeTimestamp(props.message.timestamp)}</span>
+            {relativeTimestamp(props.message.timestamp)}
           </Tooltip>
-          {props.message.model && <span class="ml-2">• {props.message.model}</span>}
+          <Show when={props.message.model}>
+            <span>•</span>
+            <span>{props.message.model}</span>
+          </Show>
           <Show when={props.isStreaming}>
-            <span class="ml-2 animate-pulse">• generating...</span>
+            <span>•</span>
+            <span class="animate-pulse">generating…</span>
           </Show>
         </div>
 
