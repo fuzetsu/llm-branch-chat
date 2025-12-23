@@ -61,7 +61,7 @@ const Popover: Component<PopoverProps> = (props) => {
     const trigger = triggerElement.getBoundingClientRect()
     const popover = popoverRef.getBoundingClientRect()
     const gap = offset()
-    let placement = props.placement ?? 'bottom-left'
+    let placement: PopoverPlacement = props.placement ?? 'bottom-left'
 
     if (placement === 'auto') {
       const spaceBelow = window.innerHeight - trigger.bottom
@@ -69,7 +69,7 @@ const Popover: Component<PopoverProps> = (props) => {
 
       const vertical = spaceBelow >= popover.height + gap ? 'bottom' : 'top'
       const horizontal = spaceRight >= popover.width ? 'left' : 'right'
-      placement = `${vertical}-${horizontal}` as PopoverPlacement
+      placement = `${vertical}-${horizontal}`
     }
 
     const style: Record<string, string> = {}
