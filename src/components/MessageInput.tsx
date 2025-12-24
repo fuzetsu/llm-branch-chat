@@ -3,11 +3,7 @@ import { useAppStore } from '../store/AppStore'
 import Icon from './ui/Icon'
 import Button from './ui/Button'
 import { isMobileBrowser, touch } from '../utils'
-import {
-  getMessageList,
-  isMessageListScrolledToBottom,
-  scrollMessageListToBottom,
-} from './MessageList'
+import { getMessageList } from './MessageList'
 import { inputBaseStyles } from './ui/styles'
 import { classnames } from '../utils'
 
@@ -45,19 +41,21 @@ const MessageInput: Component = () => {
     }
   }
 
+  const autoSizeInput = (input: HTMLTextAreaElement) => {
+    input.style.height = 'auto'
+    input.style.height = Math.min(input.scrollHeight, window.innerHeight / 2) + 'px'
+  }
+
   const handleInput = (e: Event) => {
-    const target = e.target as HTMLTextAreaElement
+    const target = e.currentTarget as HTMLTextAreaElement
     setInputValue(target.value)
 
-    const wasScrolledToBottom = isMessageListScrolledToBottom()
-    const scrollTop = wasScrolledToBottom ? null : getMessageList()?.scrollTop
+    const messageList = getMessageList()
+    if (!messageList) return autoSizeInput(target)
 
-    // Auto-resize textarea
-    target.style.height = 'auto'
-    target.style.height = Math.min(target.scrollHeight, window.innerHeight / 2) + 'px'
-
-    if (wasScrolledToBottom) scrollMessageListToBottom()
-    else if (scrollTop != null) getMessageList()!.scrollTop = scrollTop
+    const { scrollTop, offsetHeight } = messageList
+    autoSizeInput(target)
+    messageList.scrollTop = scrollTop - (messageList.offsetHeight - offsetHeight)
   }
 
   const [getInput, setInput] = createSignal<HTMLTextAreaElement | null>(null)
