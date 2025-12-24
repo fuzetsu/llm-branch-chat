@@ -9,7 +9,7 @@ const ChatArea: Component = () => {
   const currentChat = () => store.getCurrentChat()
 
   return (
-    <>
+    <main class="fixed lg:left-80 top-13 left-0 right-0 bottom-0 flex flex-col">
       <Show
         when={currentChat()}
         fallback={
@@ -29,7 +29,7 @@ const ChatArea: Component = () => {
           <MessageInput />
         </div>
       </div>
-    </>
+    </main>
   )
 }
 

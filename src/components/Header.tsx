@@ -69,7 +69,7 @@ const Header: Component = () => {
     'w-full text-left px-4 py-2 text-sm text-text-secondary hover:bg-surface-hover transition-colors cursor-pointer flex items-center gap-2'
 
   return (
-    <header class="h-13 fixed top-0 left-0 right-0 z-50 bg-surface border-b border-border shadow-sm flex items-center">
+    <header class="h-13 fixed top-0 left-0 right-0 z-50 bg-surface border-b border-border shadow-md flex items-center">
       <div class="flex-1 flex items-center justify-between px-2">
         <div class="flex items-center gap-1 flex-1 min-w-0">
           <Button variant="ghost" class="lg:hidden p-2 shrink-0" onClick={toggleSidebar}>
