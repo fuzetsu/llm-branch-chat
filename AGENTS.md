@@ -5,6 +5,7 @@
 - `src/main.tsx` wires the SolidJS entrypoint and mounts `src/App.tsx`.
 - `src/components` provides feature UIs; keep shared primitives in `src/components/ui`.
 - **Complex component pattern**: When a component grows large, extract it into a folder structure:
+
   ```
   ComponentName/
     components/       # Local subcomponents (not reusable elsewhere)
@@ -13,7 +14,9 @@
     ComponentName.tsx # Main component, imports from ./components
     index.ts          # Re-exports main component
   ```
+
   This pattern is recursive—subcomponents can have their own `components/` folder if needed.
+
 - `src/store` contains the main store (`AppStore.tsx`) with all state and operations, plus the API layer (`api.ts`).
 - `src/utils` and `src/types` house helpers and contracts; extend them before adding ad-hoc files.
 
@@ -43,11 +46,13 @@ For deeper understanding, see `docs/architecture/README.md` which indexes topic-
 ## Code Comments & Documentation
 
 Comments should explain **why**, not **what**. Add comments for:
+
 - Complex algorithms or non-obvious design choices
 - Workarounds and their necessity
 - JSDoc for exported utilities with complex behavior
 
 Avoid redundant comments:
+
 - ❌ Structural labels (`// Header`, `// Backdrop`)
 - ❌ Layout descriptions (`// Left side: controls`)
 - ❌ Restating CSS classes (`// visible on lg+` for `hidden lg:block`)
@@ -61,7 +66,6 @@ Trust well-named code to be self-documenting. If writing an obvious comment, con
 - Keep derived values in `createMemo` or inline functions; never destructure signals outside their reactive scope.
 - Run side effects inside `createEffect`, pair cleanup with `onCleanup`, and keep async calls out of render paths.
 - Prefer `<For>` with stable keys over `.map`, and `<Show>` for conditionals instead of ternaries so Solid tracks nodes precisely.
-- Native `<select>` elements need explicit `selected` attributes on `<option>` elements when options can change; relying solely on the select's `value` prop can cause visual glitches when the options array reference changes.
 
 ## Testing Guidelines
 
