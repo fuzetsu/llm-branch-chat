@@ -69,8 +69,8 @@ const Header: Component = () => {
     'w-full text-left px-4 py-2 text-sm text-text-secondary hover:bg-surface-hover transition-colors cursor-pointer flex items-center gap-2'
 
   return (
-    <header class="fixed top-0 left-0 right-0 z-50 bg-surface border-b border-border shadow-sm">
-      <div class="flex items-center justify-between px-2 py-2">
+    <header class="h-13 fixed top-0 left-0 right-0 z-50 bg-surface border-b border-border shadow-sm flex items-center">
+      <div class="flex-1 flex items-center justify-between px-2">
         <div class="flex items-center gap-1 flex-1 min-w-0">
           <Button variant="ghost" class="lg:hidden p-2 shrink-0" onClick={toggleSidebar}>
             <Icon name="menu" class="text-text-muted" />
@@ -129,47 +129,47 @@ const Header: Component = () => {
             class="py-1 w-56"
           >
             <div>
-                <div class="lg:hidden">
-                  <div class="px-4 py-1.5 text-xs font-medium text-text-muted uppercase tracking-wide">
-                    Model
-                  </div>
-                  <div class="px-2 py-1">
-                    <ModelSelector class="w-full" />
-                  </div>
+              <div class="lg:hidden">
+                <div class="px-4 py-1.5 text-xs font-medium text-text-muted uppercase tracking-wide">
+                  Model
                 </div>
-
-                <div>
-                  <div class="px-4 py-1.5 text-xs font-medium text-text-muted uppercase tracking-wide">
-                    System Prompt
-                  </div>
-                  <div class="px-2 py-1">
-                    <SystemPromptSelector class="w-full" />
-                  </div>
+                <div class="px-2 py-1">
+                  <ModelSelector class="w-full" />
                 </div>
+              </div>
 
-                <Show when={hasActiveChat()}>
-                  <div class="border-t border-border my-1" />
-                  <button class={menuItemClass} onClick={handleStats}>
-                    <Icon name="bar-chart" size="sm" />
-                    Chat Statistics
-                  </button>
-                  <button class={menuItemClass} onClick={handleCopyBranch}>
-                    <Icon name="copy" size="sm" />
-                    Copy branch messages
-                  </button>
-                </Show>
-
-                <div class="md:hidden">
-                  <div class="border-t border-border my-1" />
-                  <button class={menuItemClass} onClick={handleSettings}>
-                    <Icon name="settings" size="sm" />
-                    Settings
-                  </button>
-                  <button class={menuItemClass} onClick={handleNewChat}>
-                    <Icon name="plus" size="sm" />
-                    New Chat
-                  </button>
+              <div>
+                <div class="px-4 py-1.5 text-xs font-medium text-text-muted uppercase tracking-wide">
+                  System Prompt
                 </div>
+                <div class="px-2 py-1">
+                  <SystemPromptSelector class="w-full" />
+                </div>
+              </div>
+
+              <Show when={hasActiveChat()}>
+                <div class="border-t border-border my-1" />
+                <button class={menuItemClass} onClick={handleStats}>
+                  <Icon name="bar-chart" size="sm" />
+                  Chat Statistics
+                </button>
+                <button class={menuItemClass} onClick={handleCopyBranch}>
+                  <Icon name="copy" size="sm" />
+                  Copy branch messages
+                </button>
+              </Show>
+
+              <div class="md:hidden">
+                <div class="border-t border-border my-1" />
+                <button class={menuItemClass} onClick={handleSettings}>
+                  <Icon name="settings" size="sm" />
+                  Settings
+                </button>
+                <button class={menuItemClass} onClick={handleNewChat}>
+                  <Icon name="plus" size="sm" />
+                  New Chat
+                </button>
+              </div>
             </div>
           </Popover>
         </div>
