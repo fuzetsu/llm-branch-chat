@@ -53,7 +53,7 @@ const Header: Component = () => {
     const promptId = chat.systemPromptId ?? store.state.settings.chat.defaultSystemPromptId
 
     const systemMessage = promptId ? store.state.settings.systemPrompts.get(promptId) : null
-    const systemText = systemMessage ? `[system]: ${systemMessage}` : ''
+    const systemText = systemMessage ? `[system]: ${systemMessage.content}` : ''
     const conversationLines = store
       .getVisibleMessages(chat.id)
       .map((message) => `[${message.role}]: ${message.content}`)
