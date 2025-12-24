@@ -135,7 +135,7 @@ const Select: Component<SelectProps> = (props) => {
           getElementById(popoverId).querySelector('[data-selected=true]')?.scrollIntoView({
             block: 'center',
           }),
-        100,
+        0,
       )
       onCleanup(() => clearTimeout(id))
     }
