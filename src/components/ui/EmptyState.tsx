@@ -1,9 +1,11 @@
 import { Component, JSX, Show } from 'solid-js'
+import { classnames } from '../../utils'
 
 interface EmptyStateProps {
   title: string
   description?: string
   action?: JSX.Element
+  class?: string
 }
 
 /**
@@ -11,7 +13,12 @@ interface EmptyStateProps {
  */
 const EmptyState: Component<EmptyStateProps> = (props) => {
   return (
-    <div class="text-center py-6 border border-border rounded-lg animate-fade-in">
+    <div
+      class={classnames(
+        'text-center py-6 border border-border rounded-lg animate-fade-in',
+        props.class,
+      )}
+    >
       <p class="text-text-muted">{props.title}</p>
       <Show when={props.description}>
         <p class="text-sm text-text-placeholder mt-1">{props.description}</p>
