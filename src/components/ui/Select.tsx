@@ -166,7 +166,7 @@ const Select: Component<SelectProps> = (props) => {
       type="button"
       class={classnames(
         inputBaseStyles,
-        'cursor-pointer flex items-center justify-between gap-2 w-full',
+        'cursor-pointer flex items-center justify-between gap-2 w-full text-sm',
         props.disabled && 'opacity-50 cursor-not-allowed',
         props.class,
       )}
