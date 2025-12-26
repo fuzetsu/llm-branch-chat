@@ -1,26 +1,21 @@
-import { Component, For, createEffect, Show, onCleanup, createMemo } from 'solid-js'
+import { Component, For, createEffect, onCleanup, createMemo } from 'solid-js'
 import { Chat } from '../types'
 import { useAppStore } from '../store/AppStore'
 import Message from './Message'
-import { querySelector, throttle } from '../utils'
+import { getElementById, throttle } from '../utils'
 import { createKeyedSignal } from '../utils/keyedSignal'
+import EmptyState from './ui/EmptyState'
 
 interface MessageListProps {
   chat: Chat
 }
 
-export const getMessageList = () => querySelector('#message-list')
+export const getMessageList = () => getElementById('message-list')
 
-export const scrollMessageListToBottom = () => querySelector('#message-list-end')?.scrollIntoView()
+export const scrollMessageListToBottom = () => getElementById('message-list-end')?.scrollIntoView()
 const throttledScrollToEnd = throttle(scrollMessageListToBottom, 100)
 
-export const isMessageListScrolledToBottom = () => {
-  const messageList = getMessageList()
-  if (!messageList) return true
-  const { scrollTop, scrollHeight, clientHeight } = messageList
-  const isAtBottom = scrollHeight - scrollTop <= clientHeight + 50
-  return isAtBottom
-}
+const CURSOR_INCREMENT = 20
 
 const MessageList: Component<MessageListProps> = (props) => {
   const store = useAppStore()
@@ -28,13 +23,16 @@ const MessageList: Component<MessageListProps> = (props) => {
   const chatId = createMemo(() => props.chat.id)
 
   const [shouldAutoScroll, setShouldAutoScroll] = createKeyedSignal(true, () => chatId())
+  const [cursor, setCursor] = createKeyedSignal(CURSOR_INCREMENT, () => chatId())
 
-  const visibleMessages = () => store.getVisibleMessages(props.chat.id)
+  const visibleMessages = createMemo(() => store.getVisibleMessages(props.chat.id))
+  const virtualizedMessages = createMemo(() => visibleMessages().slice(-cursor()))
 
   let messagesContainer!: HTMLDivElement
+  let firstRenderSettled = false
   createEffect(() => {
     chatId() // scroll to to bottom when chatId changes
-    let firstRenderSettled = false
+    firstRenderSettled = false
     let settledId = -1
     const observer = new ResizeObserver(() => {
       if (!firstRenderSettled) {
@@ -48,12 +46,35 @@ const MessageList: Component<MessageListProps> = (props) => {
     onCleanup(() => observer.disconnect())
   })
 
-  const handleScroll = () => setShouldAutoScroll(isMessageListScrolledToBottom())
+  const handleScroll = () => {
+    const messageList = getMessageList()
+    if (!messageList) return
+    const { scrollTop, scrollHeight, clientHeight } = messageList
+    const distanceFromBottom = scrollHeight - scrollTop - clientHeight
+    const isAtBottom = distanceFromBottom <= 50
+    setShouldAutoScroll(isAtBottom)
+    if (
+      firstRenderSettled &&
+      scrollTop < clientHeight * 3 &&
+      visibleMessages().length >= virtualizedMessages().length
+    ) {
+      setCursor((x) => x + CURSOR_INCREMENT)
+    }
+  }
 
   return (
     <div id="message-list" class="flex-1 overflow-y-auto px-2 py-2" onScroll={handleScroll}>
-      <div ref={messagesContainer} class="flex-1 flex flex-col gap-2">
-        <For each={visibleMessages()}>
+      <div ref={messagesContainer} class="flex flex-col gap-2">
+        <For
+          each={virtualizedMessages()}
+          fallback={
+            <EmptyState
+              class="self-center p-10 mt-13"
+              title="Start a conversation"
+              description="Send a message to get started"
+            />
+          }
+        >
           {(message) => (
             <Message
               message={message}
@@ -69,16 +90,6 @@ const MessageList: Component<MessageListProps> = (props) => {
           )}
         </For>
       </div>
-
-      {/* Empty state */}
-      <Show when={visibleMessages().length === 0 && !store.state.streaming.isStreaming}>
-        <div class="flex items-center justify-center h-full text-text-muted">
-          <div class="text-center">
-            <div class="text-lg mb-2">Start a conversation</div>
-            <div class="text-sm">Send a message to get started</div>
-          </div>
-        </div>
-      </Show>
 
       {/* Scroll anchor */}
       <div id="message-list-end" />

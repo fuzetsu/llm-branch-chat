@@ -2,6 +2,7 @@ import { Component, Show } from 'solid-js'
 import { useAppStore } from '../store/AppStore'
 import MessageList from './MessageList'
 import MessageInput from './MessageInput'
+import EmptyState from './ui/EmptyState'
 
 const ChatArea: Component = () => {
   const store = useAppStore()
@@ -13,11 +14,12 @@ const ChatArea: Component = () => {
       <Show
         when={currentChat()}
         fallback={
-          <div class="flex items-center justify-center h-full text-text-muted">
-            <div class="text-center">
-              <h2 class="text-xl font-semibold mb-2 tracking-tight">Welcome to LLM Chat</h2>
-              <p>Select a chat from the sidebar or start a new conversation</p>
-            </div>
+          <div class="flex-1 flex flex-col">
+            <EmptyState
+              class="self-center p-10 mt-15"
+              title="Start a conversation"
+              description="Send a message to get started"
+            />
           </div>
         }
       >
