@@ -37,6 +37,8 @@ import {
 // Sentinel value for graceful stream end
 export const STREAM_END = 'stream-end'
 
+export const STORE_VERSION = 1
+
 interface AppStoreContextType {
   state: AppStateStore
   // Settings

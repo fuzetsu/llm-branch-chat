@@ -77,6 +77,7 @@ export interface AppSettings {
 }
 
 export interface AppStateStore {
+  version: number
   chats: Record<string, Chat>
   currentChatId: string | null
   settings: AppSettings

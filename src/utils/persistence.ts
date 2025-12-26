@@ -1,3 +1,4 @@
+import { STORE_VERSION } from '../store/AppStore'
 import type { AppSettings, AppStateStore, Chat, ProviderConfig, StreamingState } from '../types'
 
 const STORAGE_KEY = 'llm-chat-state-tree-v1'
@@ -50,6 +51,7 @@ export function createDefaultStreamingState(): StreamingState {
 
 export function createDefaultState(): AppStateStore {
   return {
+    version: STORE_VERSION,
     chats: {},
     currentChatId: null,
     settings: createDefaultSettings(),
@@ -61,10 +63,8 @@ export function createDefaultState(): AppStateStore {
 function deserializeChat(chat: Chat, settings: AppSettings): Chat {
   return {
     ...chat,
-    nodes: Array.isArray(chat.nodes) ? Object.fromEntries(chat.nodes) : chat.nodes,
-    activeBranches: Array.isArray(chat.activeBranches)
-      ? Object.fromEntries(chat.activeBranches || [])
-      : chat.activeBranches,
+    nodes: maybeEntriesToObject(chat.nodes, {}),
+    activeBranches: maybeEntriesToObject(chat.activeBranches, {}),
     model: chat.model || settings.chat.model,
     systemPromptId: chat.systemPromptId || null,
   }
@@ -72,6 +72,10 @@ function deserializeChat(chat: Chat, settings: AppSettings): Chat {
 
 export function exportStateToJson(state: AppStateStore, pretty = false): string {
   return pretty ? JSON.stringify(state, null, 2) : JSON.stringify(state)
+}
+
+function maybeEntriesToObject<T>(data: T, fallback: T) {
+  return Array.isArray(data) ? Object.fromEntries(data) : (data ?? fallback)
 }
 
 export function importStateFromJson(jsonString: string): AppStateStore {
@@ -83,20 +87,21 @@ export function importStateFromJson(jsonString: string): AppStateStore {
       api: {
         ...defaultSettings.api,
         ...(state.settings?.api || {}),
-        providers: Array.isArray(state.settings?.api.providers)
-          ? Object.fromEntries(state.settings.api.providers)
-          : (state.settings?.api.providers ?? defaultSettings.api.providers),
+        providers: maybeEntriesToObject(
+          state.settings.api.providers,
+          defaultSettings.api.providers,
+        ),
       },
       chat: { ...defaultSettings.chat, ...(state.settings?.chat || {}) },
       ui: { ...defaultSettings.ui, ...(state.settings?.ui || {}) },
-      systemPrompts: Array.isArray(state.settings.systemPrompts)
-        ? Object.fromEntries(state.settings.systemPrompts)
-        : state.settings?.systemPrompts || {},
+      systemPrompts: maybeEntriesToObject(
+        state.settings.systemPrompts,
+        defaultSettings.systemPrompts,
+      ),
     }
 
-    console.log(state.settings, settings)
-
     return {
+      version: STORE_VERSION,
       chats: Array.isArray(state.chats)
         ? Object.fromEntries(state.chats.map(([id, chat]) => [id, deserializeChat(chat, settings)]))
         : state.chats || {},
