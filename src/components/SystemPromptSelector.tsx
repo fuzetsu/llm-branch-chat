@@ -30,7 +30,7 @@ const SystemPromptSelector: Component<ModelSelectorProps> = (props) => {
       onChange={handlePromptChange}
       options={() => [
         { value: NO_PROMPT, label: 'None (use default)' },
-        ...Array.from(store.state.settings.systemPrompts.values()).map((prompt) => ({
+        ...Object.values(store.state.settings.systemPrompts).map((prompt) => ({
           value: prompt.id,
           label: prompt.title,
         })),

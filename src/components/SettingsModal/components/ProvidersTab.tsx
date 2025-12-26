@@ -14,10 +14,10 @@ import ProviderList from './ProviderList'
 import ProviderForm, { type ProviderFormData, type ProviderFormErrors } from './ProviderForm'
 
 interface ProvidersTabProps {
-  providers: Map<string, ProviderConfig>
+  providers: Record<string, ProviderConfig>
   storageSizeInBytes: number
   importState: { success: boolean; message: string } | null
-  onUpdateProviders: (providers: Map<string, ProviderConfig>) => void
+  onUpdateProvider: (name: string, providers: ProviderConfig | null) => void
   onExportState: () => void
   onImportState: () => void
 }
@@ -36,7 +36,7 @@ const ProvidersTab: Component<ProvidersTabProps> = (props) => {
 
   let providerFormSection!: HTMLDivElement
 
-  const providersList = createMemo(() => Array.from(props.providers.entries()))
+  const providersList = createMemo(() => Object.entries(props.providers))
 
   const isEditing = () => editingProvider.name !== null
 
@@ -78,15 +78,13 @@ const ProvidersTab: Component<ProvidersTabProps> = (props) => {
       models,
     )
 
-    const newProviders = new Map(props.providers)
-    newProviders.set(providerForm.name, newProvider)
+    props.onUpdateProvider(providerForm.name, newProvider)
 
-    props.onUpdateProviders(newProviders)
     resetForm()
   }
 
   const handleEditProvider = (providerName: string) => {
-    const provider = props.providers.get(providerName)
+    const provider = props.providers[providerName]
     if (!provider) return
 
     setEditingProvider('name', providerName)
@@ -110,14 +108,15 @@ const ProvidersTab: Component<ProvidersTabProps> = (props) => {
 
     const urlError = validateProviderUrl(providerForm.baseUrl)
     const modelsError = validateProviderModels(models)
+    const nameError = editing !== providerForm.name ? 'Cannot change provider name.' : null
 
-    setValidationErrors({ baseUrl: urlError, models: modelsError })
+    setValidationErrors({ baseUrl: urlError, models: modelsError, name: nameError })
 
-    if (urlError || modelsError) {
+    if (urlError || modelsError || nameError) {
       return
     }
 
-    const existingProvider = props.providers.get(editing)
+    const existingProvider = props.providers[editing]
     if (!existingProvider) return
 
     const updatedProvider = updateProvider(existingProvider, {
@@ -127,16 +126,7 @@ const ProvidersTab: Component<ProvidersTabProps> = (props) => {
       availableModels: models,
     })
 
-    const newProviders = new Map(props.providers)
-
-    if (editing !== providerForm.name) {
-      newProviders.delete(editing)
-      newProviders.set(providerForm.name, updatedProvider)
-    } else {
-      newProviders.set(editing, updatedProvider)
-    }
-
-    props.onUpdateProviders(newProviders)
+    props.onUpdateProvider(editing, updatedProvider)
     resetForm()
   }
 
@@ -147,10 +137,7 @@ const ProvidersTab: Component<ProvidersTabProps> = (props) => {
       return
     }
 
-    const newProviders = new Map(props.providers)
-    newProviders.delete(providerName)
-
-    props.onUpdateProviders(newProviders)
+    props.onUpdateProvider(providerName, null)
   }
 
   return (

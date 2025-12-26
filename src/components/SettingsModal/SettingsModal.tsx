@@ -1,15 +1,15 @@
 import { Component, createEffect, Show, createSignal, untrack } from 'solid-js'
-import { createStore, unwrap } from 'solid-js/store'
+import { createStore, produce, unwrap } from 'solid-js/store'
 import { useAppStore, exportStateToJson, importStateFromJson } from '../../store/AppStore'
 import { downloadJsonFile, createFileInput } from '../../utils/fileUtils'
-import { getAllAvailableModels, getModelsGroupedByProvider } from '../../utils/providerUtils'
+import { getModelsGroupedByProvider } from '../../utils/providerUtils'
 import { classnames } from '../../utils'
-import type { ProviderConfig, SystemPrompt } from '../../types'
+import type { ApiSettings, AppSettings } from '../../types'
 import Modal from '../ui/Modal'
 import Button from '../ui/Button'
 import ProvidersTab from './components/ProvidersTab'
-import ChatSettingsTab, { type ChatSettingsForm } from './components/ChatSettingsTab'
-import UISettingsTab, { type UISettingsForm, type ThemeOption } from './components/UISettingsTab'
+import ChatSettingsTab, { ChatSettingsForm } from './components/ChatSettingsTab'
+import UISettingsTab, { type UISettingsForm } from './components/UISettingsTab'
 import SystemPromptsTab from './components/SystemPromptsTab'
 
 interface SettingsModalProps {
@@ -31,10 +31,8 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
 
   // Form state for all settings - kept local until save
   const [providersForm, setProvidersForm] = createStore<{
-    providers: Map<string, ProviderConfig>
-  }>({
-    providers: new Map(),
-  })
+    providers: ApiSettings['providers']
+  }>({ providers: {} })
 
   const [chatForm, setChatForm] = createStore<ChatSettingsForm>({
     model: '',
@@ -50,24 +48,23 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
   })
 
   const [systemPromptsForm, setSystemPromptsForm] = createStore<{
-    prompts: Map<string, SystemPrompt>
+    prompts: AppSettings['systemPrompts']
     defaultId: string | null
   }>({
-    prompts: new Map(),
+    prompts: {},
     defaultId: null,
   })
 
   const storageSizeInBytes = () => new TextEncoder().encode(exportStateToJson(store.state)).length
 
-  const allAvailableModels = () => getAllAvailableModels(providersForm.providers)
   const groupedModels = () => getModelsGroupedByProvider(providersForm.providers)
 
   createEffect(() => {
-    if (props.isOpen) {
+    if (importState()?.success || props.isOpen) {
       const settings = untrack(() => unwrap(store.state.settings))
 
       setProvidersForm({
-        providers: new Map(settings.api.providers),
+        providers: { ...settings.api.providers },
       })
 
       setChatForm({
@@ -84,7 +81,7 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
       })
 
       setSystemPromptsForm({
-        prompts: new Map(settings.systemPrompts),
+        prompts: { ...settings.systemPrompts },
         defaultId: settings.chat.defaultSystemPromptId,
       })
 
@@ -142,7 +139,6 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
       },
       chat: {
         model: chatForm.model,
-        availableModels: allAvailableModels(),
         temperature: chatForm.temperature,
         maxTokens: chatForm.maxTokens,
         autoGenerateTitle: chatForm.autoGenerateTitle,
@@ -220,8 +216,15 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
             providers={providersForm.providers}
             storageSizeInBytes={storageSizeInBytes()}
             importState={importState()}
-            onUpdateProviders={(providers) => {
-              setProvidersForm({ providers })
+            onUpdateProvider={(name, provider) => {
+              if (!provider)
+                setProvidersForm(
+                  'providers',
+                  produce((providers) => {
+                    delete providers[name]
+                  }),
+                )
+              else setProvidersForm('providers', name, provider)
             }}
             onExportState={handleExportState}
             onImportState={triggerFileImport}
@@ -237,17 +240,23 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
         </Show>
 
         <Show when={activeTab() === 'ui'}>
-          <UISettingsTab
-            form={uiForm}
-            onUpdate={(key, value) => setUiForm(key, value as ThemeOption)}
-          />
+          <UISettingsTab form={uiForm} onUpdate={(key, value) => setUiForm(key, value)} />
         </Show>
 
         <Show when={activeTab() === 'system'}>
           <SystemPromptsTab
             systemPrompts={systemPromptsForm.prompts}
             defaultSystemPromptId={systemPromptsForm.defaultId}
-            onUpdatePrompts={(prompts) => setSystemPromptsForm('prompts', prompts)}
+            onUpdatePrompt={(id, prompt) =>
+              prompt
+                ? setSystemPromptsForm('prompts', id, prompt)
+                : setSystemPromptsForm(
+                    'prompts',
+                    produce((prompts) => {
+                      delete prompts[id]
+                    }),
+                  )
+            }
             onUpdateDefaultId={(id) => setSystemPromptsForm('defaultId', id)}
           />
         </Show>

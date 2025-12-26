@@ -28,7 +28,7 @@ const Header: Component = () => {
   const currentSystemPrompt = createMemo(() => {
     const promptId = currentSystemPromptId()
     if (!promptId) return null
-    return store.state.settings.systemPrompts.get(promptId) ?? null
+    return store.state.settings.systemPrompts[promptId] ?? null
   })
 
   const hasSystemPrompt = createMemo(() => currentSystemPrompt() !== null)
@@ -41,7 +41,8 @@ const Header: Component = () => {
     setShowStats(true)
     setShowMoreMenu(false)
   }
-  const toggleSidebar = () => store.setUI({ sidebarCollapsed: !store.state.ui.sidebarCollapsed })
+  const toggleSidebar = () =>
+    store.updateUI({ sidebarCollapsed: !store.state.settings.ui.sidebarCollapsed })
   const currentChat = () => store.getCurrentChat()
   const handleNewChat = () => {
     store.createNewChat()
@@ -50,9 +51,8 @@ const Header: Component = () => {
   const handleCopyBranch = () => {
     const chat = store.getCurrentChat()
     if (!chat) return
-    const promptId = chat.systemPromptId ?? store.state.settings.chat.defaultSystemPromptId
 
-    const systemMessage = promptId ? store.state.settings.systemPrompts.get(promptId) : null
+    const systemMessage = currentSystemPrompt()
     const systemText = systemMessage ? `[system]: ${systemMessage.content}` : ''
     const conversationLines = store
       .getVisibleMessages(chat.id)

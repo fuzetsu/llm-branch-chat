@@ -6,12 +6,19 @@ import {
   createSignal,
   createMemo,
   untrack,
+  batch,
 } from 'solid-js'
-import { createStore } from 'solid-js/store'
-import type { AppSettings, Chat, UISettings, MessageNode, ApiMessage } from '../types'
+import { createStore, produce } from 'solid-js/store'
+import type {
+  AppSettings,
+  Chat,
+  MessageNode,
+  ApiMessage,
+  AppStateStore,
+  UISettings,
+} from '../types'
 import { createApiService } from './api'
 import {
-  type AppStateStore,
   loadStateFromStorage,
   saveStateToStorage,
   exportStateToJson,
@@ -22,12 +29,9 @@ import {
   createEmptyChat,
   createMessageNode,
   addNodeToPool,
-  updateNodeInPool,
-  getVisibleMessages as getVisibleMessagesFromTree,
-  findNodeById,
-  switchToBranch,
+  getVisibleNodes,
   getBranchInfo as getBranchInfoFromTree,
-  getRootChildren,
+  getSwitchBranchTarget,
 } from '../utils/messageTree'
 
 // Sentinel value for graceful stream end
@@ -38,8 +42,8 @@ interface AppStoreContextType {
   // Settings
   setCurrentChatId: (id: string | null) => void
   updateSettings: (settings: Partial<AppSettings>) => void
-  setUI: (ui: Partial<UISettings>) => void
   replaceState: (newState: AppStateStore) => void
+  updateUI: (partialUiSettings: Partial<UISettings>) => void
   // Chat operations
   addChat: (chat: Chat) => void
   updateChat: (chatId: string, updates: Partial<Chat>) => void
@@ -60,7 +64,6 @@ interface AppStoreContextType {
     model: string,
   ) => string
   switchMessageBranch: (chatId: string, messageId: string, branchIndex: number) => void
-  switchMessageBranchWithFlash: (chatId: string, messageId: string, branchIndex: number) => void
   getVisibleMessages: (chatId: string) => MessageNode[]
   getBranchInfo: (chatId: string, messageId: string) => { total: number; current: number } | null
   setFlashingMessage: (messageId: string | null) => void
@@ -127,8 +130,8 @@ export const AppStoreProvider: ParentComponent = (props) => {
     setState('settings', newSettings)
   }
 
-  const setUI = (newUI: Partial<UISettings>) => {
-    setState('ui', (ui) => ({ ...ui, ...newUI }))
+  const updateUI: AppStoreContextType['updateUI'] = (partialUISettings) => {
+    setState('settings', 'ui', partialUISettings)
   }
 
   const replaceState = (newState: AppStateStore) => {
@@ -164,53 +167,45 @@ export const AppStoreProvider: ParentComponent = (props) => {
   const getStreamingContent = (): string => state.streaming.currentContent
 
   const addChat = (chat: Chat) => {
-    setState('chats', (chats: Map<string, Chat>) => {
-      const newChats = new Map(chats)
-      newChats.set(chat.id, chat)
-      return newChats
-    })
+    setState('chats', chat.id, chat)
   }
 
   const updateChat = (chatId: string, updates: Partial<Chat>) => {
-    setState('chats', (chats: Map<string, Chat>) => {
-      const newChats = new Map(chats)
-      const existingChat = newChats.get(chatId)
-      if (existingChat) {
-        newChats.set(chatId, { ...existingChat, ...updates })
-      }
-      return newChats
-    })
+    setState('chats', chatId, updates)
   }
 
   const deleteChat = (chatId: string) => {
-    setState('chats', (chats: Map<string, Chat>) => {
-      const newChats = new Map(chats)
-      newChats.delete(chatId)
-      return newChats
-    })
+    setState(
+      'chats',
+      produce((chats) => {
+        delete chats[chatId]
+      }),
+    )
   }
 
   const getCurrentChat = (): Chat | null => {
-    return state.currentChatId ? (state.chats.get(state.currentChatId) ?? null) : null
+    return state.currentChatId ? (state.chats[state.currentChatId] ?? null) : null
   }
 
   const getActiveChats = (): Chat[] => {
-    return Array.from(state.chats.values())
+    return Object.values(state.chats)
       .filter((chat) => !chat.isArchived)
       .sort((a, b) => b.updatedAt - a.updatedAt)
   }
 
   const getArchivedChats = (): Chat[] => {
-    return Array.from(state.chats.values())
+    return Object.values(state.chats)
       .filter((chat) => chat.isArchived)
       .sort((a, b) => b.updatedAt - a.updatedAt)
   }
 
   const createNewChatInternal = (): string => {
     const chatId = generateChatId()
-    const newChat = createEmptyChat(chatId, 'New Chat', state.settings.chat.model, null)
-    addChat(newChat)
-    setCurrentChatId(chatId)
+    const newChat = createEmptyChat(chatId, 'New chat', state.settings.chat.model, null)
+    batch(() => {
+      addChat(newChat)
+      setCurrentChatId(chatId)
+    })
     return chatId
   }
 
@@ -223,46 +218,20 @@ export const AppStoreProvider: ParentComponent = (props) => {
   }
 
   const addMessage = (chatId: string, message: MessageNode, parentId: string | null) => {
-    setState('chats', (chats: Map<string, Chat>) => {
-      const newChats = new Map(chats)
-      const chat = newChats.get(chatId)
-      if (chat) {
-        const { nodes: newNodes, activeBranches: newBranches } = addNodeToPool(
-          chat.nodes,
-          chat.activeBranches,
-          chat.rootNodeId,
-          message,
-          parentId,
-        )
-
-        newChats.set(chatId, {
-          ...chat,
-          nodes: newNodes,
-          activeBranches: newBranches,
-          updatedAt: Date.now(),
-        })
-      }
-      return newChats
-    })
+    setState(
+      'chats',
+      chatId,
+      produce((chat) => {
+        addNodeToPool(chat, message, parentId)
+        chat.updatedAt = Date.now()
+      }),
+    )
   }
 
   const updateMessage = (chatId: string, messageId: string, updates: Partial<MessageNode>) => {
-    setState('chats', (chats: Map<string, Chat>) => {
-      const newChats = new Map(chats)
-      const chat = newChats.get(chatId)
-      if (chat) {
-        const node = findNodeById(chat.nodes, messageId)
-        if (node) {
-          const newNodes = updateNodeInPool(chat.nodes, messageId, updates)
-          newChats.set(chatId, {
-            ...chat,
-            nodes: newNodes,
-            updatedAt: Date.now(),
-          })
-          return newChats
-        }
-      }
-      return chats
+    batch(() => {
+      setState('chats', chatId, 'nodes', messageId, updates)
+      setState('chats', chatId, 'updatedAt', Date.now())
     })
   }
 
@@ -273,103 +242,59 @@ export const AppStoreProvider: ParentComponent = (props) => {
     role: 'user' | 'assistant' | 'system',
     model: string,
   ): string => {
-    const chat = state.chats.get(chatId)
+    const chat = state.chats[chatId]
     if (!chat) throw new Error('createMessageBranch: chat not found')
 
     let branchIndex = 0
     if (parentId === null) {
-      branchIndex = Array.from(chat.nodes.values()).filter((node) => node.parentId === null).length
+      branchIndex = Object.values(chat.nodes).filter((node) => node.parentId === null).length
     } else {
-      const parent = chat.nodes.get(parentId)
+      const parent = chat.nodes[parentId]
       branchIndex = parent?.childIds.length || 0
     }
 
     const newMessage = createMessageNode(role, content, model, parentId, branchIndex)
 
-    setState('chats', (chats: Map<string, Chat>) => {
-      const newChats = new Map(chats)
-      const { nodes: newNodes, activeBranches: newBranches } = addNodeToPool(
-        chat.nodes,
-        chat.activeBranches,
-        chat.rootNodeId,
-        newMessage,
-        parentId,
-      )
-      newChats.set(chatId, {
-        ...chat,
-        nodes: newNodes,
-        activeBranches: newBranches,
-        updatedAt: Date.now(),
-      })
-      return newChats
-    })
+    setState(
+      'chats',
+      chatId,
+      produce((chat) => {
+        addNodeToPool(chat, newMessage, parentId)
+        chat.updatedAt = Date.now()
+      }),
+    )
 
     return newMessage.id
   }
 
-  const switchMessageBranch = (chatId: string, messageId: string, branchIndex: number) => {
-    setState('chats', (chats: Map<string, Chat>) => {
-      const newChats = new Map(chats)
-      const chat = newChats.get(chatId)
-      if (chat) {
-        const newBranches = switchToBranch(
-          chat.activeBranches,
-          chat.nodes,
-          chat.rootNodeId,
-          messageId,
-          branchIndex,
-        )
-        newChats.set(chatId, {
-          ...chat,
-          activeBranches: newBranches,
-        })
-        return newChats
-      }
-      return chats
-    })
-  }
-
   const getVisibleMessages = (chatId: string): MessageNode[] => {
-    const chat = state.chats.get(chatId)
-    if (!chat) return []
-    return getVisibleMessagesFromTree(chat.nodes, chat.rootNodeId, chat.activeBranches)
+    const chat = state.chats[chatId]
+    return chat ? getVisibleNodes(chat) : []
   }
 
   const getBranchInfo = (
     chatId: string,
     messageId: string,
   ): { total: number; current: number } | null => {
-    const chat = state.chats.get(chatId)
-    if (!chat) return null
-    return getBranchInfoFromTree(chat.nodes, chat.rootNodeId, messageId)
+    const chat = state.chats[chatId]
+    return chat ? getBranchInfoFromTree(chat.nodes, messageId) : null
   }
 
   const setFlashingMessage = (messageId: string | null) => {
     setState('flashingMessageId', messageId)
   }
 
-  const switchMessageBranchWithFlash = (
-    chatId: string,
-    messageId: string,
-    branchIndex: number,
-  ): void => {
-    const chat = state.chats.get(chatId)
+  const switchMessageBranch = (chatId: string, messageId: string, branchIndex: number): void => {
+    const chat = state.chats[chatId]
     if (!chat) return
 
-    const targetNode = chat.nodes.get(messageId)
-    if (!targetNode) return
+    const message = chat.nodes[messageId]
+    if (!message) return
 
-    let siblings: string[]
-    if (targetNode.parentId === null) {
-      siblings = getRootChildren(chat.nodes).map((n: MessageNode) => n.id)
-    } else {
-      const parent = chat.nodes.get(targetNode.parentId)
-      siblings = parent?.childIds || []
-    }
+    const targetMessageId = getSwitchBranchTarget(chat, message, branchIndex)
+    if (!targetMessageId) return
 
-    const targetMessageId = siblings[branchIndex]
-
-    switchMessageBranch(chatId, messageId, branchIndex)
+    setState('chats', chatId, 'activeBranches', message.parentId ?? chat.rootNodeId, branchIndex)
 
     // Flash the target message
     if (targetMessageId) {
@@ -389,7 +314,7 @@ export const AppStoreProvider: ParentComponent = (props) => {
 
     // Add system prompt if specified and exists
     if (systemPromptId) {
-      const systemPrompt = state.settings.systemPrompts.get(systemPromptId)
+      const systemPrompt = state.settings.systemPrompts[systemPromptId]
       if (systemPrompt) {
         apiMessages.push({
           role: 'system',
@@ -523,10 +448,10 @@ export const AppStoreProvider: ParentComponent = (props) => {
   }
 
   const regenerateMessage = async (chatId: string, messageId: string) => {
-    const chat = state.chats.get(chatId)
+    const chat = state.chats[chatId]
     if (!chat) return
 
-    const message = findNodeById(chat.nodes, messageId)
+    const message = chat.nodes[messageId]
     if (!message || message.role !== 'assistant') return
 
     // Get conversation history up to this message
@@ -574,7 +499,7 @@ export const AppStoreProvider: ParentComponent = (props) => {
   }
 
   const generateChatTitle = async (chatId: string) => {
-    const chat = state.chats.get(chatId)
+    const chat = state.chats[chatId]
     if (!chat) return
 
     const visibleMessages = getVisibleMessages(chatId)
@@ -604,11 +529,11 @@ export const AppStoreProvider: ParentComponent = (props) => {
 
   const storeValue: AppStoreContextType = {
     state,
+    addChat,
     setCurrentChatId,
     updateSettings,
-    setUI,
+    updateUI,
     replaceState,
-    addChat,
     updateChat,
     deleteChat,
     createNewChat,
@@ -620,7 +545,6 @@ export const AppStoreProvider: ParentComponent = (props) => {
     updateMessage,
     createMessageBranch,
     switchMessageBranch,
-    switchMessageBranchWithFlash,
     getVisibleMessages,
     getBranchInfo,
     setFlashingMessage,

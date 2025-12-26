@@ -2,12 +2,12 @@ import type { ProviderConfig } from '../types'
 
 export function validateProviderName(
   name: string,
-  existingProviders: Map<string, ProviderConfig>,
+  existingProviders: Record<string, ProviderConfig>,
 ): string | null {
   if (!name.trim()) {
     return 'Provider name cannot be empty'
   }
-  if (existingProviders.has(name)) {
+  if (existingProviders[name]) {
     return 'Provider name already exists'
   }
   return null
@@ -67,10 +67,10 @@ export function updateProvider(
   }
 }
 
-export function getAllAvailableModels(providers: Map<string, ProviderConfig>): string[] {
+export function getAllAvailableModels(providers: Record<string, ProviderConfig>): string[] {
   const allModels: string[] = []
 
-  for (const [providerName, provider] of providers.entries()) {
+  for (const [providerName, provider] of Object.entries(providers)) {
     for (const model of provider.availableModels) {
       allModels.push(`${providerName}: ${model}`)
     }
@@ -85,11 +85,11 @@ export interface ModelOptionGroup {
 }
 
 export function getModelsGroupedByProvider(
-  providers: Map<string, ProviderConfig>,
+  providers: Record<string, ProviderConfig>,
 ): ModelOptionGroup[] {
   const groups: ModelOptionGroup[] = []
 
-  for (const [providerName, provider] of providers.entries()) {
+  for (const [providerName, provider] of Object.entries(providers)) {
     if (provider.availableModels.length > 0) {
       groups.push({
         label: providerName,
@@ -106,7 +106,7 @@ export function getModelsGroupedByProvider(
 
 export function getProviderForModel(
   modelWithPrefix: string,
-  providers: Map<string, ProviderConfig>,
+  providers: Record<string, ProviderConfig>,
 ): { providerName: string; modelName: string } | null {
   const match = modelWithPrefix.match(/^([^:]+):\s*(.+)$/)
   if (!match || !match[1] || !match[2]) {
@@ -116,8 +116,8 @@ export function getProviderForModel(
   const providerName = match[1].trim()
   const modelName = match[2].trim()
 
-  const provider = providers.get(providerName)
-  if (!provider || !provider.availableModels.includes(modelName)) {
+  const provider = providers[providerName]
+  if (!provider?.availableModels.includes(modelName)) {
     return null
   }
 
@@ -126,14 +126,14 @@ export function getProviderForModel(
 
 export function getProviderConfigForModel(
   modelWithPrefix: string,
-  providers: Map<string, ProviderConfig>,
+  providers: Record<string, ProviderConfig>,
 ): ProviderConfig | null {
   const providerInfo = getProviderForModel(modelWithPrefix, providers)
   if (!providerInfo) {
     return null
   }
 
-  return providers.get(providerInfo.providerName) || null
+  return providers[providerInfo.providerName] || null
 }
 
 export async function fetchModelsFromProvider(baseUrl: string, apiKey?: string): Promise<string[]> {

@@ -40,12 +40,8 @@ export interface ModelTokenStats {
  * Calculate comprehensive token statistics for ALL conversation paths in the chat
  * This includes all branches and alternative conversation paths
  */
-export function getTokenStats(nodes: Map<string, MessageNode>): TokenStats {
-  return getAllPathsTokenStats(nodes)
-}
-
-function getAllPathsTokenStats(nodes: Map<string, MessageNode>): TokenStats {
-  const rootMessages = Array.from(nodes.values()).filter((node) => node.parentId === null)
+export function getTokenStats(nodes: Record<string, MessageNode>): TokenStats {
+  const rootMessages = Object.values(nodes).filter((node) => node.parentId === null)
 
   let totalInputTokens = 0
   let totalCachedInputTokens = 0
@@ -123,7 +119,7 @@ function getAllPathsTokenStats(nodes: Map<string, MessageNode>): TokenStats {
 }
 
 function calculatePathTokenStatsWithModelCosts(
-  nodes: Map<string, MessageNode>,
+  nodes: Record<string, MessageNode>,
   startNodeId: string,
   modelStats: Map<
     string,
@@ -141,15 +137,13 @@ function calculatePathTokenStatsWithModelCosts(
 
   // Collect all messages in this conversation path
   function collectPathMessages(nodeId: string) {
-    const node = nodes.get(nodeId)
+    const node = nodes[nodeId]
     if (!node) return
 
     messagesInPath.push(node)
 
     // Follow all child branches (we need to account for all possible continuations)
-    node.childIds.forEach((childId) => {
-      collectPathMessages(childId)
-    })
+    node.childIds.forEach((childId) => collectPathMessages(childId))
   }
 
   collectPathMessages(startNodeId)
@@ -316,7 +310,7 @@ export function countCumulativeInputTokens(visibleMessages: MessageNode[]) {
 /**
  * Calculate branch statistics for the conversation tree
  */
-function calculateBranchStatistics(nodes: Map<string, MessageNode>): {
+function calculateBranchStatistics(nodes: Record<string, MessageNode>): {
   totalBranches: number
   maxBranchesPerNode: number
 } {
@@ -329,7 +323,7 @@ function calculateBranchStatistics(nodes: Map<string, MessageNode>): {
   }
 
   saveCount(getRootChildren(nodes).length)
-  for (const node of nodes.values()) saveCount(node.childIds.length)
+  Object.values(nodes).forEach((node) => saveCount(node.childIds.length))
 
   return { totalBranches, maxBranchesPerNode }
 }
@@ -344,8 +338,8 @@ export interface TokenBreakdown {
   messageCount: number
 }
 
-export function getTokenBreakdown(nodes: Map<string, MessageNode>): TokenBreakdown[] {
-  const messages = Array.from(nodes.values())
+export function getTokenBreakdown(nodes: Record<string, MessageNode>): TokenBreakdown[] {
+  const messages = Object.values(nodes)
   const breakdown: TokenBreakdown[] = []
 
   const roleTokens = { user: 0, assistant: 0, system: 0 }

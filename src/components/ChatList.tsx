@@ -11,10 +11,10 @@ const ChatList: Component = () => {
 
   const activeChats = () => store.getActiveChats()
   const archivedChats = () => store.getArchivedChats()
-  const isArchivedSectionCollapsed = () => store.state.ui.archivedSectionCollapsed
+  const isArchivedSectionCollapsed = () => store.state.settings.ui.archivedSectionCollapsed
 
   const toggleArchivedSection = () => {
-    store.setUI({ archivedSectionCollapsed: !isArchivedSectionCollapsed() })
+    store.updateUI({ archivedSectionCollapsed: !isArchivedSectionCollapsed() })
   }
 
   createEffect(() => {
@@ -26,7 +26,7 @@ const ChatList: Component = () => {
 
   const selectChat = (chatId: string) => {
     store.setCurrentChatId(chatId)
-    store.setUI({ sidebarCollapsed: true })
+    store.updateUI({ sidebarCollapsed: true })
   }
 
   return (

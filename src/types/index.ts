@@ -14,9 +14,9 @@ export interface MessageNode {
 export interface Chat {
   id: string
   title: string
-  nodes: Map<string, MessageNode> // Stable node pool
+  nodes: Record<string, MessageNode>
   rootNodeId: string // ID of the root node
-  activeBranches: Map<string, number> // parentId -> active child index
+  activeBranches: Record<string, number> // parentId -> active child index
   createdAt: number
   updatedAt: number
   isGeneratingTitle: boolean
@@ -33,7 +33,7 @@ export interface ProviderConfig {
 }
 
 export interface ApiSettings {
-  providers: Map<string, ProviderConfig>
+  providers: Record<string, ProviderConfig>
 }
 
 export interface SystemPrompt {
@@ -46,7 +46,6 @@ export interface ChatSettings {
   model: string
   temperature: number
   maxTokens: number
-  availableModels: string[]
   autoGenerateTitle: boolean
   titleGenerationTrigger: number
   titleModel: string
@@ -64,18 +63,25 @@ export interface UISettings {
   }
 }
 
+export interface StreamingState {
+  isStreaming: boolean
+  currentMessageId: string | null
+  currentContent: string
+}
+
 export interface AppSettings {
   api: ApiSettings
   chat: ChatSettings
   ui: UISettings
-  systemPrompts: Map<string, SystemPrompt>
+  systemPrompts: Record<string, SystemPrompt>
 }
 
-export interface AppStateData {
-  chats: Map<string, Chat>
+export interface AppStateStore {
+  chats: Record<string, Chat>
   currentChatId: string | null
   settings: AppSettings
-  ui: UISettings
+  streaming: StreamingState
+  flashingMessageId: string | null
 }
 
 export interface StreamCallbacks {

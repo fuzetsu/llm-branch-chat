@@ -11,9 +11,9 @@ import EmptyState from '../../ui/EmptyState'
 import SectionHeader from '../../ui/SectionHeader'
 
 interface SystemPromptsTabProps {
-  systemPrompts: Map<string, SystemPrompt>
+  systemPrompts: Record<string, SystemPrompt>
   defaultSystemPromptId: string | null
-  onUpdatePrompts: (prompts: Map<string, SystemPrompt>) => void
+  onUpdatePrompt: (id: string, prompt: SystemPrompt | null) => void
   onUpdateDefaultId: (id: string | null) => void
 }
 
@@ -26,7 +26,7 @@ const SystemPromptsTab: Component<SystemPromptsTabProps> = (props) => {
 
   let formSection!: HTMLDivElement
 
-  const promptsList = () => Array.from(props.systemPrompts.values())
+  const promptsList = () => Object.values(props.systemPrompts)
 
   const disableSubmit = createMemo(() => !promptForm.title.trim() || !promptForm.content.trim())
 
@@ -47,15 +47,12 @@ const SystemPromptsTab: Component<SystemPromptsTabProps> = (props) => {
       content: promptForm.content.trim(),
     }
 
-    const newPrompts = new Map(props.systemPrompts)
-    newPrompts.set(newPromptId, newPrompt)
-
-    props.onUpdatePrompts(newPrompts)
+    props.onUpdatePrompt(newPromptId, newPrompt)
     resetForm()
   }
 
   const handleEditPrompt = (promptId: string) => {
-    const prompt = props.systemPrompts.get(promptId)
+    const prompt = props.systemPrompts[promptId]
     if (!prompt) return
 
     setEditingPromptId(promptId)
@@ -76,10 +73,7 @@ const SystemPromptsTab: Component<SystemPromptsTabProps> = (props) => {
       content: promptForm.content.trim(),
     }
 
-    const newPrompts = new Map(props.systemPrompts)
-    newPrompts.set(promptId, updatedPrompt)
-
-    props.onUpdatePrompts(newPrompts)
+    props.onUpdatePrompt(promptId, updatedPrompt)
     resetForm()
   }
 
@@ -87,16 +81,12 @@ const SystemPromptsTab: Component<SystemPromptsTabProps> = (props) => {
     if (!confirm('Are you sure you want to delete this system prompt? This cannot be undone.')) {
       return
     }
-
-    const newPrompts = new Map(props.systemPrompts)
-    newPrompts.delete(promptId)
-
     // If deleting the default prompt, clear the default
     if (promptId === props.defaultSystemPromptId) {
       props.onUpdateDefaultId(null)
     }
 
-    props.onUpdatePrompts(newPrompts)
+    props.onUpdatePrompt(promptId, null)
   }
 
   const handleSetDefaultPrompt = (promptId: string) => {

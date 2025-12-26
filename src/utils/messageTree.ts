@@ -1,4 +1,4 @@
-import type { MessageNode, MessageRole } from '../types'
+import type { Chat, MessageNode, MessageRole } from '../types'
 import { generateMessageId } from './index'
 
 export function createMessageNode(
@@ -27,14 +27,14 @@ export function createEmptyChat(
   title: string,
   model: string,
   systemPromptId: string | null = null,
-) {
+): Chat {
   const rootNodeId = generateMessageId()
   return {
     id,
     title,
-    nodes: new Map<string, MessageNode>(),
+    nodes: {},
     rootNodeId,
-    activeBranches: new Map<string, number>(),
+    activeBranches: {},
     createdAt: Date.now(),
     updatedAt: Date.now(),
     isGeneratingTitle: false,
@@ -44,102 +44,47 @@ export function createEmptyChat(
   }
 }
 
-export function findNodeById(nodes: Map<string, MessageNode>, nodeId: string): MessageNode | null {
-  return nodes.get(nodeId) || null
-}
-
-export function addNodeToPool(
-  nodes: Map<string, MessageNode>,
-  activeBranches: Map<string, number>,
-  rootNodeId: string,
-  newNode: MessageNode,
-  parentId: string | null,
-): { nodes: Map<string, MessageNode>; activeBranches: Map<string, number> } {
-  const newNodes = new Map(nodes)
-  const newBranches = new Map(activeBranches)
-
+export function addNodeToPool(chat: Chat, newNode: MessageNode, parentId: string | null): void {
   // Add the new node to the pool
-  newNodes.set(newNode.id, newNode)
+  chat.nodes[newNode.id] = newNode
 
   // Update parent's childIds if it has a parent
   if (parentId) {
-    const parent = newNodes.get(parentId)
+    const parent = chat.nodes[parentId]
     if (parent) {
-      const updatedParent = {
-        ...parent,
-        childIds: [...parent.childIds, newNode.id],
-      }
-      newNodes.set(parentId, updatedParent)
-
+      parent.childIds.push(newNode.id)
       // Set this as the active branch (most recent child)
-      newBranches.set(parentId, parent.childIds.length)
+      chat.activeBranches[parentId] = parent.childIds.length - 1
     }
   } else {
     // Root level node - update root's active branch
-    const rootChildren = getRootChildren(newNodes).length
-    newBranches.set(rootNodeId, rootChildren - 1)
+    const rootChildren = getRootChildren(chat.nodes).length
+    chat.activeBranches[chat.rootNodeId] = rootChildren - 1
   }
-
-  return { nodes: newNodes, activeBranches: newBranches }
 }
 
-export function updateNodeInPool(
-  nodes: Map<string, MessageNode>,
-  nodeId: string,
-  updates: Partial<MessageNode>,
-): Map<string, MessageNode> {
-  const newNodes = new Map(nodes)
-  const existingNode = newNodes.get(nodeId)
-
-  if (existingNode) {
-    const updatedNode = { ...existingNode, ...updates }
-    if (updates.content) {
-      updatedNode.timestamp = Date.now()
-    }
-    newNodes.set(nodeId, updatedNode)
-  }
-
-  return newNodes
-}
-
-export function setActiveBranch(
-  activeBranches: Map<string, number>,
-  parentId: string,
-  childIndex: number,
-  maxChildren: number,
-): Map<string, number> {
-  const newBranches = new Map(activeBranches)
-  const clampedIndex = Math.max(0, Math.min(childIndex, maxChildren - 1))
-  newBranches.set(parentId, clampedIndex)
-  return newBranches
-}
-
-export function getVisibleNodes(
-  nodes: Map<string, MessageNode>,
-  rootNodeId: string,
-  activeBranches: Map<string, number>,
-): MessageNode[] {
+export function getVisibleNodes(chat: Chat): MessageNode[] {
   const visibleNodes: MessageNode[] = []
 
-  const rootChildren = getRootChildren(nodes)
+  const rootChildren = getRootChildren(chat.nodes)
   if (rootChildren.length === 0) return []
 
   // Start with the active root child
-  const activeRootIndex = activeBranches.get(rootNodeId) || 0
+  const activeRootIndex = chat.activeBranches[chat.rootNodeId] || 0
   const activeRootChild = rootChildren[activeRootIndex]
 
   if (!activeRootChild) return []
 
   // Traverse the active path
   function traverseActivePath(nodeId: string) {
-    const node = nodes.get(nodeId)
+    const node = chat.nodes[nodeId]
     if (!node) return
 
     visibleNodes.push(node)
 
     // If this node has children, follow the active branch
     if (node.childIds.length > 0) {
-      const activeChildIndex = activeBranches.get(nodeId) || 0
+      const activeChildIndex = chat.activeBranches[nodeId] || 0
       const activeChildId = node.childIds[activeChildIndex]
       if (activeChildId) {
         traverseActivePath(activeChildId)
@@ -151,39 +96,28 @@ export function getVisibleNodes(
   return visibleNodes
 }
 
-export function getVisibleMessages(
-  nodes: Map<string, MessageNode>,
-  rootNodeId: string,
-  activeBranches: Map<string, number>,
-): MessageNode[] {
-  return getVisibleNodes(nodes, rootNodeId, activeBranches)
-}
-
-export function getRootChildren(nodes: Map<string, MessageNode>): MessageNode[] {
-  return Array.from(nodes.values())
+export function getRootChildren(nodes: Record<string, MessageNode>): MessageNode[] {
+  return Object.values(nodes)
     .filter((node) => node.parentId === null)
     .sort((a, b) => a.branchIndex - b.branchIndex)
 }
 
-export function countDescendants(nodes: Map<string, MessageNode>, rootNodeId: string | null) {
-  const node = rootNodeId
-    ? nodes.get(rootNodeId)
-    : { childIds: getRootChildren(nodes).map((node) => node.id) }
+export function countDescendants(nodes: Record<string, MessageNode>, nodeId: string | null) {
+  const node = nodeId ? nodes[nodeId] : { childIds: getRootChildren(nodes).map((node) => node.id) }
   if (!node) return 0
   let count = node.childIds.length
   for (const id of node.childIds) {
-    const node = nodes.get(id)
+    const node = nodes[id]
     if (node) count += countDescendants(nodes, node.id)
   }
   return count
 }
 
 export function getBranchInfo(
-  nodes: Map<string, MessageNode>,
-  _rootNodeId: string,
+  nodes: Record<string, MessageNode>,
   nodeId: string,
 ): { total: number; current: number; hasPrevious: boolean; hasNext: boolean } | null {
-  const node = nodes.get(nodeId)
+  const node = nodes[nodeId]
   if (!node) return null
 
   const siblings =
@@ -198,38 +132,31 @@ export function getBranchInfo(
   }
 }
 
-export function switchToBranch(
-  activeBranches: Map<string, number>,
-  nodes: Map<string, MessageNode>,
-  rootNodeId: string,
-  nodeId: string,
+export function getSwitchBranchTarget(
+  chat: Chat,
+  node: MessageNode,
   branchIndex: number,
-): Map<string, number> {
-  const node = nodes.get(nodeId)
-  if (!node) return activeBranches
-
-  const parentId = node.parentId || rootNodeId
-
-  // Get the number of siblings to validate the branch index
-  let siblingCount: number
+): string | null {
+  let siblings: string[]
   if (node.parentId === null) {
-    // Root level - count nodes with null parentId
-    siblingCount = getRootChildren(nodes).length
+    siblings = getRootChildren(chat.nodes).map((n: MessageNode) => n.id)
   } else {
-    // Regular node - count parent's children
-    const parent = nodes.get(node.parentId)
-    siblingCount = parent?.childIds.length || 0
+    const parent = chat.nodes[node.parentId]
+    siblings = parent?.childIds || []
   }
 
-  return setActiveBranch(activeBranches, parentId, branchIndex, siblingCount)
+  const targetMessageId = siblings[branchIndex]
+  if (!targetMessageId) return null
+
+  return targetMessageId
 }
 
-export function getNodeChildren(nodes: Map<string, MessageNode>, nodeId: string): MessageNode[] {
-  const node = nodes.get(nodeId)
+export function getNodeChildren(nodes: Record<string, MessageNode>, nodeId: string): MessageNode[] {
+  const node = nodes[nodeId]
   if (!node) return []
 
   return node.childIds
-    .map((id) => nodes.get(id)!)
-    .filter(Boolean)
+    .map((id) => nodes[id])
+    .filter((x) => x != null)
     .sort((a, b) => a.branchIndex - b.branchIndex)
 }

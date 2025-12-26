@@ -27,10 +27,7 @@ interface ProviderConnection {
   apiKey: string | undefined
 }
 
-export function createApiService(providers: Map<string, ProviderConfig>): ApiService {
-  // Cache connections per provider to avoid recreating
-  const connectionCache = new Map<string, ProviderConnection>()
-
+export function createApiService(providers: Record<string, ProviderConfig>): ApiService {
   const getConnection = (
     modelWithPrefix: string,
   ): { connection: ProviderConnection; model: string } => {
@@ -39,21 +36,15 @@ export function createApiService(providers: Map<string, ProviderConfig>): ApiSer
       throw new Error(`No provider found for model: ${modelWithPrefix}`)
     }
 
-    const provider = providers.get(providerInfo.providerName)
+    const provider = providers[providerInfo.providerName]
     if (!provider) {
       throw new Error(`Provider not found: ${providerInfo.providerName}`)
     }
 
-    let connection = connectionCache.get(providerInfo.providerName)
-    if (!connection) {
-      connection = {
-        baseUrl: provider.baseUrl,
-        apiKey: provider.key,
-      }
-      connectionCache.set(providerInfo.providerName, connection)
+    return {
+      connection: { baseUrl: provider.baseUrl, apiKey: provider.key },
+      model: providerInfo.modelName,
     }
-
-    return { connection, model: providerInfo.modelName }
   }
 
   const buildUrl = (baseUrl: string, entropy: boolean): string => {

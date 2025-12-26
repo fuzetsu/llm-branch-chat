@@ -1,8 +1,8 @@
 import { Component, Show, Index, createSignal } from 'solid-js'
 import { Chat } from '../types'
 import { useAppStore } from '../store/AppStore'
-import { block, classnames, debounce } from '../utils'
-import { countDescendants, getRootChildren } from '../utils/messageTree'
+import { classnames, debounce } from '../utils'
+import { countDescendants, getSwitchBranchTarget } from '../utils/messageTree'
 import Button from './ui/Button'
 import Tooltip from './ui/Tooltip'
 
@@ -21,7 +21,7 @@ const MessageBranching: Component<MessageBranchingProps> = (props) => {
   }
 
   const handleBranchSwitch = (branchIndex: number) =>
-    store.switchMessageBranchWithFlash(props.chat.id, props.messageId, branchIndex)
+    store.switchMessageBranch(props.chat.id, props.messageId, branchIndex)
 
   const [hoverIndex, setHoverIndex] = createSignal(-1)
   const changeHover = debounce(setHoverIndex, 300)
@@ -30,15 +30,8 @@ const MessageBranching: Component<MessageBranchingProps> = (props) => {
     if (hoverIndex() !== index) return ''
 
     const { nodes } = props.chat
-    const message = nodes.get(props.messageId)
-    const parentId = message?.parentId
-    const branchId = block(() => {
-      if (parentId) {
-        const parent = nodes.get(parentId)
-        return parent?.childIds[index]
-      }
-      return getRootChildren(nodes)[index]?.id
-    })
+    const message = nodes[props.messageId]
+    const branchId = message ? getSwitchBranchTarget(props.chat, message, index) : null
 
     if (!branchId) return 'Switch to this branch'
 

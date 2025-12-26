@@ -10,14 +10,14 @@ const Sidebar: Component = () => {
 
   const handleNewChat = () => {
     store.createNewChat()
-    store.setUI({ sidebarCollapsed: true })
+    store.updateUI({ sidebarCollapsed: true })
   }
 
   const isNewChatActive = () => store.state.currentChatId == null
 
   const handleBackdropClick = () => {
-    if (!store.state.ui.sidebarCollapsed) {
-      store.setUI({ sidebarCollapsed: true })
+    if (!store.state.settings.ui.sidebarCollapsed) {
+      store.updateUI({ sidebarCollapsed: true })
     }
   }
 
@@ -26,7 +26,7 @@ const Sidebar: Component = () => {
       <aside
         class={classnames(
           'fixed inset-y-0 left-0 z-40 w-80 bg-surface border-r border-border transition-transform duration-300 ease-in-out lg:translate-x-0',
-          store.state.ui.sidebarCollapsed ? '-translate-x-full' : 'translate-x-0',
+          store.state.settings.ui.sidebarCollapsed ? '-translate-x-full' : 'translate-x-0',
         )}
       >
         <div class="flex flex-col h-full pt-15">
@@ -44,7 +44,7 @@ const Sidebar: Component = () => {
         </div>
       </aside>
       {/* sidebar backdrop */}
-      <Show when={!store.state.ui.sidebarCollapsed}>
+      <Show when={!store.state.settings.ui.sidebarCollapsed}>
         <div class="fixed inset-0 bg-black/50 z-30 lg:hidden" onClick={handleBackdropClick} />
       </Show>
     </>
