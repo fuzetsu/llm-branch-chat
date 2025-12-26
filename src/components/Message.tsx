@@ -173,7 +173,12 @@ const Message: Component<MessageProps> = (props) => {
               <Button variant="secondary" size="micro" onClick={() => saveEdit(true)}>
                 Save in place
               </Button>
-              <Button variant="primary" size="micro" onClick={() => saveEdit()}>
+              <Button
+                tooltip="Creates new branch"
+                variant="primary"
+                size="micro"
+                onClick={() => saveEdit()}
+              >
                 {isUser() ? 'Save & Send' : 'Save'}
               </Button>
             </div>
