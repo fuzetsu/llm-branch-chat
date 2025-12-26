@@ -134,12 +134,12 @@ const Popover: Component<PopoverProps> = (props) => {
 
     // Delay listener setup to avoid the click that opened the popover
     const timeoutId = window.setTimeout(() => {
-      document.addEventListener('mousedown', handleClickOutside)
+      document.addEventListener('click', handleClickOutside)
     }, 0)
 
     onCleanup(() => {
       clearTimeout(timeoutId)
-      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('click', handleClickOutside)
     })
   })
 
