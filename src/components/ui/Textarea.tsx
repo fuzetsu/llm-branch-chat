@@ -1,4 +1,4 @@
-import { Component, JSX } from 'solid-js'
+import { Component, createEffect, JSX } from 'solid-js'
 import { classnames } from '../../utils'
 import { inputBaseStyles, inputFullWidth } from './styles'
 
@@ -19,8 +19,16 @@ const Textarea: Component<TextareaProps> = (props) => {
     props.onInput?.(value)
   }
 
+  let ref!: HTMLTextAreaElement
+  createEffect(() => {
+    if (props.autofocus) {
+      ref.focus()
+    }
+  })
+
   return (
     <textarea
+      ref={ref}
       class={classnames(inputBaseStyles, inputFullWidth, 'resize-y', props.class)}
       placeholder={props.placeholder}
       value={props.value || ''}
@@ -28,7 +36,6 @@ const Textarea: Component<TextareaProps> = (props) => {
       onKeyDown={(e) => props.onKeyDown?.(e)}
       rows={props.rows || 3}
       disabled={props.disabled}
-      autofocus={props.autofocus}
     />
   )
 }
