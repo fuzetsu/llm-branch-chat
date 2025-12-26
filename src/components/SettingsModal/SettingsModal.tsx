@@ -150,8 +150,6 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
         theme: uiForm.theme,
         sidebarCollapsed: store.state.settings.ui.sidebarCollapsed,
         archivedSectionCollapsed: store.state.settings.ui.archivedSectionCollapsed,
-        isGenerating: store.state.settings.ui.isGenerating,
-        editTextareaSize: store.state.settings.ui.editTextareaSize,
       },
       systemPrompts: systemPromptsForm.prompts,
     })

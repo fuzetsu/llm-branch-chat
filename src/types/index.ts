@@ -56,11 +56,6 @@ export interface UISettings {
   sidebarCollapsed: boolean
   archivedSectionCollapsed: boolean
   theme: 'light' | 'dark' | 'auto'
-  isGenerating: boolean
-  editTextareaSize: {
-    width: string
-    height: string
-  }
 }
 
 export interface StreamingState {

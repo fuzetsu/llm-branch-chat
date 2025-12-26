@@ -3,6 +3,8 @@ import type { AppSettings, AppStateStore, Chat, ProviderConfig, StreamingState }
 
 const STORAGE_KEY = 'llm-chat-state-tree-v1'
 
+export type StateToSave = Pick<AppStateStore, 'version' | 'chats' | 'currentChatId' | 'settings'>
+
 export function createDefaultSettings(): AppSettings {
   const availableModels = ['openai', 'openai-fast', 'bidara', 'chickytutor', 'midijourney']
   const defaultProvider: ProviderConfig = {
@@ -31,11 +33,6 @@ export function createDefaultSettings(): AppSettings {
       sidebarCollapsed: false,
       archivedSectionCollapsed: true,
       theme: 'dark' as const,
-      isGenerating: false,
-      editTextareaSize: {
-        width: '100%',
-        height: '120px',
-      },
     },
     systemPrompts: {},
   }
@@ -71,7 +68,13 @@ function deserializeChat(chat: Chat, settings: AppSettings): Chat {
 }
 
 export function exportStateToJson(state: AppStateStore, pretty = false): string {
-  return pretty ? JSON.stringify(state, null, 2) : JSON.stringify(state)
+  const stateToSave: StateToSave = {
+    version: state.version,
+    chats: state.chats,
+    currentChatId: state.currentChatId,
+    settings: state.settings,
+  }
+  return pretty ? JSON.stringify(stateToSave, null, 2) : JSON.stringify(stateToSave)
 }
 
 function maybeEntriesToObject<T>(data: T, fallback: T) {
