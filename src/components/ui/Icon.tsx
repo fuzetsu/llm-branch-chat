@@ -110,62 +110,62 @@ const Icon: Component<IconProps> = (props) => {
       case 'database':
         return (
           <>
-            <ellipse cx="12" cy="6" rx="9" ry="3" {...commonProps} />
-            <path d="M3 6v6c0 1.657 4.03 3 9 3s9-1.343 9-3V6" {...commonProps} />
-            <path d="M3 12v6c0 1.657 4.03 3 9 3s9-1.343 9-3v-6" {...commonProps} />
+            <ellipse {...commonProps} cx="12" cy="6" rx="9" ry="3" />
+            <path {...commonProps} d="M3 6v6c0 1.657 4.03 3 9 3s9-1.343 9-3V6" />
+            <path {...commonProps} d="M3 12v6c0 1.657 4.03 3 9 3s9-1.343 9-3v-6" />
           </>
         )
 
       case 'more-horizontal':
         return (
           <>
-            <circle cx="12" cy="12" r="1" {...commonProps} />
-            <circle cx="19" cy="12" r="1" {...commonProps} />
-            <circle cx="5" cy="12" r="1" {...commonProps} />
+            <circle {...commonProps} cx="12" cy="12" r="1" />
+            <circle {...commonProps} cx="19" cy="12" r="1" />
+            <circle {...commonProps} cx="5" cy="12" r="1" />
           </>
         )
 
       case 'more-vertical':
         return (
           <>
-            <circle cx="12" cy="12" r="1" {...commonProps} />
-            <circle cx="12" cy="5" r="1" {...commonProps} />
-            <circle cx="12" cy="19" r="1" {...commonProps} />
+            <circle {...commonProps} cx="12" cy="12" r="1" />
+            <circle {...commonProps} cx="12" cy="5" r="1" />
+            <circle {...commonProps} cx="12" cy="19" r="1" />
           </>
         )
 
       case 'copy':
         return (
           <>
-            <rect x="9" y="9" width="13" height="13" rx="2" ry="2" {...commonProps} />
-            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" {...commonProps} />
+            <rect {...commonProps} x="9" y="9" width="13" height="13" rx="2" ry="2" />
+            <path {...commonProps} d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
           </>
         )
 
       case 'bar-chart':
         return (
           <>
-            <line x1="18" y1="20" x2="18" y2="10" {...commonProps} />
-            <line x1="12" y1="20" x2="12" y2="4" {...commonProps} />
-            <line x1="6" y1="20" x2="6" y2="14" {...commonProps} />
+            <line {...commonProps} x1="18" y1="20" x2="18" y2="10" />
+            <line {...commonProps} x1="12" y1="20" x2="12" y2="4" />
+            <line {...commonProps} x1="6" y1="20" x2="6" y2="14" />
           </>
         )
 
       case 'file-text':
         return (
           <>
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" {...commonProps} />
-            <polyline points="14 2 14 8 20 8" {...commonProps} />
-            <line x1="16" y1="13" x2="8" y2="13" {...commonProps} />
-            <line x1="16" y1="17" x2="8" y2="17" {...commonProps} />
-            <polyline points="10 9 9 9 8 9" {...commonProps} />
+            <path {...commonProps} d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline {...commonProps} points="14 2 14 8 20 8" />
+            <line {...commonProps} x1="16" y1="13" x2="8" y2="13" />
+            <line {...commonProps} x1="16" y1="17" x2="8" y2="17" />
+            <polyline {...commonProps} points="10 9 9 9 8 9" />
           </>
         )
 
       case 'check-circle':
         return (
           <>
-            <circle cx="12" cy="12" r="10" {...commonProps} />
+            <circle {...commonProps} cx="12" cy="12" r="10" />
             <path {...commonProps} d="M9 12l2 2 4-4" />
           </>
         )
@@ -173,7 +173,7 @@ const Icon: Component<IconProps> = (props) => {
       case 'x-circle':
         return (
           <>
-            <circle cx="12" cy="12" r="10" {...commonProps} />
+            <circle {...commonProps} cx="12" cy="12" r="10" />
             <path {...commonProps} d="M15 9l-6 6M9 9l6 6" />
           </>
         )
