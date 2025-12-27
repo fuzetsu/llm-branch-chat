@@ -3,7 +3,7 @@ import { useAppStore } from '../store/AppStore'
 import Icon from './ui/Icon'
 import Button from './ui/Button'
 import { isMobileBrowser, touch } from '../utils'
-import { getMessageList } from './MessageList'
+import { getMessageList, scrollMessageListToBottom } from './MessageList'
 import { inputBaseStyles } from './ui/styles'
 import { classnames } from '../utils'
 
@@ -23,6 +23,7 @@ const MessageInput: Component = () => {
 
     // Clear input immediately for better UX
     setInputValue('')
+    scrollMessageListToBottom()
 
     // Send message through store
     try {
@@ -46,16 +47,18 @@ const MessageInput: Component = () => {
     input.style.height = Math.min(input.scrollHeight, window.innerHeight / 2) + 'px'
   }
 
+  const retainScroll = (fn: () => void) => {
+    const messageList = getMessageList()
+    if (!messageList) return fn()
+    const { scrollTop, offsetHeight } = messageList
+    fn()
+    messageList.scrollTop = scrollTop - (messageList.offsetHeight - offsetHeight)
+  }
+
   const handleInput = (e: Event) => {
     const target = e.currentTarget as HTMLTextAreaElement
     setInputValue(target.value)
-
-    const messageList = getMessageList()
-    if (!messageList) return autoSizeInput(target)
-
-    const { scrollTop, offsetHeight } = messageList
-    autoSizeInput(target)
-    messageList.scrollTop = scrollTop - (messageList.offsetHeight - offsetHeight)
+    retainScroll(() => autoSizeInput(target))
   }
 
   const [getInput, setInput] = createSignal<HTMLTextAreaElement | null>(null)
