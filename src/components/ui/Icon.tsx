@@ -22,11 +22,13 @@ export type IconName =
   | 'file-text'
   | 'check-circle'
   | 'x-circle'
+  | 'spinner'
 
 interface IconProps {
   name: IconName
   class?: string
   size?: 'sm' | 'md' | 'lg'
+  spin?: boolean
 }
 
 const Icon: Component<IconProps> = (props) => {
@@ -37,7 +39,7 @@ const Icon: Component<IconProps> = (props) => {
   }
 
   const size = () => props.size || 'md'
-  const classes = () => classnames(sizeClasses[size()], props.class)
+  const classes = () => classnames(sizeClasses[size()], props.spin && 'animate-spin', props.class)
 
   const commonProps = {
     'stroke-linejoin': 'round',
@@ -173,6 +175,18 @@ const Icon: Component<IconProps> = (props) => {
           <>
             <circle cx="12" cy="12" r="10" {...commonProps} />
             <path {...commonProps} d="M15 9l-6 6M9 9l6 6" />
+          </>
+        )
+
+      case 'spinner':
+        return (
+          <>
+            <circle {...commonProps} class="opacity-25" cx="12" cy="12" r="10" />
+            <path
+              class="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            />
           </>
         )
 
