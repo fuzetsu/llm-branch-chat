@@ -132,7 +132,7 @@ const Select: Component<SelectProps> = (props) => {
       // automatically scroll selected option into view
       const id = setTimeout(
         () =>
-          getElementById(popoverId).querySelector('[data-selected=true]')?.scrollIntoView({
+          getElementById(popoverId)?.querySelector('[data-selected=true]')?.scrollIntoView({
             block: 'center',
           }),
         0,

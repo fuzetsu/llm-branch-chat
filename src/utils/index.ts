@@ -40,12 +40,8 @@ export function relativeTimestamp(timestamp: number) {
 /**
  * Safely gets an element by ID with type checking
  */
-export function getElementById<T extends HTMLElement>(id: string): T {
-  const element = document.getElementById(id) as T | null
-  if (!element) {
-    throw new Error(`Element with id "${id}" not found`)
-  }
-  return element
+export function getElementById<T extends HTMLElement>(id: string): T | null {
+  return document.getElementById(id) as T | null
 }
 
 /**
@@ -58,8 +54,8 @@ export function querySelector<T extends HTMLElement>(selector: string): T | null
 /**
  * Safely queries all elements matching a selector
  */
-export function querySelectorAll<T extends HTMLElement>(selector: string): NodeListOf<T> {
-  return document.querySelectorAll(selector) as NodeListOf<T>
+export function querySelectorAll<T extends HTMLElement>(selector: string): T[] {
+  return Array.from(document.querySelectorAll<T>(selector))
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

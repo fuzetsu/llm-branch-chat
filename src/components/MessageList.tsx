@@ -10,7 +10,7 @@ interface MessageListProps {
   chat: Chat
 }
 
-export const getMessageList = () => getElementById('message-list') as HTMLDivElement | undefined
+export const getMessageList = () => getElementById('message-list')
 
 export const scrollMessageListToBottom = () => getElementById('message-list-end')?.scrollIntoView()
 const throttledScrollToEnd = throttle(scrollMessageListToBottom, 100)
