@@ -181,7 +181,14 @@ const Icon: Component<IconProps> = (props) => {
       case 'spinner':
         return (
           <>
-            <circle {...commonProps} class="opacity-25" cx="12" cy="12" r="10" />
+            <circle
+              {...commonProps}
+              fill="currentColor"
+              class="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+            />
             <path
               class="opacity-75"
               fill="currentColor"
