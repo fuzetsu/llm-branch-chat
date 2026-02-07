@@ -23,11 +23,11 @@ const MessageInput: Component = () => {
 
     // Clear input immediately for better UX
     setInputValue('')
-    scrollMessageListToBottom()
 
     // Send message through store
     try {
-      await store.sendMessage(message)
+      store.sendMessage(message)
+      scrollMessageListToBottom()
     } catch (error) {
       console.error('Failed to send message:', error)
       // Restore message if sending failed
@@ -63,7 +63,7 @@ const MessageInput: Component = () => {
 
   const [getInput, setInput] = createSignal<HTMLTextAreaElement | null>(null)
   const focusInputIfDesktop = () => {
-    if (!isMobileBrowser()) getInput()?.focus()
+    if (!isMobileBrowser()) requestAnimationFrame(() => getInput()?.focus())
   }
 
   createEffect(() => {

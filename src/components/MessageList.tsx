@@ -12,7 +12,8 @@ interface MessageListProps {
 
 export const getMessageList = () => getElementById('message-list')
 
-export const scrollMessageListToBottom = () => getElementById('message-list-end')?.scrollIntoView()
+export const scrollMessageListToBottom = () =>
+  requestAnimationFrame(() => getElementById('message-list-end')?.scrollIntoView())
 const throttledScrollToEnd = throttle(scrollMessageListToBottom, 100)
 
 const CURSOR_INCREMENT = 20
