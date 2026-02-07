@@ -110,6 +110,14 @@ const Message: Component<MessageProps> = (props) => {
     props.isStreaming && store.getStreamingContent().length <= 30 ? 'animate-pulse' : null,
   )
 
+  const [timestamp, setTimestamp] = createSignal('')
+  createEffect(() => {
+    const update = () => setTimestamp(relativeTimestamp(props.message.timestamp))
+    update()
+    const id = setInterval(update, 1000 * 60 * 1)
+    onCleanup(() => clearInterval(id))
+  })
+
   const fullMessageDate = () => new Date(props.message.timestamp).toLocaleString()
 
   return (
@@ -187,9 +195,7 @@ const Message: Component<MessageProps> = (props) => {
 
         <div class="flex items-center justify-between gap-2 flex-wrap">
           <div class="flex gap-1 text-xs text-text-muted whitespace-nowrap shrink-0">
-            <Tooltip content={fullMessageDate()}>
-              {relativeTimestamp(props.message.timestamp)}
-            </Tooltip>
+            <Tooltip content={fullMessageDate()}>{timestamp()}</Tooltip>
             <Show when={props.message.model}>
               <span>•</span>
               <span>{props.message.model}</span>
