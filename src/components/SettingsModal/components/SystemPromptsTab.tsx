@@ -1,5 +1,4 @@
 import { Component, createMemo, For, Show, createSignal } from 'solid-js'
-import { createStore } from 'solid-js/store'
 import type { SystemPrompt } from '../../../types'
 import { generateSystemPromptId } from '../../../utils'
 import Button from '../../ui/Button'
@@ -9,32 +8,35 @@ import FormField from '../../ui/FormField'
 import ItemCard from '../../ui/ItemCard'
 import EmptyState from '../../ui/EmptyState'
 import SectionHeader from '../../ui/SectionHeader'
+import { produce, SetStoreFunction } from 'solid-js/store'
 
 interface SystemPromptsTabProps {
-  systemPrompts: Record<string, SystemPrompt>
-  defaultSystemPromptId: string | null
-  onUpdatePrompt: (id: string, prompt: SystemPrompt | null) => void
-  onUpdateDefaultId: (id: string | null) => void
+  formData: SystemPrompsForm
+  setFormData: SetStoreFunction<SystemPrompsForm>
+}
+
+export interface SystemPrompsForm {
+  defaultId: string | null
+  draft: Omit<SystemPrompt, 'id'>
+  saved: Record<string, SystemPrompt>
 }
 
 const SystemPromptsTab: Component<SystemPromptsTabProps> = (props) => {
   const [editingPromptId, setEditingPromptId] = createSignal<string | null>(null)
-  const [promptForm, setPromptForm] = createStore({
-    title: '',
-    content: '',
-  })
 
   let formSection!: HTMLDivElement
 
-  const promptsList = () => Object.values(props.systemPrompts)
+  const promptsList = () => Object.values(props.formData.saved)
 
-  const disableSubmit = createMemo(() => !promptForm.title.trim() || !promptForm.content.trim())
+  const draft = () => props.formData.draft
+
+  const disableSubmit = createMemo(() => !draft().title.trim() || !draft().content.trim())
 
   const isEditing = () => editingPromptId() !== null
 
   const resetForm = () => {
     setEditingPromptId(null)
-    setPromptForm({ title: '', content: '' })
+    props.setFormData('draft', { title: '', content: '' })
   }
 
   const handleAddPrompt = () => {
@@ -43,23 +45,20 @@ const SystemPromptsTab: Component<SystemPromptsTabProps> = (props) => {
     const newPromptId = generateSystemPromptId()
     const newPrompt: SystemPrompt = {
       id: newPromptId,
-      title: promptForm.title.trim(),
-      content: promptForm.content.trim(),
+      title: draft().title.trim(),
+      content: draft().content.trim(),
     }
 
-    props.onUpdatePrompt(newPromptId, newPrompt)
+    props.setFormData('saved', newPromptId, newPrompt)
     resetForm()
   }
 
   const handleEditPrompt = (promptId: string) => {
-    const prompt = props.systemPrompts[promptId]
+    const prompt = props.formData.saved[promptId]
     if (!prompt) return
 
     setEditingPromptId(promptId)
-    setPromptForm({
-      title: prompt.title,
-      content: prompt.content,
-    })
+    props.setFormData('draft', { title: prompt.title, content: prompt.content })
     formSection.scrollIntoView({ behavior: 'smooth' })
   }
 
@@ -69,11 +68,11 @@ const SystemPromptsTab: Component<SystemPromptsTabProps> = (props) => {
 
     const updatedPrompt: SystemPrompt = {
       id: promptId,
-      title: promptForm.title.trim(),
-      content: promptForm.content.trim(),
+      title: draft().title.trim(),
+      content: draft().content.trim(),
     }
 
-    props.onUpdatePrompt(promptId, updatedPrompt)
+    props.setFormData('saved', promptId, updatedPrompt)
     resetForm()
   }
 
@@ -82,20 +81,21 @@ const SystemPromptsTab: Component<SystemPromptsTabProps> = (props) => {
       return
     }
     // If deleting the default prompt, clear the default
-    if (promptId === props.defaultSystemPromptId) {
-      props.onUpdateDefaultId(null)
+    if (promptId === props.formData.defaultId) {
+      props.setFormData('defaultId', null)
     }
 
-    props.onUpdatePrompt(promptId, null)
+    if (editingPromptId() === promptId) resetForm()
+
+    props.setFormData(
+      produce((draft) => {
+        delete draft.saved[promptId]
+      }),
+    )
   }
 
-  const handleSetDefaultPrompt = (promptId: string) => {
-    if (promptId === props.defaultSystemPromptId) {
-      props.onUpdateDefaultId(null)
-    } else {
-      props.onUpdateDefaultId(promptId)
-    }
-  }
+  const handleSetDefaultPrompt = (promptId: string) =>
+    props.setFormData('defaultId', promptId === props.formData.defaultId ? null : promptId)
 
   return (
     <div class="space-y-5">
@@ -115,7 +115,7 @@ const SystemPromptsTab: Component<SystemPromptsTabProps> = (props) => {
           {(prompt) => (
             <ItemCard
               title={prompt.title}
-              badge={props.defaultSystemPromptId === prompt.id ? 'Default' : undefined}
+              badge={props.formData.defaultId === prompt.id ? 'Default' : undefined}
               actions={
                 <>
                   <Button
@@ -123,7 +123,7 @@ const SystemPromptsTab: Component<SystemPromptsTabProps> = (props) => {
                     size="sm"
                     onClick={() => handleSetDefaultPrompt(prompt.id)}
                   >
-                    {props.defaultSystemPromptId === prompt.id ? 'Unset Default' : 'Set Default'}
+                    {props.formData.defaultId === prompt.id ? 'Unset Default' : 'Set Default'}
                   </Button>
                   <Button variant="secondary" size="sm" onClick={() => handleEditPrompt(prompt.id)}>
                     Edit
@@ -154,8 +154,8 @@ const SystemPromptsTab: Component<SystemPromptsTabProps> = (props) => {
             <Input
               type="text"
               placeholder="e.g., 'Creative Writer', 'Code Assistant'"
-              value={promptForm.title}
-              onInput={(value) => setPromptForm('title', value)}
+              value={draft().title}
+              onInput={(value) => props.setFormData('draft', 'title', value)}
             />
           </FormField>
 
@@ -163,8 +163,8 @@ const SystemPromptsTab: Component<SystemPromptsTabProps> = (props) => {
             <Textarea
               rows={6}
               placeholder="Enter the system prompt content here..."
-              value={promptForm.content}
-              onInput={(value) => setPromptForm('content', value)}
+              value={draft().content}
+              onInput={(value) => props.setFormData('draft', 'content', value)}
             />
           </FormField>
 

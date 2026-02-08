@@ -1,16 +1,16 @@
-import { Component, createEffect, Show, createSignal, untrack } from 'solid-js'
-import { createStore, produce, unwrap } from 'solid-js/store'
+import { Component, createEffect, Show, createSignal, untrack, batch } from 'solid-js'
+import { unwrap } from 'solid-js/store'
 import { useAppStore, exportStateToJson, importStateFromJson } from '../../store/AppStore'
 import { downloadJsonFile, createFileInput } from '../../utils/fileUtils'
 import { getModelsGroupedByProvider } from '../../utils/providerUtils'
 import { classnames } from '../../utils'
-import type { ApiSettings, AppSettings } from '../../types'
 import Modal from '../ui/Modal'
 import Button from '../ui/Button'
-import ProvidersTab from './components/ProvidersTab'
+import ProvidersTab, { ProvidersForm } from './components/ProvidersTab'
 import ChatSettingsTab, { ChatSettingsForm } from './components/ChatSettingsTab'
 import UISettingsTab, { type UISettingsForm } from './components/UISettingsTab'
-import SystemPromptsTab from './components/SystemPromptsTab'
+import SystemPromptsTab, { SystemPrompsForm } from './components/SystemPromptsTab'
+import { createFormStore } from '../../utils/createFormStore'
 
 interface SettingsModalProps {
   isOpen: boolean
@@ -29,12 +29,16 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
     message: string
   } | null>(null)
 
-  // Form state for all settings - kept local until save
-  const [providersForm, setProvidersForm] = createStore<{
-    providers: ApiSettings['providers']
-  }>({ providers: {} })
+  const [formDirty, setFormDirty] = createSignal(false)
+  const setDirty = () => setFormDirty(true)
 
-  const [chatForm, setChatForm] = createStore<ChatSettingsForm>({
+  // Form state for all settings - kept local until save
+  const [providersForm, setProvidersForm] = createFormStore<ProvidersForm>(setDirty, {
+    providers: {},
+    draft: { name: '', baseUrl: '', availableModels: '', key: '' },
+  })
+
+  const [chatForm, setChatForm] = createFormStore<ChatSettingsForm>(setDirty, {
     model: '',
     temperature: 0.7,
     maxTokens: 2048,
@@ -43,15 +47,13 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
     titleModel: '',
   })
 
-  const [uiForm, setUiForm] = createStore<UISettingsForm>({
+  const [uiForm, setUiForm] = createFormStore<UISettingsForm>(setDirty, {
     theme: 'auto',
   })
 
-  const [systemPromptsForm, setSystemPromptsForm] = createStore<{
-    prompts: AppSettings['systemPrompts']
-    defaultId: string | null
-  }>({
-    prompts: {},
+  const [systemPromptsForm, setSystemPromptsForm] = createFormStore<SystemPrompsForm>(setDirty, {
+    saved: {},
+    draft: { title: '', content: '' },
     defaultId: null,
   })
 
@@ -63,29 +65,33 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
     if (importState()?.success || props.isOpen) {
       const settings = untrack(() => unwrap(store.state.settings))
 
-      setProvidersForm({
-        providers: { ...settings.api.providers },
-      })
+      batch(() => {
+        setProvidersForm({
+          providers: { ...settings.api.providers },
+        })
 
-      setChatForm({
-        model: settings.chat.model,
-        temperature: settings.chat.temperature,
-        maxTokens: settings.chat.maxTokens,
-        autoGenerateTitle: settings.chat.autoGenerateTitle,
-        titleGenerationTrigger: settings.chat.titleGenerationTrigger,
-        titleModel: settings.chat.titleModel,
-      })
+        setChatForm({
+          model: settings.chat.model,
+          temperature: settings.chat.temperature,
+          maxTokens: settings.chat.maxTokens,
+          autoGenerateTitle: settings.chat.autoGenerateTitle,
+          titleGenerationTrigger: settings.chat.titleGenerationTrigger,
+          titleModel: settings.chat.titleModel,
+        })
 
-      setUiForm({
-        theme: settings.ui.theme,
-      })
+        setUiForm({
+          theme: settings.ui.theme,
+        })
 
-      setSystemPromptsForm({
-        prompts: { ...settings.systemPrompts },
-        defaultId: settings.chat.defaultSystemPromptId,
-      })
+        setSystemPromptsForm({
+          saved: { ...settings.systemPrompts },
+          defaultId: settings.chat.defaultSystemPromptId,
+        })
 
-      setImportState(null)
+        setImportState(null)
+
+        setFormDirty(false)
+      })
     }
   })
 
@@ -133,6 +139,7 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
   }
 
   const handleSave = () => {
+    setFormDirty(false)
     store.updateSettings({
       api: {
         providers: providersForm.providers,
@@ -151,13 +158,19 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
         sidebarCollapsed: store.state.settings.ui.sidebarCollapsed,
         archivedSectionCollapsed: store.state.settings.ui.archivedSectionCollapsed,
       },
-      systemPrompts: systemPromptsForm.prompts,
+      systemPrompts: systemPromptsForm.saved,
     })
 
     props.onClose()
   }
 
   const handleCancel = () => {
+    if (formDirty()) {
+      const shouldClose = confirm(
+        'There are unsaved changes, are you sure you want to close the settings modal?',
+      )
+      if (!shouldClose) return
+    }
     props.onClose()
   }
 
@@ -211,19 +224,10 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
       <div class="space-y-4">
         <Show when={activeTab() === 'providers'}>
           <ProvidersTab
-            providers={providersForm.providers}
+            formData={providersForm}
+            setFormData={setProvidersForm}
             storageSizeInBytes={storageSizeInBytes()}
             importState={importState()}
-            onUpdateProvider={(name, provider) => {
-              if (!provider)
-                setProvidersForm(
-                  'providers',
-                  produce((providers) => {
-                    delete providers[name]
-                  }),
-                )
-              else setProvidersForm('providers', name, provider)
-            }}
             onExportState={handleExportState}
             onImportState={triggerFileImport}
           />
@@ -242,21 +246,7 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
         </Show>
 
         <Show when={activeTab() === 'system'}>
-          <SystemPromptsTab
-            systemPrompts={systemPromptsForm.prompts}
-            defaultSystemPromptId={systemPromptsForm.defaultId}
-            onUpdatePrompt={(id, prompt) =>
-              prompt
-                ? setSystemPromptsForm('prompts', id, prompt)
-                : setSystemPromptsForm(
-                    'prompts',
-                    produce((prompts) => {
-                      delete prompts[id]
-                    }),
-                  )
-            }
-            onUpdateDefaultId={(id) => setSystemPromptsForm('defaultId', id)}
-          />
+          <SystemPromptsTab formData={systemPromptsForm} setFormData={setSystemPromptsForm} />
         </Show>
       </div>
     </Modal>

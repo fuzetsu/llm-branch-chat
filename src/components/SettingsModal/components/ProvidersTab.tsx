@@ -1,5 +1,5 @@
 import { Component, Show, createMemo } from 'solid-js'
-import { createStore } from 'solid-js/store'
+import { createStore, produce, SetStoreFunction } from 'solid-js/store'
 import type { ProviderConfig } from '../../../types'
 import {
   validateProviderName,
@@ -13,11 +13,16 @@ import Button from '../../ui/Button'
 import ProviderList from './ProviderList'
 import ProviderForm, { type ProviderFormData, type ProviderFormErrors } from './ProviderForm'
 
-interface ProvidersTabProps {
+export interface ProvidersForm {
   providers: Record<string, ProviderConfig>
+  draft: ProviderFormData
+}
+
+interface ProvidersTabProps {
+  formData: ProvidersForm
+  setFormData: SetStoreFunction<ProvidersForm>
   storageSizeInBytes: number
   importState: { success: boolean; message: string } | null
-  onUpdateProvider: (name: string, providers: ProviderConfig | null) => void
   onExportState: () => void
   onImportState: () => void
 }
@@ -26,23 +31,17 @@ const ProvidersTab: Component<ProvidersTabProps> = (props) => {
   const [editingProvider, setEditingProvider] = createStore<{
     name: string | null
   }>({ name: null })
-  const [providerForm, setProviderForm] = createStore<ProviderFormData>({
-    name: '',
-    baseUrl: '',
-    key: undefined,
-    availableModels: '',
-  })
   const [validationErrors, setValidationErrors] = createStore<ProviderFormErrors>({})
 
   let providerFormSection!: HTMLDivElement
 
-  const providersList = createMemo(() => Object.entries(props.providers))
+  const providersList = createMemo(() => Object.entries(props.formData.providers))
 
   const isEditing = () => editingProvider.name !== null
 
   const resetForm = () => {
     setEditingProvider('name', null)
-    setProviderForm({
+    props.setFormData('draft', {
       name: '',
       baseUrl: '',
       key: undefined,
@@ -51,14 +50,16 @@ const ProvidersTab: Component<ProvidersTabProps> = (props) => {
     setValidationErrors({})
   }
 
+  const draft = () => props.formData.draft
+
   const handleAddProvider = () => {
-    const models = providerForm.availableModels
-      .split('\n')
+    const models = draft()
+      .availableModels.split('\n')
       .map((model) => model.trim())
       .filter((model) => model.length > 0)
 
-    const nameError = validateProviderName(providerForm.name, props.providers)
-    const urlError = validateProviderUrl(providerForm.baseUrl)
+    const nameError = validateProviderName(draft().name, props.formData.providers)
+    const urlError = validateProviderUrl(draft().baseUrl)
     const modelsError = validateProviderModels(models)
 
     setValidationErrors({
@@ -71,24 +72,18 @@ const ProvidersTab: Component<ProvidersTabProps> = (props) => {
       return
     }
 
-    const newProvider = createProvider(
-      providerForm.name,
-      providerForm.baseUrl,
-      providerForm.key,
-      models,
-    )
+    const newProvider = createProvider(draft().name, draft().baseUrl, draft().key, models)
 
-    props.onUpdateProvider(providerForm.name, newProvider)
-
+    props.setFormData('providers', draft().name, newProvider)
     resetForm()
   }
 
   const handleEditProvider = (providerName: string) => {
-    const provider = props.providers[providerName]
+    const provider = props.formData.providers[providerName]
     if (!provider) return
 
     setEditingProvider('name', providerName)
-    setProviderForm({
+    props.setFormData('draft', {
       name: provider.name,
       baseUrl: provider.baseUrl,
       key: provider.key,
@@ -101,14 +96,14 @@ const ProvidersTab: Component<ProvidersTabProps> = (props) => {
     const editing = editingProvider.name
     if (!editing) return
 
-    const models = providerForm.availableModels
-      .split('\n')
+    const models = draft()
+      .availableModels.split('\n')
       .map((model) => model.trim())
       .filter((model) => model.length > 0)
 
-    const urlError = validateProviderUrl(providerForm.baseUrl)
+    const urlError = validateProviderUrl(draft().baseUrl)
     const modelsError = validateProviderModels(models)
-    const nameError = editing !== providerForm.name ? 'Cannot change provider name.' : null
+    const nameError = editing !== draft().name ? 'Cannot change provider name.' : null
 
     setValidationErrors({ baseUrl: urlError, models: modelsError, name: nameError })
 
@@ -116,17 +111,17 @@ const ProvidersTab: Component<ProvidersTabProps> = (props) => {
       return
     }
 
-    const existingProvider = props.providers[editing]
+    const existingProvider = props.formData.providers[editing]
     if (!existingProvider) return
 
     const updatedProvider = updateProvider(existingProvider, {
-      name: providerForm.name,
-      baseUrl: providerForm.baseUrl,
-      key: providerForm.key,
+      name: draft().name,
+      baseUrl: draft().baseUrl,
+      key: draft().key,
       availableModels: models,
     })
 
-    props.onUpdateProvider(editing, updatedProvider)
+    props.setFormData('providers', editing, updatedProvider)
     resetForm()
   }
 
@@ -137,7 +132,11 @@ const ProvidersTab: Component<ProvidersTabProps> = (props) => {
       return
     }
 
-    props.onUpdateProvider(providerName, null)
+    props.setFormData(
+      produce((draft) => {
+        delete draft.providers[providerName]
+      }),
+    )
   }
 
   return (
@@ -173,10 +172,10 @@ const ProvidersTab: Component<ProvidersTabProps> = (props) => {
 
       <div ref={providerFormSection}>
         <ProviderForm
-          form={providerForm}
+          form={draft()}
           errors={validationErrors}
           isEditing={isEditing()}
-          onUpdate={(key, value) => setProviderForm(key, value)}
+          onUpdate={(key, value) => props.setFormData('draft', key, value)}
           onClearError={(key) => setValidationErrors(key, undefined)}
           onSubmit={isEditing() ? handleUpdateProvider : handleAddProvider}
           onCancelEdit={resetForm}
