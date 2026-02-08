@@ -51,9 +51,13 @@ export function createApiService(providers: Record<string, ProviderConfig>): Api
     const url = new URL(baseUrl + '/chat/completions')
     if (!entropy) return url.toString()
 
-    const timestamp = Date.now()
-    const randomValue = Math.random().toString(32).slice(2)
-    url.searchParams.append('rand', timestamp + randomValue)
+    // hack to allow regen on pollinations since it caches by prompt
+    if (baseUrl === 'pollinations') {
+      const timestamp = Date.now()
+      const randomValue = Math.random().toString(32).slice(2)
+      url.searchParams.append('rand', timestamp + randomValue)
+    }
+
     return url.toString()
   }
 
