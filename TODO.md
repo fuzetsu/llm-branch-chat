@@ -15,10 +15,15 @@
   messages in its responses
 - store draft message input per-chat (maybe in separate LS keys to avoid stringify churn, export
   becomes an issue though, debounce is another option to avoid churn)
+
+## Medium
+
 - add chat search functionality (cmd+k global/specific chat?), interplays with messages that are
   revealed by scrolling since cmd+f wont find them
+  test message)
+- add way to test model ID while adding or editing provider to know if it actually works (send small
 
-## Bigger
+## Large
 
 - split chat display (select up to 2-3 chats to display at once for comparison/copy-paste purposes)
 - move away from LocalStorage and use browser based (IndexedDB) or server based (sqlite) DB
