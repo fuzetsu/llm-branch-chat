@@ -8,15 +8,8 @@ import {
   untrack,
   batch,
 } from 'solid-js'
-import { createStore, produce } from 'solid-js/store'
-import type {
-  AppSettings,
-  Chat,
-  MessageNode,
-  ApiMessage,
-  AppStateStore,
-  UISettings,
-} from '../types'
+import { createStore, produce, SetStoreFunction } from 'solid-js/store'
+import type { Chat, MessageNode, ApiMessage, AppStateStore, UISettings } from '../types'
 import { createApiService } from './api'
 import {
   loadStateFromStorage,
@@ -41,9 +34,9 @@ export const STORE_VERSION = 1
 
 interface AppStoreContextType {
   state: AppStateStore
+  setState: SetStoreFunction<AppStateStore>
   // Settings
   setCurrentChatId: (id: string | null) => void
-  updateSettings: (settings: Partial<AppSettings>) => void
   replaceState: (newState: AppStateStore) => void
   updateUI: (partialUiSettings: Partial<UISettings>) => void
   // Chat operations
@@ -126,10 +119,6 @@ export const AppStoreProvider: ParentComponent = (props) => {
 
   const setCurrentChatId = (id: string | null) => {
     setState('currentChatId', id)
-  }
-
-  const updateSettings = (newSettings: Partial<AppSettings>) => {
-    setState('settings', newSettings)
   }
 
   const updateUI: AppStoreContextType['updateUI'] = (partialUISettings) => {
@@ -531,9 +520,9 @@ export const AppStoreProvider: ParentComponent = (props) => {
 
   const storeValue: AppStoreContextType = {
     state,
+    setState,
     addChat,
     setCurrentChatId,
-    updateSettings,
     updateUI,
     replaceState,
     updateChat,

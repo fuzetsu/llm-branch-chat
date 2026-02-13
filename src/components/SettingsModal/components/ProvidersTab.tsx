@@ -1,6 +1,5 @@
 import { Component, Show, createMemo } from 'solid-js'
-import { createStore, produce, SetStoreFunction } from 'solid-js/store'
-import type { ProviderConfig } from '../../../types'
+import { createStore, produce } from 'solid-js/store'
 import {
   validateProviderName,
   validateProviderUrl,
@@ -11,55 +10,59 @@ import {
 import { StorageInfo } from '../../StorageInfo'
 import Button from '../../ui/Button'
 import ProviderList from './ProviderList'
-import ProviderForm, { type ProviderFormData, type ProviderFormErrors } from './ProviderForm'
-
-export interface ProvidersForm {
-  providers: Record<string, ProviderConfig>
-  draft: ProviderFormData
-}
+import ProviderForm, { type ProviderFormErrors } from './ProviderForm'
+import { ProviderConfig } from '../../../types'
+import { useAppStore } from '../../../store/AppStore'
+import { classnames } from '../../../utils'
 
 interface ProvidersTabProps {
-  formData: ProvidersForm
-  setFormData: SetStoreFunction<ProvidersForm>
   storageSizeInBytes: number
   importState: { success: boolean; message: string } | null
-  onExportState: () => void
-  onImportState: () => void
+  onExportState(): void
+  onImportState(): void
+  setPreventClose(canClose: boolean): void
+}
+
+interface Draft extends Omit<ProviderConfig, 'availableModels'> {
+  availableModels: string
 }
 
 const ProvidersTab: Component<ProvidersTabProps> = (props) => {
-  const [editingProvider, setEditingProvider] = createStore<{
-    name: string | null
-  }>({ name: null })
+  const store = useAppStore()
+
+  const [editingProvider, setEditingProvider] = createStore<{ name: string | null }>({ name: null })
   const [validationErrors, setValidationErrors] = createStore<ProviderFormErrors>({})
+
+  const [draft, setDraft] = createStore<Draft>({
+    name: '',
+    baseUrl: '',
+    key: '',
+    availableModels: '',
+  })
 
   let providerFormSection!: HTMLDivElement
 
-  const providersList = createMemo(() => Object.entries(props.formData.providers))
+  const providers = () => store.state.settings.api.providers
+
+  const providersList = createMemo(() => Object.entries(providers()))
 
   const isEditing = () => editingProvider.name !== null
 
   const resetForm = () => {
+    props.setPreventClose(false)
     setEditingProvider('name', null)
-    props.setFormData('draft', {
-      name: '',
-      baseUrl: '',
-      key: undefined,
-      availableModels: '',
-    })
+    setDraft({ name: '', baseUrl: '', key: undefined, availableModels: '' })
     setValidationErrors({})
   }
 
-  const draft = () => props.formData.draft
-
   const handleAddProvider = () => {
-    const models = draft()
-      .availableModels.split('\n')
+    const models = draft.availableModels
+      .split('\n')
       .map((model) => model.trim())
       .filter((model) => model.length > 0)
 
-    const nameError = validateProviderName(draft().name, props.formData.providers)
-    const urlError = validateProviderUrl(draft().baseUrl)
+    const nameError = validateProviderName(draft.name, providers())
+    const urlError = validateProviderUrl(draft.baseUrl)
     const modelsError = validateProviderModels(models)
 
     setValidationErrors({
@@ -72,18 +75,18 @@ const ProvidersTab: Component<ProvidersTabProps> = (props) => {
       return
     }
 
-    const newProvider = createProvider(draft().name, draft().baseUrl, draft().key, models)
+    const newProvider = createProvider(draft.name, draft.baseUrl, draft.key, models)
 
-    props.setFormData('providers', draft().name, newProvider)
+    store.setState('settings', 'api', 'providers', draft.name, newProvider)
     resetForm()
   }
 
   const handleEditProvider = (providerName: string) => {
-    const provider = props.formData.providers[providerName]
+    const provider = providers()[providerName]
     if (!provider) return
 
     setEditingProvider('name', providerName)
-    props.setFormData('draft', {
+    setDraft({
       name: provider.name,
       baseUrl: provider.baseUrl,
       key: provider.key,
@@ -96,14 +99,14 @@ const ProvidersTab: Component<ProvidersTabProps> = (props) => {
     const editing = editingProvider.name
     if (!editing) return
 
-    const models = draft()
-      .availableModels.split('\n')
+    const models = draft.availableModels
+      .split('\n')
       .map((model) => model.trim())
       .filter((model) => model.length > 0)
 
-    const urlError = validateProviderUrl(draft().baseUrl)
+    const urlError = validateProviderUrl(draft.baseUrl)
     const modelsError = validateProviderModels(models)
-    const nameError = editing !== draft().name ? 'Cannot change provider name.' : null
+    const nameError = editing !== draft.name ? 'Cannot change provider name.' : null
 
     setValidationErrors({ baseUrl: urlError, models: modelsError, name: nameError })
 
@@ -111,17 +114,17 @@ const ProvidersTab: Component<ProvidersTabProps> = (props) => {
       return
     }
 
-    const existingProvider = props.formData.providers[editing]
+    const existingProvider = providers()[editing]
     if (!existingProvider) return
 
     const updatedProvider = updateProvider(existingProvider, {
-      name: draft().name,
-      baseUrl: draft().baseUrl,
-      key: draft().key,
+      name: draft.name,
+      baseUrl: draft.baseUrl,
+      key: draft.key,
       availableModels: models,
     })
 
-    props.setFormData('providers', editing, updatedProvider)
+    store.setState('settings', 'api', 'providers', editing, updatedProvider)
     resetForm()
   }
 
@@ -132,9 +135,9 @@ const ProvidersTab: Component<ProvidersTabProps> = (props) => {
       return
     }
 
-    props.setFormData(
+    store.setState(
       produce((draft) => {
-        delete draft.providers[providerName]
+        delete draft.settings.api.providers[providerName]
       }),
     )
   }
@@ -156,9 +159,10 @@ const ProvidersTab: Component<ProvidersTabProps> = (props) => {
 
       <Show when={props.importState}>
         <div
-          class={`p-3 rounded-md text-sm mb-4 ${
-            props.importState?.success ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'
-          }`}
+          class={classnames(
+            'p-3 rounded-md text-sm mb-4',
+            props.importState?.success ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger',
+          )}
         >
           {props.importState?.message}
         </div>
@@ -172,10 +176,13 @@ const ProvidersTab: Component<ProvidersTabProps> = (props) => {
 
       <div ref={providerFormSection}>
         <ProviderForm
-          form={draft()}
+          form={draft}
           errors={validationErrors}
           isEditing={isEditing()}
-          onUpdate={(key, value) => props.setFormData('draft', key, value)}
+          onUpdate={(key, value) => {
+            props.setPreventClose(true)
+            setDraft(key, value)
+          }}
           onClearError={(key) => setValidationErrors(key, undefined)}
           onSubmit={isEditing() ? handleUpdateProvider : handleAddProvider}
           onCancelEdit={resetForm}

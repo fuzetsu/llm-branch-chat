@@ -2,9 +2,11 @@ import { Component } from 'solid-js'
 import FormField from '../../ui/FormField'
 import Input from '../../ui/Input'
 import Select from '../../ui/Select'
-import type { SelectOptionGroup } from '../../ui/Select'
 import Checkbox from '../../ui/Checkbox'
 import Slider from '../../ui/Slider'
+import { getModelsGroupedByProvider } from '../../../utils/providerUtils'
+import { useAppStore } from '../../../store/AppStore'
+import { ChatSettings } from '../../../types'
 
 export interface ChatSettingsForm {
   model: string
@@ -15,28 +17,32 @@ export interface ChatSettingsForm {
   titleModel: string
 }
 
-interface ChatSettingsTabProps {
-  form: ChatSettingsForm
-  groupedModels: SelectOptionGroup[]
-  onUpdate: <K extends keyof ChatSettingsForm>(key: K, value: ChatSettingsForm[K]) => void
-}
+const ChatSettingsTab: Component = () => {
+  const store = useAppStore()
 
-const ChatSettingsTab: Component<ChatSettingsTabProps> = (props) => {
+  const settings = () => store.state.settings.chat
+
+  const groupedModels = () => getModelsGroupedByProvider(store.state.settings.api.providers)
+
+  function onUpdate<T extends keyof ChatSettings>(key: T, value: ChatSettings[T]) {
+    store.setState('settings', 'chat', key, value)
+  }
+
   return (
     <div class="space-y-4">
       <FormField label="Default Model">
         <Select
-          value={props.form.model}
-          onChange={(value) => props.onUpdate('model', value)}
-          optionGroups={props.groupedModels}
+          value={settings().model}
+          onChange={(value) => onUpdate('model', value)}
+          optionGroups={groupedModels()}
           placeholder="Select a model"
         />
       </FormField>
 
       <FormField label="Temperature">
         <Slider
-          value={props.form.temperature}
-          onInput={(value) => props.onUpdate('temperature', value)}
+          value={settings().temperature}
+          onInput={(value) => onUpdate('temperature', value)}
           min={0}
           max={2}
           step={0.1}
@@ -47,16 +53,16 @@ const ChatSettingsTab: Component<ChatSettingsTabProps> = (props) => {
       <FormField label="Max Tokens">
         <Input
           type="number"
-          value={props.form.maxTokens}
-          onInput={(value) => props.onUpdate('maxTokens', parseInt(value))}
+          value={settings().maxTokens}
+          onInput={(value) => onUpdate('maxTokens', Number(value))}
           min="1"
           max="4096"
         />
       </FormField>
 
       <Checkbox
-        checked={props.form.autoGenerateTitle}
-        onInput={(checked) => props.onUpdate('autoGenerateTitle', checked)}
+        checked={settings().autoGenerateTitle}
+        onInput={(checked) => onUpdate('autoGenerateTitle', checked)}
         label="Auto-generate chat titles"
       />
 
@@ -66,8 +72,8 @@ const ChatSettingsTab: Component<ChatSettingsTabProps> = (props) => {
       >
         <Input
           type="number"
-          value={props.form.titleGenerationTrigger}
-          onInput={(value) => props.onUpdate('titleGenerationTrigger', parseInt(value))}
+          value={settings().titleGenerationTrigger}
+          onInput={(value) => onUpdate('titleGenerationTrigger', parseInt(value))}
           min="1"
           max="20"
         />
@@ -75,9 +81,9 @@ const ChatSettingsTab: Component<ChatSettingsTabProps> = (props) => {
 
       <FormField label="Title Generation Model">
         <Select
-          value={props.form.titleModel}
-          onChange={(value) => props.onUpdate('titleModel', value)}
-          optionGroups={props.groupedModels}
+          value={settings().titleModel}
+          onChange={(value) => onUpdate('titleModel', value)}
+          optionGroups={groupedModels()}
           placeholder="Select a model"
         />
       </FormField>

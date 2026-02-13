@@ -2,16 +2,12 @@ import { Component } from 'solid-js'
 import FormField from '../../ui/FormField'
 import Select from '../../ui/Select'
 import { Theme } from '../../../types'
+import { useAppStore } from '../../../store/AppStore'
 
 export type ThemeOption = 'light' | 'dark' | 'auto'
 
 export interface UISettingsForm {
   theme: ThemeOption
-}
-
-interface UISettingsTabProps {
-  form: UISettingsForm
-  onUpdate: <K extends keyof UISettingsForm>(key: K, value: UISettingsForm[K]) => void
 }
 
 const themeOptions: { value: Theme; label: string }[] = [
@@ -20,12 +16,14 @@ const themeOptions: { value: Theme; label: string }[] = [
   { value: 'auto', label: 'Auto' },
 ]
 
-const UISettingsTab: Component<UISettingsTabProps> = (props) => {
+const UISettingsTab: Component = () => {
+  const store = useAppStore()
+
   return (
     <FormField label="Theme">
       <Select
-        value={props.form.theme}
-        onChange={(value) => props.onUpdate('theme', value as ThemeOption)}
+        value={store.state.settings.ui.theme}
+        onChange={(value) => store.updateUI({ theme: value as ThemeOption })}
         options={themeOptions}
         placeholder="Select theme"
       />
