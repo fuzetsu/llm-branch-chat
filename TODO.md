@@ -2,9 +2,6 @@
 
 ## Bugs
 
-- close warning on settings modal doesn't handle reset form cases, like cancel edit on provider
-  form, or returning to same data as saved
-
 ## Small
 
 - add scroll box-shadow to indicate where overflow is in scrollable areas (Select, ChatList,
