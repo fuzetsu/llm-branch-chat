@@ -10,8 +10,6 @@
 - add way of providing or detecting token costs and get rid of hard-coded system
 - add per chat opt-in message injections like timestamp so that LLM can consider time between
   messages in its responses
-- store draft message input per-chat (maybe in separate LS keys to avoid stringify churn, export
-  becomes an issue though, debounce is another option to avoid churn)
 
 ## Medium
 

@@ -1,7 +1,17 @@
-import { STORE_VERSION } from '../store/AppStore'
-import type { AppSettings, AppStateStore, Chat, ProviderConfig, StreamingState } from '../types'
+import type {
+  AppSettings,
+  AppStateStore,
+  Chat,
+  DraftStateStore,
+  ProviderConfig,
+  StreamingState,
+} from '../types'
 
 const STORAGE_KEY = 'llm-chat-state-tree-v1'
+const DRAFT_STORAGE_KEY = `${STORAGE_KEY}-draft-msg`
+
+export const STORE_VERSION = 1
+export const DRAFT_STORE_VERSION = 1
 
 export type StateToSave = Pick<AppStateStore, 'version' | 'chats' | 'currentChatId' | 'settings'>
 
@@ -57,6 +67,10 @@ export function createDefaultState(): AppStateStore {
   }
 }
 
+export function createDefaultDraftState(): DraftStateStore {
+  return { version: DRAFT_STORE_VERSION, drafts: {} }
+}
+
 function deserializeChat(chat: Chat, settings: AppSettings): Chat {
   return {
     ...chat,
@@ -67,12 +81,27 @@ function deserializeChat(chat: Chat, settings: AppSettings): Chat {
   }
 }
 
-export function exportStateToJson(state: AppStateStore, pretty = false): string {
+export function exportStateToJson(state: AppStateStore): string {
   const stateToSave: StateToSave = {
     version: state.version,
     chats: state.chats,
     currentChatId: state.currentChatId,
     settings: state.settings,
+  }
+  return JSON.stringify(stateToSave)
+}
+
+export function exportStateToJsonExternal(
+  state: AppStateStore,
+  draftState: DraftStateStore,
+  pretty = false,
+): string {
+  const stateToSave: StateToSave & { draftState: DraftStateStore } = {
+    version: state.version,
+    chats: state.chats,
+    currentChatId: state.currentChatId,
+    settings: state.settings,
+    draftState,
   }
   return pretty ? JSON.stringify(stateToSave, null, 2) : JSON.stringify(stateToSave)
 }
@@ -114,8 +143,36 @@ export function importStateFromJson(jsonString: string): AppStateStore {
       flashingMessageId: null,
     }
   } catch (error) {
-    console.error('Failed to import state:', error)
+    console.error('Failed to import state:', error, jsonString)
     throw new Error('Invalid JSON data or corrupted state file')
+  }
+}
+
+export function importDraftStateFromExternalJson(jsonString: string): DraftStateStore {
+  try {
+    const { draftState } = JSON.parse(jsonString)
+    if (!draftState) return createDefaultDraftState()
+    const { version, drafts } = draftState
+    if (typeof drafts !== 'object') throw new Error('draftState.drafts is not an object')
+    return { version, drafts }
+  } catch (error) {
+    console.error('Failed to import draft state:', error, jsonString)
+    throw new Error('Invalid JSON data or corrupted state file')
+  }
+}
+
+export function loadDraftStateFromStorage(json?: string): DraftStateStore {
+  try {
+    const saved = json ?? localStorage.getItem(DRAFT_STORAGE_KEY)
+    if (!saved) return createDefaultDraftState()
+    let data = JSON.parse(saved)
+    if ('draftState' in data) data = data.draftState
+    const { version, drafts } = JSON.parse(saved)
+    if (typeof drafts !== 'object') throw new Error('drafts is not an object')
+    return { version, drafts }
+  } catch (error) {
+    console.error('Failed to load state:', error, json)
+    return createDefaultDraftState()
   }
 }
 
@@ -127,6 +184,14 @@ export function loadStateFromStorage(): AppStateStore {
   } catch (error) {
     console.error('Failed to load state:', error)
     return createDefaultState()
+  }
+}
+
+export function saveDraftStateToStorage(state: DraftStateStore) {
+  try {
+    localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(state))
+  } catch (error) {
+    console.error('Failed to save state:', error)
   }
 }
 

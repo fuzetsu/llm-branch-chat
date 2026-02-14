@@ -8,16 +8,23 @@ import {
   untrack,
   batch,
 } from 'solid-js'
-import { createStore, produce, SetStoreFunction } from 'solid-js/store'
-import type { Chat, MessageNode, ApiMessage, AppStateStore, UISettings } from '../types'
+import { createStore, produce, SetStoreFunction, unwrap } from 'solid-js/store'
+import type {
+  Chat,
+  MessageNode,
+  ApiMessage,
+  AppStateStore,
+  UISettings,
+  DraftStateStore,
+} from '../types'
 import { createApiService } from './api'
 import {
   loadStateFromStorage,
   saveStateToStorage,
-  exportStateToJson,
-  importStateFromJson,
+  loadDraftStateFromStorage,
+  saveDraftStateToStorage,
 } from '../utils/persistence'
-import { generateChatId } from '../utils'
+import { generateChatId, throttle } from '../utils'
 import {
   createEmptyChat,
   createMessageNode,
@@ -30,14 +37,14 @@ import {
 // Sentinel value for graceful stream end
 export const STREAM_END = 'stream-end'
 
-export const STORE_VERSION = 1
-
 interface AppStoreContextType {
   state: AppStateStore
+  draftState: DraftStateStore
   setState: SetStoreFunction<AppStateStore>
+  replaceState: (newState: AppStateStore) => void
+  replaceDraftState: (newDraftState: DraftStateStore) => void
   // Settings
   setCurrentChatId: (id: string | null) => void
-  replaceState: (newState: AppStateStore) => void
   updateUI: (partialUiSettings: Partial<UISettings>) => void
   // Chat operations
   addChat: (chat: Chat) => void
@@ -49,6 +56,8 @@ interface AppStoreContextType {
   getArchivedChats: () => Chat[]
   ensureCurrentChat: () => string
   // Message operations
+  getMessageDraft: () => string
+  saveMessageDraft: (content: string) => void
   addMessage: (chatId: string, message: MessageNode, parentId: string | null) => void
   updateMessage: (chatId: string, messageId: string, updates: Partial<MessageNode>) => void
   createMessageBranch: (
@@ -78,12 +87,12 @@ interface AppStoreContextType {
 
 const AppStoreContext = createContext<AppStoreContextType>()
 
-// Re-export persistence functions for external use
-export { exportStateToJson, importStateFromJson }
-
 export const AppStoreProvider: ParentComponent = (props) => {
   const initialState = loadStateFromStorage()
   const [state, setState] = createStore<AppStateStore>(initialState)
+
+  const initialDraftState = loadDraftStateFromStorage()
+  const [draftState, setDraftState] = createStore<DraftStateStore>(initialDraftState)
 
   // Reactive API service - automatically recreates when providers change
   const apiService = createMemo(() => createApiService(state.settings.api.providers))
@@ -127,6 +136,10 @@ export const AppStoreProvider: ParentComponent = (props) => {
 
   const replaceState = (newState: AppStateStore) => {
     setState(newState)
+  }
+
+  const replaceDraftState = (newDraftState: DraftStateStore) => {
+    setDraftState(newDraftState)
   }
 
   const startStreaming = (messageId: string) => {
@@ -518,13 +531,35 @@ export const AppStoreProvider: ParentComponent = (props) => {
     }
   }
 
+  const getMessageDraft = () =>
+    state.currentChatId ? (draftState.drafts[state.currentChatId] ?? '') : ''
+
+  const throttledDraftSave = throttle(saveDraftStateToStorage, 300)
+
+  const saveMessageDraft = (content: string) => {
+    const chatId = state.currentChatId
+    if (chatId == null) return
+    if (!content.trim()) {
+      setDraftState(
+        produce((draft) => {
+          delete draft.drafts[chatId]
+        }),
+      )
+    } else {
+      setDraftState('drafts', chatId, content)
+    }
+    throttledDraftSave(unwrap(draftState))
+  }
+
   const storeValue: AppStoreContextType = {
     state,
+    draftState,
     setState,
     addChat,
     setCurrentChatId,
     updateUI,
     replaceState,
+    replaceDraftState,
     updateChat,
     deleteChat,
     createNewChat,
@@ -532,6 +567,8 @@ export const AppStoreProvider: ParentComponent = (props) => {
     getActiveChats,
     getArchivedChats,
     ensureCurrentChat,
+    getMessageDraft,
+    saveMessageDraft,
     addMessage,
     updateMessage,
     createMessageBranch,

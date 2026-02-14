@@ -1,7 +1,12 @@
 import { Component, createEffect, Show, createSignal, batch } from 'solid-js'
-import { useAppStore, exportStateToJson, importStateFromJson } from '../../store/AppStore'
+import { useAppStore } from '../../store/AppStore'
 import { downloadJsonFile, createFileInput } from '../../utils/fileUtils'
 import { classnames } from '../../utils'
+import {
+  exportStateToJsonExternal,
+  importDraftStateFromExternalJson,
+  importStateFromJson,
+} from '../../utils/persistence'
 import Modal from '../ui/Modal'
 import Button from '../ui/Button'
 import ProvidersTab from './components/ProvidersTab'
@@ -41,7 +46,8 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
 
   const [preventClose, setPreventClose] = createSignal(false)
 
-  const storageSizeInBytes = () => new TextEncoder().encode(exportStateToJson(store.state)).length
+  const storageSizeInBytes = () =>
+    new TextEncoder().encode(exportStateToJsonExternal(store.state, store.draftState)).length
 
   createEffect(() => {
     if (importState()?.success || props.isOpen) {
@@ -54,7 +60,7 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
 
   const handleExportState = () => {
     try {
-      const jsonData = exportStateToJson(store.state, true)
+      const jsonData = exportStateToJsonExternal(store.state, store.draftState, true)
       const filename = `llm-chat-state-export-${new Date().toISOString().split('T')[0]}.json`
       downloadJsonFile(jsonData, filename)
     } catch (error) {
@@ -76,6 +82,9 @@ const SettingsModal: Component<SettingsModalProps> = (props) => {
 
       const newState = importStateFromJson(content)
       store.replaceState(newState)
+
+      const newDraftState = importDraftStateFromExternalJson(content)
+      store.replaceDraftState(newDraftState)
 
       setImportState({
         success: true,

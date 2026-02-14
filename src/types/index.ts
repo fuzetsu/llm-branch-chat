@@ -80,6 +80,11 @@ export interface AppStateStore {
   flashingMessageId: string | null
 }
 
+export interface DraftStateStore {
+  version: number
+  drafts: Record<string, string>
+}
+
 export interface StreamCallbacks {
   onStart?: () => void
   onToken: (token: string) => void

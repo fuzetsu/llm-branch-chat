@@ -1,4 +1,4 @@
-import { Component, createEffect, createSignal, Show } from 'solid-js'
+import { Component, createEffect, createMemo, createSignal, Show } from 'solid-js'
 import { useAppStore } from '../store/AppStore'
 import Icon from './ui/Icon'
 import Button from './ui/Button'
@@ -9,9 +9,9 @@ import { classnames } from '../utils'
 
 const MessageInput: Component = () => {
   const store = useAppStore()
-  const [inputValue, setInputValue] = createSignal('')
-
   const isStreaming = () => store.state.streaming.isStreaming
+
+  const inputValue = createMemo(() => store.getMessageDraft())
 
   const handleSend = async () => {
     if (isStreaming()) {
@@ -22,7 +22,7 @@ const MessageInput: Component = () => {
     if (!message) return
 
     // Clear input immediately for better UX
-    setInputValue('')
+    store.saveMessageDraft('')
 
     // Send message through store
     try {
@@ -31,7 +31,7 @@ const MessageInput: Component = () => {
     } catch (error) {
       console.error('Failed to send message:', error)
       // Restore message if sending failed
-      setInputValue(message)
+      store.saveMessageDraft(message)
     }
   }
 
@@ -57,7 +57,7 @@ const MessageInput: Component = () => {
 
   const handleInput = (e: Event) => {
     const target = e.currentTarget as HTMLTextAreaElement
-    setInputValue(target.value)
+    store.saveMessageDraft(target.value)
     retainScroll(() => autoSizeInput(target))
   }
 
