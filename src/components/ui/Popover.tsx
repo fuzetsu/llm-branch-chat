@@ -149,6 +149,9 @@ const Popover: Component<PopoverProps> = (props) => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         props.onClose()
+        triggerRef
+          ?.querySelector<HTMLElement>('button,a,select,[tab-index],input,textarea')
+          ?.focus()
       }
     }
 
