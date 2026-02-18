@@ -6,7 +6,7 @@ import MessageBranching from './MessageBranching'
 import IconButton from './ui/IconButton'
 import Textarea from './ui/Textarea'
 import Tooltip from './ui/Tooltip'
-import { relativeTimestamp, throttle, classnames, isMobileBrowser } from '../utils'
+import { throttle, classnames, isMobileBrowser, createUpdatingTimestamp } from '../utils'
 import { renderMarkdown } from '../utils/markdown'
 import Button from './ui/Button.jsx'
 
@@ -110,13 +110,7 @@ const Message: Component<MessageProps> = (props) => {
     props.isStreaming && store.getStreamingContent().length <= 30 ? 'animate-pulse' : null,
   )
 
-  const [timestamp, setTimestamp] = createSignal('')
-  createEffect(() => {
-    const update = () => setTimestamp(relativeTimestamp(props.message.timestamp))
-    update()
-    const id = setInterval(update, 1000 * 60 * 1)
-    onCleanup(() => clearInterval(id))
-  })
+  const timestamp = createUpdatingTimestamp(() => props.message.timestamp)
 
   const fullMessageDate = () => new Date(props.message.timestamp).toLocaleString()
 

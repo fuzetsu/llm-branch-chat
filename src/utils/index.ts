@@ -1,3 +1,5 @@
+import { createEffect, createSignal, onCleanup } from 'solid-js'
+
 /** Basic console.log wrapper that returns first argument for easy debugging */
 export function p<T>(first: T, ...rest: unknown[]): T {
   console.log(first, ...rest)
@@ -26,15 +28,15 @@ export function generateSystemPromptId(): string {
 /**
  * Formats a timestamp into a human-readable relative time string
  */
-export function relativeTimestamp(timestamp: number) {
+export function relativeTimestamp(timestamp: number): [string, boolean] {
   const date = new Date(timestamp)
   const now = new Date()
   const diff = now.getTime() - date.getTime()
 
-  if (diff < 60000) return 'Just now'
-  if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`
-  if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`
-  return date.toLocaleDateString()
+  if (diff < 60000) return ['Just now', true]
+  if (diff < 3600000) return [`${Math.floor(diff / 60000)}m ago`, true]
+  if (diff < 86400000) return [`${Math.floor(diff / 3600000)}h ago`, true]
+  return [date.toLocaleDateString(), false]
 }
 
 /**
@@ -171,4 +173,20 @@ export function isMobileBrowser() {
     navigator.maxTouchPoints > 0 ||
     'ontouchstart' in window
   )
+}
+
+/** Given a date in the form a number returns an updating relative timestamp signal */
+export function createUpdatingTimestamp(dateNum: () => number) {
+  const [timestamp, setTimestamp] = createSignal('')
+  createEffect(() => {
+    const update = () => {
+      const [maybeRelative, isRelative] = relativeTimestamp(dateNum())
+      setTimestamp(maybeRelative)
+      if (!isRelative) clearInterval(id)
+    }
+    const id = setInterval(update, 1000 * 60 * 1)
+    update()
+    onCleanup(() => clearInterval(id))
+  })
+  return timestamp
 }

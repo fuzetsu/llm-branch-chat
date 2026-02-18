@@ -3,7 +3,7 @@ import { useAppStore } from '../store/AppStore'
 import type { Chat } from '../types'
 import IconButton from './ui/IconButton'
 import ConfirmModal from './ConfirmModal'
-import { classnames, isMobileBrowser } from '../utils'
+import { classnames, createUpdatingTimestamp, isMobileBrowser } from '../utils'
 
 interface ChatItemProps {
   chat: Chat
@@ -18,6 +18,8 @@ const ChatItem: Component<ChatItemProps> = (props) => {
   const [isEditing, setIsEditing] = createSignal(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = createSignal(false)
   let editableRef: HTMLDivElement | undefined
+
+  const timestamp = createUpdatingTimestamp(() => props.chat.updatedAt)
 
   const handleContentEdit = () => {
     if (editableRef) {
@@ -90,21 +92,6 @@ const ChatItem: Component<ChatItemProps> = (props) => {
     setShowDeleteConfirm(false)
   }
 
-  const formatDate = (timestamp: number) => {
-    const date = new Date(timestamp)
-    const now = new Date()
-    const diffMs = now.getTime() - date.getTime()
-    const diffMins = Math.floor(diffMs / (1000 * 60))
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-
-    if (diffMins < 1) return 'Just now'
-    if (diffMins < 60) return `${diffMins}m ago`
-    if (diffHours < 24) return `${diffHours}h ago`
-    if (diffDays < 7) return `${diffDays}d ago`
-    return date.toLocaleDateString()
-  }
-
   return (
     <>
       <div
@@ -141,7 +128,7 @@ const ChatItem: Component<ChatItemProps> = (props) => {
                   props.isSelected ? 'text-white/70' : 'text-text-muted',
                 )}
               >
-                {formatDate(props.chat.updatedAt)}
+                {timestamp()}
               </div>
             </div>
             <Show when={showActions()}>
