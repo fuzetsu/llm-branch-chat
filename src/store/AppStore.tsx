@@ -531,14 +531,14 @@ export const AppStoreProvider: ParentComponent = (props) => {
     }
   }
 
-  const getMessageDraft = () =>
-    state.currentChatId ? (draftState.drafts[state.currentChatId] ?? '') : ''
+  const NEW_CHAT_ID = 'new'
+
+  const getMessageDraft = () => draftState.drafts[state.currentChatId ?? NEW_CHAT_ID] ?? ''
 
   const throttledDraftSave = throttle(saveDraftStateToStorage, 300)
 
   const saveMessageDraft = (content: string) => {
-    const chatId = state.currentChatId
-    if (chatId == null) return
+    const chatId = state.currentChatId ?? NEW_CHAT_ID
     if (!content.trim()) {
       setDraftState(
         produce((draft) => {
